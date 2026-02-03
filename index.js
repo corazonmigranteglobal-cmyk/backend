@@ -27,7 +27,7 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: ["http://127.0.0.1:5500", "http://localhost:5173"],
+    origin: ["http://127.0.0.1:5500", "http://localhost:5173", "https://dev.corazondemigrante.com/", "https://corazondemigrante.com/"],
     allowedHeaders: ["Content-Type", "x-api-key", "Authorization"],
   })
 );
