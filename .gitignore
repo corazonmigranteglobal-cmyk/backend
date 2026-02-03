@@ -32,9 +32,6 @@ coverage/
 !.env.example
 !.env.template
 
-secrets/
-
-
 !backend/secrets/README.md
 !backend/secrets/.gitkeep
 
