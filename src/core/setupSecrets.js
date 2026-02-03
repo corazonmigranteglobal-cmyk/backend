@@ -26,11 +26,19 @@ function setupSecrets() {
     // 2. Fallback: Try individual GCP_* variables if present
     else if (process.env.GCP_CLIENT_EMAIL && process.env.GCP_PRIVATE_KEY) {
         try {
+            let privateKey = process.env.GCP_PRIVATE_KEY;
+            // Common Fix: Remove wrapping double quotes if the user pasted them into the value field
+            if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+                privateKey = privateKey.slice(1, -1);
+            }
+            // Common Fix: Replace literal \n with actual newlines
+            privateKey = privateKey.replace(/\\n/g, '\n');
+
             credentials = {
                 type: process.env.GCP_TYPE || "service_account",
                 project_id: process.env.GCP_PROJECT_ID,
                 private_key_id: process.env.GCP_PRIVATE_KEY_ID,
-                private_key: process.env.GCP_PRIVATE_KEY.replace(/\\n/g, '\n'),
+                private_key: privateKey,
                 client_email: process.env.GCP_CLIENT_EMAIL,
                 client_id: process.env.GCP_CLIENT_ID,
                 auth_uri: process.env.GCP_AUTH_URI || "https://accounts.google.com/o/oauth2/auth",
