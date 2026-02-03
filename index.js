@@ -21,6 +21,21 @@ const { errorHandler } = require("./src/core/http/errorHandler");
 
 const app = express();
 
+if (process.env.GOOGLE_CREDENTIALS_JSON) {
+  const fs = require("fs");
+  const secretsDir = path.resolve(__dirname, "secrets");
+  
+  if (!fs.existsSync(secretsDir)) {
+    fs.mkdirSync(secretsDir, { recursive: true });
+  }
+
+  const credentialsPath = path.join(secretsDir, "google_credentials.json");
+  fs.writeFileSync(credentialsPath, process.env.GOOGLE_CREDENTIALS_JSON);
+  
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
+  console.log("[Setup] Google Credentials written to:", credentialsPath);
+}
+
 if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
   process.env.GOOGLE_APPLICATION_CREDENTIALS = path.resolve(
     process.env.GOOGLE_APPLICATION_CREDENTIALS
