@@ -7,6 +7,21 @@ require("dotenv").config();
 require("./src/core/setupSecrets").setupSecrets();
 
 const db = require("./src/core/db/dbUitls");
+const { logger } = require("./src/core/logger");
+
+
+const { emailRoutes } = require("./src/routes/email.routes");
+const { filesRoutes } = require("./src/routes/files.routes");
+const { initRedis } = require("./src/core/cache/redis");
+
+const terapiaRoutes = require("./src/routes/terapia.routes");
+const usuariosRoutes = require("./src/routes/usuarios.routes");
+const publicoRoutes = require("./src/routes/publico.routes");
+const contabilidadRoutes = require("./src/routes/contabilidad.routes");
+
+const { errorHandler } = require("./src/core/http/errorHandler");
+
+const app = express();
 
 // Middlewares globales
 app.use(helmet());
@@ -94,7 +109,3 @@ npm pg                                 |
 npm winston                            | 
 ========================================
 */
-
-
-
-
