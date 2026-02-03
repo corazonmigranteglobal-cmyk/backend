@@ -1,0 +1,58 @@
+{   
+    "success": [
+      {
+        "status": "ok",
+        "type_error": null,
+        "message": "usuario verificado correctamente",
+        "data": {
+          "user_id": "<int>"
+        }
+      }
+    ],
+    "errors": [
+      {
+        "status": "error",
+        "type_error": "PIN_NOT_FOUND",
+        "message": "PIN no encontrado.",
+        "data": null
+      },
+      {
+        "status": "error",
+        "type_error": "PIN_EXPIRED",
+        "message": "PIN expirado.",
+        "data": {
+          "id_auth_pin": "<int>",
+          "email": "<string>",
+          "tipo_pin": "<string>",
+          "expired_at": "<ISO-8601 datetime string>"
+        }
+      },
+      {
+        "status": "error",
+        "type_error": "MAX_ATTEMPTS_EXCEEDED",
+        "message": "Cantidad de intentos excedidos",
+        "data": {
+          "intentos": "<int>",
+          "max_intentos": "<int>"
+        }
+      },
+      {
+        "status": "error",
+        "type_error": "PIN_INCORRECTO",
+        "message": "Pin ingresado incorrectamente",
+        "data": {
+          "intentos": "<int>",
+          "max_intentos": "<int>"
+        }
+      },
+      {
+        "status": "error",
+        "type_error": "INTERNAL_ERROR",
+        "message": "Error interno del servidor.",
+        "data": {
+          "error_message": "<SQLERRM>",
+          "error_code": "<SQLSTATE>"
+        }
+      }
+    ]
+}

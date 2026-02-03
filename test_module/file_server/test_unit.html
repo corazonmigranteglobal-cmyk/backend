@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GCS Tester</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 20px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+    label { display:block; font-size: 12px; color:#444; margin-bottom: 4px; }
+    input, select, button { padding: 10px; border-radius: 8px; border:1px solid #ccc; }
+    input { min-width: 320px; }
+    button { cursor: pointer; }
+    pre { background:#0b1020; color:#d7e1ff; padding:12px; border-radius:10px; overflow:auto; }
+    .small { font-size: 12px; color:#555; }
+    .ok { color: #0a7a2f; font-weight: 600; }
+    .bad { color: #b00020; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <h1>GCS Tester (Frontend)</h1>
+  <p class="small">
+    Esto llama endpoints de tu backend para probar: ensureUserFolders, uploadBufferAtPath, getSignedReadUrlByPath, existsByPath, deleteByPath, listPaths, copyByPath, moveByPath y download/stream.
+  </p>
+
+  <div class="card">
+    <h3>Configuración</h3>
+    <div class="row">
+      <div>
+        <label>API Base URL</label>
+        <input id="baseUrl" value="http://localhost:3000" />
+      </div>
+      <div>
+        <label>x-api-key (opcional)</label>
+        <input id="apiKey" placeholder="si tu backend protege rutas" />
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>1) Crear jerarquía de carpetas (ensureUserFolders)</h3>
+    <div class="row">
+      <div>
+        <label>userId</label>
+        <input id="userId" placeholder="123" />
+      </div>
+      <div style="display:flex; align-items:end;">
+        <button id="btnEnsure">Crear profile/media</button>
+      </div>
+    </div>
+    <p class="small">Creará placeholders .keep para que se vean “carpetas” en consola.</p>
+  </div>
+
+  <div class="card">
+    <h3>2) Subir archivo a ruta específica (uploadBufferAtPath)</h3>
+    <div class="row">
+      <div>
+        <label>targetPath</label>
+        <input id="uploadPath" placeholder="users/123/profile/avatar.jpg" />
+      </div>
+      <div>
+        <label>contentType</label>
+        <input id="contentType" placeholder="image/jpeg" />
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Archivo</label>
+        <input id="fileInput" type="file" />
+      </div>
+      <div style="display:flex; align-items:end;">
+        <button id="btnUpload">Subir</button>
+      </div>
+    </div>
+    <p class="small">Recomendación: prueba con <code>users/{userId}/profile/avatar.jpg</code> y luego con media.</p>
+  </div>
+
+  <div class="card">
+    <h3>3) Signed URL (getSignedReadUrlByPath)</h3>
+    <div class="row">
+      <div>
+        <label>targetPath</label>
+        <input id="signedReadPath" placeholder="users/123/profile/avatar.jpg" />
+      </div>
+      <div>
+        <label>ttlSeconds</label>
+        <input id="ttl" value="900" />
+      </div>
+      <div style="display:flex; align-items:end;">
+        <button id="btnSignedRead">Generar URL</button>
+      </div>
+    </div>
+    <div class="row">
+      <button id="btnOpenSigned">Abrir URL generada</button>
+    </div>
+    <p class="small">Si el archivo es imagen/video, se abrirá en otra pestaña.</p>
+  </div>
+
+  <div class="card">
+    <h3>4) Exists / Delete (existsByPath / deleteByPath)</h3>
+    <div class="row">
+      <div>
+        <label>targetPath</label>
+        <input id="targetPathBasic" placeholder="users/123/profile/avatar.jpg" />
+      </div>
+      <div style="display:flex; align-items:end; gap:10px;">
+        <button id="btnExists">Exists</button>
+        <button id="btnDelete">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>5) Listar por prefijo (listPaths)</h3>
+    <div class="row">
+      <div>
+        <label>prefix (ej: users/123/)</label>
+        <input id="listPrefix" placeholder="users/123/" />
+      </div>
+      <div style="display:flex; align-items:end;">
+        <button id="btnList">Listar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>6) Copy / Move (copyByPath / moveByPath)</h3>
+    <div class="row">
+      <div>
+        <label>fromPath</label>
+        <input id="fromPath" placeholder="users/123/profile/avatar.jpg" />
+      </div>
+      <div>
+        <label>toPath</label>
+        <input id="toPath" placeholder="users/123/media/2025/12/avatar_copy.jpg" />
+      </div>
+    </div>
+    <div class="row">
+      <button id="btnCopy">Copy</button>
+      <button id="btnMove">Move</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>7) Descargar vía tu backend (stream/download)</h3>
+    <div class="row">
+      <div>
+        <label>targetPath</label>
+        <input id="downloadPath" placeholder="users/123/profile/avatar.jpg" />
+      </div>
+      <div style="display:flex; align-items:end;">
+        <button id="btnDownload">Descargar</button>
+      </div>
+    </div>
+    <p class="small">Esto prueba tu endpoint de descarga (no signed url).</p>
+  </div>
+
+  <div class="card">
+    <h3>Respuesta</h3>
+    <div id="status" class="small"></div>
+    <pre id="out">{}</pre>
+  </div>
+
+  <script src="./test_unit.js"></script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
+const helmet = require("helmet");
+require("dotenv").config();
+
+const db = require("./src/core/db/dbUitls");
+const { logger } = require("./src/core/logger");
+
+
+const { emailRoutes } = require("./src/routes/email.routes");
+const { filesRoutes } = require("./src/routes/files.routes");
+const { initRedis } = require("./src/core/cache/redis");
+
+const terapiaRoutes = require("./src/routes/terapia.routes");
+const usuariosRoutes = require("./src/routes/usuarios.routes");
+const publicoRoutes = require("./src/routes/publico.routes");
+const contabilidadRoutes = require("./src/routes/contabilidad.routes");
+
+const { errorHandler } = require("./src/core/http/errorHandler");
+
+const app = express();
+
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = path.resolve(
+    process.env.GOOGLE_APPLICATION_CREDENTIALS
+  );
+}
+
+// Middlewares globales
+app.use(helmet());
+app.use(
+  cors({
+    origin: ["http://127.0.0.1:5500", "http://localhost:5173"],
+      allowedHeaders: ["Content-Type", "x-api-key", "Authorization"],
+  })
+);
+
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
+
+// Health
+app.get("/health", (req, res) => {
+  return res.status(200).json({
+    ok: true,
+    message: "API de agenda de terapia funcionando",
+  });
+});
+
+app.use(emailRoutes({ projectRootDir: __dirname }));
+app.use(filesRoutes({ projectRootDir: __dirname }));
+app.use("/api/terapia", terapiaRoutes);
+app.use("/api/usuarios", usuariosRoutes);
+app.use("/api/publico", publicoRoutes);
+app.use("/api/contabilidad", contabilidadRoutes);
+
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 3003;
+
+process.on("unhandledRejection", (reason) => {
+  logger.error("Unhandled Rejection", { reason });
+});
+
+process.on("uncaughtException", (err) => {
+  logger.error("Uncaught Exception", { error: err });
+});
+
+const fs = require("fs");
+async function startServer() {
+  try {
+    console.log("[cwd]", process.cwd());
+    console.log("[GAC raw]", process.env.GOOGLE_APPLICATION_CREDENTIALS);
+
+    const abs = path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+    console.log("[GAC abs]", abs);
+    console.log("[GAC exists]", fs.existsSync(abs));
+    
+    console.log("MAIL_PROVIDER:", process.env.MAIL_PROVIDER);
+    console.log("HAS_SENDGRID_KEY:", !!process.env.SENDGRID_API_KEY);
+    console.log("KEY_PREFIX:", (process.env.SENDGRID_API_KEY || "").slice(0, 3)); // debería ser "SG."
+
+    await db.query("SELECT 1");
+    console.log("Conectado a la base de datos correctamente");
+    try {
+      await initRedis();
+    } catch (e) {
+      console.warn("[redis:init_failed]", e?.message || String(e));
+    }
+
+    app.listen(PORT, () => {
+      console.log(`Servidor escuchando en puerto ${PORT}`);
+      console.log(`Email direct endpoint (): http://localhost:${PORT}`);
+      console.log(`GCS direct endpoint: http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Error al conectar con la base de datos:", error);
+    process.exit(1);
+  }
+}
+
+startServer();
+
+
+/* 
+========================================
+npm instal express                     |
+npm body-parser                        |
+npm nodemon                            |
+npm helmet                             |
+npm corse                              |
+npm pg                                 |
+npm winston                            | 
+========================================
+*/
+
+
+
+

@@ -1,0 +1,16 @@
+{
+    "cita" : {
+        "key": "id_cita",
+        "modifiable_fields" : [
+            "id_enfoque",
+            "fecha_programada",
+            "inicio",
+            "fin",
+            "canal",
+            "enlace_sesion",
+            "direccion",
+            "notas_internas"
+        ],
+        "validation_condition" : "time_til_execution < 1 dia"
+    }
+}

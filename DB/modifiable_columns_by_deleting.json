@@ -1,0 +1,15 @@
+{
+    "horario_terapeuta" : {
+        "key": "id_horario_terapeuta",
+        "modifiable_fields":[
+            "dia_semana",
+            "hora_inicio",
+            "hora_fin",
+            "es_laboral",
+            "tipo_atencion",
+            "canal",
+            "ubicacion",
+            "metadata"
+        ]
+    }
+}
