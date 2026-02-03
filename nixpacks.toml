@@ -2,7 +2,7 @@
 # Controla cómo Coolify construye y ejecuta la app.
 
 [phases.setup]
-nixPkgs = ["nodejs", "npm"]
+nixPkgs = ["nodejs"]
 
 [phases.install]
 cmds = ["npm ci --omit=dev"]
