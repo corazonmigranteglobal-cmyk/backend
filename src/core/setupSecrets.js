@@ -36,19 +36,24 @@ function setupSecrets() {
                 privateKey = privateKey.slice(1, -1);
             }
 
-            // Common Fix: Replace literal \n with actual newlines
-            if (privateKey && privateKey.includes("\\n")) {
-                console.log("[Setup] Replacing literal \\n with actual newlines");
-                privateKey = privateKey.replace(/\\n/g, '\n');
+            // CRITICAL FIX: The env var contains the literal text "\n" (backslash + n)
+            // We need to convert these to actual newline characters
+            // First try to replace literal \\n (if double-escaped)
+            let iterations = 0;
+            while (privateKey.includes('\\n') && iterations < 5) {
+                privateKey = privateKey.split('\\n').join('\n');
+                iterations++;
+                console.log(`[Setup] Iteration ${iterations}: Replaced \\n sequences`);
             }
 
             // Validation logging
             if (privateKey) {
                 const hasHeader = privateKey.includes("-----BEGIN PRIVATE KEY-----");
                 const hasFooter = privateKey.includes("-----END PRIVATE KEY-----");
-                console.log("[Setup] Key Validation - Header:", hasHeader, "Footer:", hasFooter);
-                console.log("[Setup] Key Preview (Start):", JSON.stringify(privateKey.substring(0, 40)));
-                console.log("[Setup] Key Preview (End):", JSON.stringify(privateKey.substring(privateKey.length - 40)));
+                const lines = privateKey.split('\n');
+                console.log("[Setup] Key Validation - Header:", hasHeader, "Footer:", hasFooter, "Line count:", lines.length);
+                console.log("[Setup] First line:", JSON.stringify(lines[0]));
+                console.log("[Setup] Last line:", JSON.stringify(lines[lines.length - 1]));
             }
 
             credentials = {
