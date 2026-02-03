@@ -3,51 +3,17 @@ const path = require("path");
 const cors = require("cors");
 const helmet = require("helmet");
 require("dotenv").config();
+// Setup secrets (Google Credentials) from ENV if needed
+require("./src/core/setupSecrets").setupSecrets();
 
 const db = require("./src/core/db/dbUitls");
-const { logger } = require("./src/core/logger");
-
-
-const { emailRoutes } = require("./src/routes/email.routes");
-const { filesRoutes } = require("./src/routes/files.routes");
-const { initRedis } = require("./src/core/cache/redis");
-
-const terapiaRoutes = require("./src/routes/terapia.routes");
-const usuariosRoutes = require("./src/routes/usuarios.routes");
-const publicoRoutes = require("./src/routes/publico.routes");
-const contabilidadRoutes = require("./src/routes/contabilidad.routes");
-
-const { errorHandler } = require("./src/core/http/errorHandler");
-
-const app = express();
-
-if (process.env.GOOGLE_CREDENTIALS_JSON) {
-  const fs = require("fs");
-  const secretsDir = path.resolve(__dirname, "secrets");
-  
-  if (!fs.existsSync(secretsDir)) {
-    fs.mkdirSync(secretsDir, { recursive: true });
-  }
-
-  const credentialsPath = path.join(secretsDir, "google_credentials.json");
-  fs.writeFileSync(credentialsPath, process.env.GOOGLE_CREDENTIALS_JSON);
-  
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
-  console.log("[Setup] Google Credentials written to:", credentialsPath);
-}
-
-if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = path.resolve(
-    process.env.GOOGLE_APPLICATION_CREDENTIALS
-  );
-}
 
 // Middlewares globales
 app.use(helmet());
 app.use(
   cors({
     origin: ["http://127.0.0.1:5500", "http://localhost:5173"],
-      allowedHeaders: ["Content-Type", "x-api-key", "Authorization"],
+    allowedHeaders: ["Content-Type", "x-api-key", "Authorization"],
   })
 );
 
@@ -90,7 +56,7 @@ async function startServer() {
     const abs = path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
     console.log("[GAC abs]", abs);
     console.log("[GAC exists]", fs.existsSync(abs));
-    
+
     console.log("MAIL_PROVIDER:", process.env.MAIL_PROVIDER);
     console.log("HAS_SENDGRID_KEY:", !!process.env.SENDGRID_API_KEY);
     console.log("KEY_PREFIX:", (process.env.SENDGRID_API_KEY || "").slice(0, 3)); // debería ser "SG."
