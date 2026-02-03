@@ -27,12 +27,29 @@ function setupSecrets() {
     else if (process.env.GCP_CLIENT_EMAIL && process.env.GCP_PRIVATE_KEY) {
         try {
             let privateKey = process.env.GCP_PRIVATE_KEY;
+
+            console.log("[Setup] Raw Private Key Length:", privateKey ? privateKey.length : 0);
+
             // Common Fix: Remove wrapping double quotes if the user pasted them into the value field
-            if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+            if (privateKey && privateKey.startsWith('"') && privateKey.endsWith('"')) {
+                console.log("[Setup] Removing wrapping double quotes from private key");
                 privateKey = privateKey.slice(1, -1);
             }
+
             // Common Fix: Replace literal \n with actual newlines
-            privateKey = privateKey.replace(/\\n/g, '\n');
+            if (privateKey && privateKey.includes("\\n")) {
+                console.log("[Setup] Replacing literal \\n with actual newlines");
+                privateKey = privateKey.replace(/\\n/g, '\n');
+            }
+
+            // Validation logging
+            if (privateKey) {
+                const hasHeader = privateKey.includes("-----BEGIN PRIVATE KEY-----");
+                const hasFooter = privateKey.includes("-----END PRIVATE KEY-----");
+                console.log("[Setup] Key Validation - Header:", hasHeader, "Footer:", hasFooter);
+                console.log("[Setup] Key Preview (Start):", JSON.stringify(privateKey.substring(0, 40)));
+                console.log("[Setup] Key Preview (End):", JSON.stringify(privateKey.substring(privateKey.length - 40)));
+            }
 
             credentials = {
                 type: process.env.GCP_TYPE || "service_account",

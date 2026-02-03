@@ -76,8 +76,6 @@ async function startServer() {
     console.log("HAS_SENDGRID_KEY:", !!process.env.SENDGRID_API_KEY);
     console.log("KEY_PREFIX:", (process.env.SENDGRID_API_KEY || "").slice(0, 3)); // debería ser "SG."
 
-    await db.query("SELECT 1");
-    console.log("Conectado a la base de datos correctamente");
     try {
       await initRedis();
     } catch (e) {
