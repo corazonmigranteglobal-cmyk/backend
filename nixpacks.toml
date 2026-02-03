@@ -1,0 +1,11 @@
+# Nixpacks Configuration for Backend
+# Controla cómo Coolify construye y ejecuta la app.
+
+[phases.setup]
+nixPkgs = ["nodejs", "npm"]
+
+[phases.install]
+cmds = ["npm ci --omit=dev"]
+
+[start]
+cmd = "node index.js"
