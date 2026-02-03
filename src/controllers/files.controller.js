@@ -94,10 +94,10 @@ async function uploadAtPath(req, res) {
           targetPath,
         },
       },
-    meta: { module: "files", op: "uploadAtPath" },
-  });
+      meta: { module: "files", op: "uploadAtPath" },
+    });
 
-  const archivoRow = reg?.rows?.[0] || null;
+    const archivoRow = reg?.rows?.[0] || null;
 
     return res.json({
       ok: true,
@@ -212,6 +212,7 @@ async function list(req, res) {
     const result = await gcs.listPaths({ prefix });
     return res.json({ ok: true, items: result });
   } catch (e) {
+    console.error("[FILES_LIST_ERROR]", e);
     return res.status(400).json({ ok: false, error: String(e.message || e) });
   }
 }
