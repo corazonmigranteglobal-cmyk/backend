@@ -102,6 +102,17 @@ const publicoRepository = {
       wrapError("publicoRepository.apagarPaginaUi", err, { fn: "publico.fn_apagar_pagina_ui", args });
     }
   },
+
+  getPaginaPublicaAssets: async (args, meta) => {
+    try {
+      return await call_db({ fnName: "publico.fn_get_pagina_publica_assets", args, meta });
+    } catch (err) {
+      wrapError("publicoRepository.getPaginaPublicaAssets", err, {
+        fn: "publico.fn_get_pagina_publica_assets",
+        args,
+      });
+    }
+  },
 };
 
 module.exports = { publicoRepository };

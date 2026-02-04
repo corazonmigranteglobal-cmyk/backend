@@ -165,6 +165,19 @@ const publicoController = {
       wrapError("publicoController.actualizarElementoUiConArchivo", err);
     }
   },
+
+  obtenerPaginaPublicaBundle: async (req, res) => {
+    try {
+      const q = req.query || {};
+      const id_pagina = q.id_pagina === undefined ? null : Number(q.id_pagina);
+      const cod_pagina = (q.cod_pagina ?? "").toString().trim() || null;
+
+      const result = await publicoService.obtenerPaginaPublicaBundle({ id_pagina, cod_pagina });
+      return res.json(result);
+    } catch (err) {
+      wrapError("publicoController.obtenerPaginaPublicaBundle", err);
+    }
+  },
 };
 
 module.exports = { publicoController };

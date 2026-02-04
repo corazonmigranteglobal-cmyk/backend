@@ -1660,7 +1660,14 @@ export const DB_FUNCTIONS = {
     { "name": "p_id_producto",        "type": "integer", "hasDefault": false },
     { "name": "p_id_cita",            "type": "integer", "hasDefault": true  }
   ]
-}
+},
+  "publico.fn_get_pagina_publica_assets": {
+    "name": "publico.fn_get_pagina_publica_assets",
+    "params": [
+      { "name": "p_id_pagina",  "type": "integer", "hasDefault": true },
+      { "name": "p_cod_pagina", "type": "text",    "hasDefault": true }
+    ]
+  },
 
 };
 

@@ -252,6 +252,81 @@ const publicoService = {
       wrapError("publicoService.actualizarElementoUiConArchivo", err, { args });
     }
   },
+    obtenerPaginaPublicaBundle: async ({ id_pagina = null, cod_pagina = null } = {}) => {
+    try {
+      const pid = id_pagina === null || id_pagina === undefined || id_pagina === "" ? null : Number(id_pagina);
+      const pcod = cod_pagina ? String(cod_pagina).trim() : null;
+
+      const dbRes = await publicoRepository.getPaginaPublicaAssets({
+        p_id_pagina: pid,
+        p_cod_pagina: pcod,
+      });
+
+      const row = dbRes?.rows?.[0] || null;
+      if (!row) throw new Error("PAGE_PUBLIC_BUNDLE_NOT_FOUND");
+
+      const uiVersion = row.ui_version ?? null;
+      const elementos = row.elementos ?? [];
+      const contentUrl = row.content_url ?? null;
+      const contentElementoId = row.content_elemento_id ?? null;
+
+      if (!contentUrl) {
+        throw new Error("CONTENT_URL_NOT_FOUND");
+      }
+
+      // Descarga JSON de contenido (GCS público)
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), 10000);
+      let contentJson = null;
+      try {
+        const r = await fetch(contentUrl, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          signal: ac.signal,
+        });
+        if (!r.ok) {
+          throw new Error(`CONTENT_FETCH_FAILED_HTTP_${r.status}`);
+        }
+        contentJson = await r.json();
+      } finally {
+        clearTimeout(t);
+      }
+
+      // Map uiById: { [id_elemento]: { url, alt, cod, tipo, metadata, valor_texto } }
+      const uiById = {};
+      for (const e of Array.isArray(elementos) ? elementos : []) {
+        if (!e) continue;
+        const id = e.id_elemento;
+        if (id === undefined || id === null) continue;
+        uiById[String(id)] = {
+          id_elemento: id,
+          cod: e.cod ?? null,
+          tipo: e.tipo ?? null,
+          url: e.url ?? null,
+          alt: e.alt ?? null,
+          valor_texto: e.valor_texto ?? null,
+          metadata: e.metadata ?? {},
+        };
+      }
+
+      return {
+        ok: true,
+        meta: {
+          id_pagina: row.id_pagina,
+          cod_pagina: row.cod,
+          titulo: row.titulo,
+          ruta: row.ruta,
+          ui_version: uiVersion,
+          content_elemento_id: contentElementoId,
+          content_url: contentUrl,
+        },
+        content: contentJson,
+        uiById,
+      };
+    } catch (err) {
+      wrapError("publicoService.obtenerPaginaPublicaBundle", err, { id_pagina, cod_pagina });
+    }
+  },
 };
 
 module.exports = { publicoService };
