@@ -1637,6 +1637,16 @@ export const DB_FUNCTIONS = {
       { "name": "p_metadata", "type": "jsonb", "hasDefault": true }
     ]
   },
+  "usuarios.fn_update_admin_full": {
+  "name": "usuarios.fn_update_admin_full",
+  "params": [
+    { "name": "p_actor_user_id", "type": "integer", "hasDefault": false },
+    { "name": "p_id_sesion",     "type": "integer", "hasDefault": false },
+    { "name": "p_user_id",       "type": "integer", "hasDefault": false },
+    { "name": "p_patch",         "type": "jsonb",   "hasDefault": false }
+  ]
+},
+
 };
 
 export const DB_FUNCTION_NAMES = Object.keys(DB_FUNCTIONS);

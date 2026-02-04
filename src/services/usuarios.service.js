@@ -837,6 +837,17 @@ const usuariosService = {
       throw err;
     }
   },
+  async updateAdminFull(payload, trace) {
+    try {
+      return await usuariosRepository.updateAdminFull(payload, trace);
+    } catch (err) {
+      console.error("[service:error]", {
+        action: "usuarios.updateAdminFull",
+        message: err?.message,
+      });
+      throw err;
+    }
+  },
 };
 
 module.exports = { usuariosService };
