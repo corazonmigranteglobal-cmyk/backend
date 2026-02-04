@@ -1644,7 +1644,22 @@ export const DB_FUNCTIONS = {
     { "name": "p_id_sesion",     "type": "integer", "hasDefault": false },
     { "name": "p_user_id",       "type": "integer", "hasDefault": false },
     { "name": "p_patch",         "type": "jsonb",   "hasDefault": false }
+  ],
+  "contabilidad.fn_registrar_transaccion_venta": {
+  "name": "contabilidad.fn_registrar_transaccion_venta",
+  "params": [
+    { "name": "p_actor_user_id",       "type": "integer", "hasDefault": false },
+    { "name": "p_id_sesion",           "type": "integer", "hasDefault": false },
+    { "name": "p_fecha",              "type": "date",    "hasDefault": false },
+    { "name": "p_glosa",              "type": "text",    "hasDefault": false },
+    { "name": "p_referencia_externa", "type": "text",    "hasDefault": false },
+    { "name": "p_metadata",           "type": "jsonb",   "hasDefault": false },
+    { "name": "p_movimientos",        "type": "jsonb",   "hasDefault": false },
+    { "name": "p_cantidad",           "type": "integer", "hasDefault": false },
+    { "name": "p_id_producto",        "type": "integer", "hasDefault": false },
+    { "name": "p_id_cita",            "type": "integer", "hasDefault": true  }
   ]
+},
 },
 
 };
