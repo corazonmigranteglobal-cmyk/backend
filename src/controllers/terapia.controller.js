@@ -17,8 +17,8 @@ function parseJsonMaybe(value, fallback = null) {
 
 function pickArgsMeta(req) {
   const body = req.body || {};
-  const args = body.args ?? body;      
-  const meta = body.meta ?? {};        
+  const args = body.args ?? body;
+  const meta = body.meta ?? {};
   return { args, meta };
 }
 
@@ -167,42 +167,53 @@ const terapiaController = {
   },
 
   actualizarEstadoCita: async (req, res) => {
-    try{
-      const { args, meta} = pickArgsMeta(req); 
-      const result  = await terapiaService.actualizarEstadoCita(args, meta);
+    try {
+      const { args, meta } = pickArgsMeta(req);
+      const result = await terapiaService.actualizarEstadoCita(args, meta);
       return res.json(result);
-    } catch (err) {  
+    } catch (err) {
       wrapError("terapiaController.actualizarEstadoCita", err);
     }
   },
 
-  
+
   obtenerDisponibilidadHorarios: async (req, res) => {
-    try{
-      const { args, meta} = pickArgsMeta(req); 
-      const result  = await terapiaService.obtenerDisponibilidadHorarios(args, meta);
+    try {
+      const { args, meta } = pickArgsMeta(req);
+
+      // Validar parámetro requerido
+      const terapeutaId = args?.p_id_usuario_terapeuta;
+      if (!terapeutaId) {
+        return res.status(400).json({
+          ok: false,
+          error: "MISSING_PARAM",
+          message: "Falta el parámetro requerido 'p_id_usuario_terapeuta'. Debe enviar el ID del terapeuta seleccionado."
+        });
+      }
+
+      const result = await terapiaService.obtenerDisponibilidadHorarios(args, meta);
       return res.json(result);
-    } catch (err) {  
+    } catch (err) {
       wrapError("terapiaController.obtenerDisponibilidadHorarios", err);
     }
   },
 
   obtenerProducto: async (req, res) => {
-    try{
-      const { args, meta} = pickArgsMeta(req); 
-      const result  = await terapiaService.obtenerProducto(args, meta);
+    try {
+      const { args, meta } = pickArgsMeta(req);
+      const result = await terapiaService.obtenerProducto(args, meta);
       return res.json(result);
-    } catch (err) {  
+    } catch (err) {
       wrapError("terapiaController.obtenerProducto", err);
     }
   },
-  
+
   obtenerEnfoque: async (req, res) => {
-    try{
-      const { args, meta} = pickArgsMeta(req); 
-      const result  = await terapiaService.obtenerEnfoque(args, meta);
+    try {
+      const { args, meta } = pickArgsMeta(req);
+      const result = await terapiaService.obtenerEnfoque(args, meta);
       return res.json(result);
-    } catch (err) {  
+    } catch (err) {
       wrapError("terapiaController.obtenerEnfoque", err);
     }
   },
