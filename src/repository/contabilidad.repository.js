@@ -153,6 +153,20 @@ const contabilidadRepository = {
       wrapError("contabilidadRepository.apagarTransaccion", err, { fn: "contabilidad.fn_apagar_transaccion", args });
     }
   },
+  crearTransaccionVenta: async (args, meta) => {
+    try {
+      return await call_db({
+        fnName: "contabilidad.fn_registrar_transaccion_venta",
+        args: args || {},
+        meta,
+      });
+    } catch (err) {
+      wrapError("contabilidadRepository.crearTransaccionVenta", err, {
+        fn: "contabilidad.fn_registrar_transaccion_venta",
+        args,
+      });
+    }
+  },
 
 };
 

@@ -172,6 +172,15 @@ const contabilidadController = {
       wrapError("contabilidadController.apagarTransaccion", err);
     }
   },
+
+  crearTransaccionVenta: async (req, res) => {
+    try {
+      const { args, meta } = pickArgsMeta(req);
+      return res.json(await contabilidadService.crearTransaccionVenta(args, meta));
+    } catch (err) {
+      wrapError("contabilidadController.crearTransaccionVenta", err);
+    }
+},
 };
 
 module.exports = { contabilidadController };

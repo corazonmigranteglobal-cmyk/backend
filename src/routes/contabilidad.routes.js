@@ -41,8 +41,6 @@ router.post("/centros-costo/apagar", asyncHandler(contabilidadController.apagarC
 router.post("/transacciones/listar", asyncHandler(contabilidadController.listarTransacciones));
 router.post("/transacciones/batch/crear", asyncHandler(contabilidadController.crearTransaccionesBatch));
 router.post("/transacciones/apagar", asyncHandler(contabilidadController.apagarTransaccion));
-
-
-
+router.post("/transacciones/venta/crear",contabilidadController.crearTransaccionVenta);
 
 module.exports = router;
