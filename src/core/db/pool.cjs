@@ -41,6 +41,7 @@ const pool = new Pool({
   max: Number(process.env.PGPOOL_MAX || 10),
   idleTimeoutMillis: Number(process.env.PG_IDLE_TIMEOUT || 30000),
   connectionTimeoutMillis: Number(process.env.PG_CONN_TIMEOUT || 80000),
+  ssl: false,
 });
 
 module.exports = { pool };

@@ -1,5 +1,4 @@
 .env
-secrets/
 logs/
 node_modules/
 test_module/

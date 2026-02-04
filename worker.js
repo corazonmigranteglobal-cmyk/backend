@@ -1,6 +1,8 @@
 if (process.env.NODE_ENV !== "production") {
   require("dotenv").config();
 }
+// Setup secrets (Google Credentials) from ENV if needed
+require("./src/core/setupSecrets").setupSecrets();
 const { logger } = require("./src/core/logger");
 const { startWorker } = require("./src/services/messageOutboxWorker");
 
