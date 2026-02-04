@@ -29,15 +29,23 @@ function normalizeValueByType(value, pgType) {
   const t = (pgType || "").trim().toLowerCase();
   if (value === undefined) return undefined;
 
-  if (t === "jsonb" || t === "json") {
-    // pg accepts stringified json safely; casting ensures correct type.
-    if (typeof value === "string") return value;
-    if (isPlainObject(value) || Array.isArray(value)) return JSON.stringify(value);
-    // allow null or primitive; Postgres will accept JSON primitives too.
-    return JSON.stringify(value);
+  if (value === undefined || value === null) return null;
+
+  // Si llega como string, debe ser JSON válido (no "[object Object]" ni "")
+  if (typeof value === "string") {
+    const s = value.trim();
+    if (!s) return null;
+
+    try {
+      JSON.parse(s); // valida
+      return s;
+    } catch (e) {
+      throw new Error(`Invalid JSON param for ${t}: ${s.slice(0, 120)}`);
+    }
   }
 
-  return value;
+  // Si llega como objeto/array/boolean/number -> stringify seguro
+  return JSON.stringify(value);
 }
 
 /**
