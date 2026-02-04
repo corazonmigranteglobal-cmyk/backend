@@ -38,24 +38,9 @@ function normalizeValueByType(value, pgType) {
   if (value === null) return null;
 
   // SOLO json/jsonb se trata como JSON
-  if (t === "jsonb" || t === "json") {
-    // Si viene string, debe ser JSON válido
-    if (typeof value === "string") {
-      const s = value.trim();
-      if (!s) return null;
-
-      try {
-        JSON.parse(s);
-        return s;
-      } catch (e) {
-        throw new Error(`Invalid JSON param for ${t}: ${s.slice(0, 120)}`);
-      }
-    }
-
-    // objeto/array/boolean/number -> stringify seguro
-    // (PG recibirá string JSON y lo casteará ::jsonb/::json)
-    return JSON.stringify(value);
-  }
+if (t === "json" || t === "jsonb") {
+  return JSON.stringify(value ?? null);
+}
 
   // Para el resto: retornar tal cual.
   // (PG castea con ::date, ::int, etc.)
