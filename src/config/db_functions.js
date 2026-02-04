@@ -1645,6 +1645,7 @@ export const DB_FUNCTIONS = {
     { "name": "p_user_id",       "type": "integer", "hasDefault": false },
     { "name": "p_patch",         "type": "jsonb",   "hasDefault": false }
   ],
+},
   "contabilidad.fn_registrar_transaccion_venta": {
   "name": "contabilidad.fn_registrar_transaccion_venta",
   "params": [
@@ -1659,8 +1660,7 @@ export const DB_FUNCTIONS = {
     { "name": "p_id_producto",        "type": "integer", "hasDefault": false },
     { "name": "p_id_cita",            "type": "integer", "hasDefault": true  }
   ]
-},
-},
+}
 
 };
 
