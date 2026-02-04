@@ -25,18 +25,25 @@ function castFor(pgType) {
   return `::${pgType.trim()}`;
 }
 
+/**
+ * Normaliza valores según tipo PG.
+ * - json/jsonb: valida string JSON o stringify para object/array/primitive
+ * - otros tipos: retorna tal cual (solo mapea undefined -> null)
+ */
 function normalizeValueByType(value, pgType) {
   const t = (pgType || "").trim().toLowerCase();
-  if (value === undefined) return undefined;
+
+  // 🔥 Nunca devolver undefined a la query.
+  if (value === undefined) return null;
   if (value === null) return null;
 
-  // SOLO json/jsonb se valida/serializa como JSON
+  // SOLO json/jsonb se trata como JSON
   if (t === "jsonb" || t === "json") {
+    // Si viene string, debe ser JSON válido
     if (typeof value === "string") {
       const s = value.trim();
       if (!s) return null;
 
-      // acepta strings JSON válidos; rechaza basura tipo "[object Object]"
       try {
         JSON.parse(s);
         return s;
@@ -45,35 +52,19 @@ function normalizeValueByType(value, pgType) {
       }
     }
 
-    // objeto/array/boolean/number -> stringify válido para json/jsonb
+    // objeto/array/boolean/number -> stringify seguro
+    // (PG recibirá string JSON y lo casteará ::jsonb/::json)
     return JSON.stringify(value);
   }
 
-  // Para el resto de tipos: NO JSON.parse, NO JSON.stringify.
-  // Solo ajustes mínimos por compatibilidad:
-  if (t === "integer" || t === "int" || t === "int4" || t === "bigint" || t === "int8" || t === "smallint" || t === "int2") {
-    if (value === "") return null;
-    return value; // puede ser number o string numérica, Postgres castea por ::int/::bigint
-  }
-
-  if (t === "boolean" || t === "bool") {
-    if (value === "") return null;
-    return value; // true/false o "true"/"false"
-  }
-
-  if (t === "date" || t === "time" || t.startsWith("timestamp")) {
-    if (value === "") return null;
-    return value; // string tipo "2026-02-04"
-  }
-
-  // text/varchar/uuid/numeric/etc: tal cual
-  if (value === "") return value; // permite texto vacío si lo mandas
+  // Para el resto: retornar tal cual.
+  // (PG castea con ::date, ::int, etc.)
   return value;
 }
 
 /**
  * Build a parametrized SELECT * FROM fn call using named arguments.
- * 
+ *
  * @param {string} fnName - Full name e.g. "usuarios.fn_signup_paciente_with_verification_pin"
  * @param {object} args   - { p_email: "...", p_pin_metadata: {...}, ... }
  * @returns {{ text: string, values: any[] }}
@@ -89,17 +80,29 @@ export function buildSelectFunction(fnName, args = {}) {
 
   for (const p of meta.params) {
     const has = Object.prototype.hasOwnProperty.call(args, p.name);
+
+    // Si falta: OK solo si tiene DEFAULT. Caso contrario, error.
     if (!has) {
-      // If missing: OK only if function param has DEFAULT; omit it to use default.
       if (!p.hasDefault) {
         throw new Error(`Missing required param '${p.name}' for function ${fnName}`);
       }
       continue;
     }
 
+    // Normaliza el valor (json/jsonb stringify + validación; otros tal cual)
     const v = normalizeValueByType(args[p.name], p.type);
-    values.push(v);
 
+    // 🔥 Si tiene DEFAULT y el valor es null, puedes decidir:
+    // - Enviar null explícito (lo hará NULL)
+    // - O omitirlo para que use DEFAULT
+    // En tu caso, p_id_cita default NULL, ambos dan lo mismo.
+    // Para ser consistente con tu lógica de "si tiene default, puede omitirse",
+    // omitimos si viene null y hasDefault=true:
+    if (p.hasDefault && (v === null)) {
+      continue;
+    }
+
+    values.push(v);
     const idx = values.length;
     parts.push(`${p.name} => $${idx}${castFor(p.type)}`);
   }
