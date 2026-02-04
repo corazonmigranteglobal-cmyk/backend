@@ -382,7 +382,19 @@ const usuariosService = {
       throw err;
     }
   },
-
+  async updateTerapeutaFull(payload, trace) {
+    try {
+      return await usuariosRepository.updateTerapeutaFull(payload, trace);
+    } catch (err) {
+      console.error("[service:error]", {
+        action: "usuarios.updateTerapeutaFull",
+        message: err?.message,
+        trace,
+      });
+      throw err;
+    }
+  },
+  
   async updateTerapeutaFullConArchivo(args, trace, file) {
     try {
       const p_actor_user_id = Number(args?.p_actor_user_id);
