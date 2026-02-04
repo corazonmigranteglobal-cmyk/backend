@@ -28,24 +28,47 @@ function castFor(pgType) {
 function normalizeValueByType(value, pgType) {
   const t = (pgType || "").trim().toLowerCase();
   if (value === undefined) return undefined;
+  if (value === null) return null;
 
-  if (value === undefined || value === null) return null;
+  // SOLO json/jsonb se valida/serializa como JSON
+  if (t === "jsonb" || t === "json") {
+    if (typeof value === "string") {
+      const s = value.trim();
+      if (!s) return null;
 
-  // Si llega como string, debe ser JSON válido (no "[object Object]" ni "")
-  if (typeof value === "string") {
-    const s = value.trim();
-    if (!s) return null;
-
-    try {
-      JSON.parse(s); // valida
-      return s;
-    } catch (e) {
-      throw new Error(`Invalid JSON param for ${t}: ${s.slice(0, 120)}`);
+      // acepta strings JSON válidos; rechaza basura tipo "[object Object]"
+      try {
+        JSON.parse(s);
+        return s;
+      } catch (e) {
+        throw new Error(`Invalid JSON param for ${t}: ${s.slice(0, 120)}`);
+      }
     }
+
+    // objeto/array/boolean/number -> stringify válido para json/jsonb
+    return JSON.stringify(value);
   }
 
-  // Si llega como objeto/array/boolean/number -> stringify seguro
-  return JSON.stringify(value);
+  // Para el resto de tipos: NO JSON.parse, NO JSON.stringify.
+  // Solo ajustes mínimos por compatibilidad:
+  if (t === "integer" || t === "int" || t === "int4" || t === "bigint" || t === "int8" || t === "smallint" || t === "int2") {
+    if (value === "") return null;
+    return value; // puede ser number o string numérica, Postgres castea por ::int/::bigint
+  }
+
+  if (t === "boolean" || t === "bool") {
+    if (value === "") return null;
+    return value; // true/false o "true"/"false"
+  }
+
+  if (t === "date" || t === "time" || t.startsWith("timestamp")) {
+    if (value === "") return null;
+    return value; // string tipo "2026-02-04"
+  }
+
+  // text/varchar/uuid/numeric/etc: tal cual
+  if (value === "") return value; // permite texto vacío si lo mandas
+  return value;
 }
 
 /**
