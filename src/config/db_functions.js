@@ -1086,7 +1086,11 @@ export const DB_FUNCTIONS = {
       { "name": "p_actor_user_id", "type": "integer", "hasDefault": false },
       { "name": "p_id_sesion",     "type": "integer", "hasDefault": false },
       { "name": "p_limit",         "type": "integer", "hasDefault": true  },
-      { "name": "p_offset",        "type": "integer", "hasDefault": true  }
+      { "name": "p_offset",        "type": "integer", "hasDefault": true  },
+      
+      { "name": "p_id_usuario_paciente",        "type": "integer", "hasDefault": true  },
+      { "name": "p_id_usuario_terapeuta",        "type": "integer", "hasDefault": true  },
+
     ]
   },
 
