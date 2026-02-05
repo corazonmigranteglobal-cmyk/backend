@@ -387,7 +387,9 @@ listarProductos: async (args, meta) => {
       // Encolar notificación (best-effort): si falla, NO debe tumbar el endpoint
       try {
         const row = result?.rows?.[0];
-        if (row?.status === "ok") {
+
+        const statusStr = String(row?.status ?? row?.estado ?? "").trim().toLowerCase();
+        if (statusStr === "ok") {
           const data = row.data || {};
 
           // Estado nuevo: prioriza el input (contrato) y luego el retorno de DB
@@ -414,34 +416,78 @@ listarProductos: async (args, meta) => {
           };
 
           const templateKey = templateByEstado[estado] || null;
-          if (templateKey) {
-            const para =
-              data?.email ??
-              data?.to ??
-              data?.cita?.email ??
-              args?.p_email ??
-              args?.email ??
-              null;
 
-            if (para) {
-              await enqueueMessage({
-                tipo: "ACTUALIZACION_ESTADO_CITA",
-                canal: "EMAIL",
-                prioridad: 5,
-                para,
-                templateKey,
-                payload: {
-                  // payload flexible para tus templates
-                  email: para,
-                  estado,
-                  // si DB retorna la cita completa, la mandamos tal cual
-                  ...(data?.cita ? data.cita : {}),
-                  cita: data?.cita ?? undefined,
-                  id_cita: data?.id_cita ?? data?.cita?.id_cita ?? args?.p_id_cita,
-                },
-              });
+          // Detectar email "para" sin asumir nombres:
+          // - busca en data/cita cualquier campo típico (email/correo) y también por heurística
+          function pickEmail(obj) {
+            if (!obj || typeof obj !== "object") return null;
+
+            // 1) claves directas comunes
+            const direct =
+              obj.email ??
+              obj.correo ??
+              obj.mail ??
+              obj.to ??
+              obj.para ??
+              null;
+            if (direct && String(direct).includes("@")) return String(direct).trim();
+
+            // 2) búsqueda heurística por keys que contengan 'mail' o 'correo'
+            for (const [k, v] of Object.entries(obj)) {
+              if (!v) continue;
+              const kk = String(k).toLowerCase();
+              if (kk.includes("email") || kk.includes("correo") || kk.includes("mail")) {
+                const s = String(v).trim();
+                if (s.includes("@")) return s;
+              }
+            }
+            return null;
+          }
+
+          const para =
+            pickEmail(data) ??
+            pickEmail(data?.cita) ??
+            args?.p_email ??
+            args?.email ??
+            null;
+
+          if (!templateKey) {
+            console.warn("[enqueue:skip] estado sin template", { estado, trace });
+          } else if (!para) {
+            console.warn("[enqueue:skip] sin email destinatario", {
+              estado,
+              templateKey,
+              trace,
+              // te dejo trazas mínimas para depurar sin imprimir toda la cita
+              hasData: !!data,
+              hasCita: !!data?.cita,
+              keysData: data && typeof data === "object" ? Object.keys(data).slice(0, 20) : [],
+              keysCita: data?.cita && typeof data.cita === "object" ? Object.keys(data.cita).slice(0, 20) : [],
+            });
+          } else {
+            const enq = await enqueueMessage({
+              tipo: "ACTUALIZACION_ESTADO_CITA",
+              canal: "EMAIL",
+              prioridad: 5,
+              para,
+              templateKey,
+              payload: {
+                email: para,
+                estado,
+                ...(data?.cita ? data.cita : {}),
+                cita: data?.cita ?? undefined,
+                id_cita: data?.id_cita ?? data?.cita?.id_cita ?? args?.p_id_cita,
+              },
+            });
+
+            if (!enq?.ok) {
+              console.warn("[enqueue:fail]", { estado, templateKey, para, trace, error: enq?.error });
+            } else {
+              console.log("[enqueue:ok]", { estado, templateKey, para, trace, id_mensaje: enq?.job?.id_mensaje });
             }
           }
+        } else {
+          // No ok: no encolar
         }
       } catch (e) {
         console.error("[service:warn]", {
