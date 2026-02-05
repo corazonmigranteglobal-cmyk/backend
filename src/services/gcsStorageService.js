@@ -42,6 +42,22 @@ function toObjectName(uploadPrefix, targetPath) {
 
   const pref = stripLeadingSlash(uploadPrefix).replace(/\/+$/, "");
 
+  // IMPORTANT:
+  // Many callers pass an ABSOLUTE object path inside the bucket (relative to the bucket root),
+  // e.g. "landing_page/media/Imagen p2.0.png".
+  // If we blindly prepend uploadPrefix (e.g. "admin_portal"), we end up with invalid object names
+  // like "admin_portal/landing_page/...".
+  //
+  // Rule:
+  // - If the incoming path already targets a *different* top-level folder than the uploadPrefix,
+  //   treat it as absolute and DO NOT prepend.
+  const prefRoot = pref.split("/")[0];
+  const cleanRoot = clean.split("/")[0];
+  const KNOWN_BUCKET_ROOTS = new Set(["admin_portal", "landing_page", "global_assets", "terapia"]);
+  if (cleanRoot && KNOWN_BUCKET_ROOTS.has(cleanRoot) && prefRoot && cleanRoot !== prefRoot) {
+    return clean;
+  }
+
   if (clean === pref || clean.startsWith(pref + "/")) return clean;
 
   return safeJoinPosix(pref, clean);
