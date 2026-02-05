@@ -389,19 +389,59 @@ listarProductos: async (args, meta) => {
         const row = result?.rows?.[0];
         if (row?.status === "ok") {
           const data = row.data || {};
-          await enqueueMessage({
-            tipo: "ACTUALIZACION_ESTADO_CITA",
-            canal: "EMAIL",
-            prioridad: 5,
-            para: data.email,
-            templateKey: "verify_pin",
-            payload: {
-              email: data.email,
-              userId: data.user_id,
-              contexto: "El estado de la cita ha sido actualizada",
-              expiresAt: data.expires_at,
-            },
-          });
+
+          // Estado nuevo: prioriza el input (contrato) y luego el retorno de DB
+          const rawEstado =
+            args?.p_nuevo_estado ??
+            args?.nuevo_estado ??
+            args?.estado ??
+            data?.nuevo_estado ??
+            data?.estado ??
+            data?.cita?.estado ??
+            null;
+
+          const estado = String(rawEstado || "").trim().toUpperCase();
+
+          // Mapeo 1:1 con tus estados válidos en DB (ck_cita_estado_valido)
+          const templateByEstado = {
+            PENDIENTE: "cita_pendiente",
+            PLANIFICADA: "cita_pendiente_programacion",
+            CONFIRMADA: "cita_confirmada",
+            CANCELADA: "cita_cancelada",
+            RECHAZADA: "cita_rechazada",
+            MODIFICADA: "cita_modificada",
+            COMPLETADA: "cita_completada",
+          };
+
+          const templateKey = templateByEstado[estado] || null;
+          if (templateKey) {
+            const para =
+              data?.email ??
+              data?.to ??
+              data?.cita?.email ??
+              args?.p_email ??
+              args?.email ??
+              null;
+
+            if (para) {
+              await enqueueMessage({
+                tipo: "ACTUALIZACION_ESTADO_CITA",
+                canal: "EMAIL",
+                prioridad: 5,
+                para,
+                templateKey,
+                payload: {
+                  // payload flexible para tus templates
+                  email: para,
+                  estado,
+                  // si DB retorna la cita completa, la mandamos tal cual
+                  ...(data?.cita ? data.cita : {}),
+                  cita: data?.cita ?? undefined,
+                  id_cita: data?.id_cita ?? data?.cita?.id_cita ?? args?.p_id_cita,
+                },
+              });
+            }
+          }
         }
       } catch (e) {
         console.error("[service:warn]", {

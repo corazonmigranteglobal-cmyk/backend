@@ -585,7 +585,53 @@ const usuariosService = {
 
   async superSetUsuarioEstado(payload, trace) {
     try {
-      return await usuariosRepository.superSetUsuarioEstado(payload, trace);
+      const result = await usuariosRepository.superSetUsuarioEstado(payload, trace);
+
+      // Encolar notificación (best-effort): habilitado/inhabilitado
+      // Si falla, NO tumba el endpoint.
+      try {
+        const row = result?.rows?.[0] ?? result?.data?.[0] ?? null;
+        const status = row?.status ?? row?.ok ?? null;
+        if (status === "ok" || status === true) {
+          const data = row?.data ?? row ?? {};
+          const activo = payload?.p_activo ?? payload?.activo ?? data?.activo ?? data?.p_activo;
+
+          const para =
+            data?.email ??
+            data?.to ??
+            data?.usuario?.email ??
+            payload?.p_email ??
+            payload?.email ??
+            null;
+
+          const templateKey = activo === false ? "usuario_inhabilitado" : "usuario_habilitado";
+
+          if (para) {
+            await enqueueMessage({
+              tipo: "USUARIO_ESTADO_CAMBIADO",
+              canal: "EMAIL",
+              prioridad: 5,
+              para,
+              templateKey,
+              payload: {
+                email: para,
+                activo: !!activo,
+                target_user_id: payload?.p_target_user_id ?? payload?.target_user_id ?? data?.target_user_id ?? data?.user_id,
+                nombre: data?.nombre ?? data?.usuario?.nombre,
+                apellido: data?.apellido ?? data?.usuario?.apellido,
+              },
+            });
+          }
+        }
+      } catch (e) {
+        console.error("[service:warn]", {
+          action: "usuarios.superSetUsuarioEstado.enqueueMessage",
+          message: e?.message || String(e),
+          trace,
+        });
+      }
+
+      return result;
     } catch (err) {
       console.error("[service:error]", {
         action: "usuarios.superSetUsuarioEstado",
