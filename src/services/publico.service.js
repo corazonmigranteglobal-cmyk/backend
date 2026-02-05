@@ -225,11 +225,25 @@ const publicoService = {
       }
 
       // --- 3) Actualizar elemento UI linkeando el archivo ---
+      // Normalizamos tipo y metadata para evitar inconsistencias en UI/Bundle:
+      // - Si el archivo subido es JSON, forzamos p_tipo='json' (muchas consultas filtran por tipo)
+      // - Sincronizamos p_link y metadata.url con la URL final del archivo
+      const mime = String(file?.mimetype || '').toLowerCase();
+      const extLower = String(ext || '').toLowerCase();
+      const isJson = mime.includes('application/json') || extLower === '.json' || safeName.toLowerCase().endsWith('.json');
+
+      const nextTipo = isJson ? 'json' : (args?.p_tipo ?? args?.p_tipo_elemento ?? args?.tipo ?? null);
+      const nextMetadata = {
+        ...(args?.p_metadata || {}),
+        url: uploadResult.url,
+      };
+
       const updateArgs = {
         ...args,
+        p_tipo: nextTipo,
         p_id_archivo: id_archivo,
-        // cuando se actualiza por archivo, no necesitamos que el front mande link
-        // (la función SQL resolverá path/url desde infraestructura.archivo)
+        p_link: uploadResult.url,
+        p_metadata: nextMetadata,
       };
 
       const updated = await publicoRepository.actualizarElementoUi(updateArgs, {
