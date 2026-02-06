@@ -557,7 +557,8 @@ listarSolicitudesCitaAdmin: async (args, meta) => {
         incluir === true || incluir === "true" || incluir === 1 || incluir === "1";
 
       // clave SEGURA: incluye sesión (evita leaks por cache cross-user)
-      const cacheKey = `cm:booking_bootstrap:v1:uid:${uid}:sid:${sid}:h:${p_incluir_horarios ? 1 : 0}`;
+      // v2: incluye nuevos campos (image_url) en terapeutas/enfoques
+      const cacheKey = `cm:booking_bootstrap:v2:uid:${uid}:sid:${sid}:h:${p_incluir_horarios ? 1 : 0}`;
 
       // TTL corto si hay horarios (porque dependen de NOW y de citas/bloqueos)
       const ttlSeconds = p_incluir_horarios ? 45 : 300;

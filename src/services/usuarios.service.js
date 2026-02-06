@@ -274,7 +274,9 @@ const usuariosService = {
       } catch (_) {}
 
       try {
-        await tryEnqueueSignupEmail({ tipo: "ADMIN", payload, trace });
+        const row = result?.rows?.[0] || null;
+        const data = row?.data || {};
+        await tryEnqueueSignupEmail({ tipo: "ADMIN", payload: { ...payload, ...data }, trace });
       } catch (e) {
         console.error("[service:error]", {
           action: "usuarios.signupAdmin.enqueueMessage",
@@ -338,8 +340,8 @@ const usuariosService = {
       } catch (_) {}
 
       try {
+        const row = result?.rows?.[0] || null;
         const data = row?.data || {};
-
         await tryEnqueueSignupEmail({ tipo: "TERAPEUTA", payload: { ...payload, ...data }, trace });
       } catch (e) {
         console.error("[service:error]", {
