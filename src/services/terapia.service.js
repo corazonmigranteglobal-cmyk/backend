@@ -14,6 +14,90 @@ function wrapError(scope, err, extra = {}) {
   throw e;
 }
 
+
+
+/* =========================
+   Signed URL helpers (bucket privado de usuarios)
+   - Booking público no puede consumir URL "https://storage.googleapis.com/<bucket_privado>/..."
+     porque el bucket es privado. Necesitamos devolver URLs firmadas.
+========================= */
+function isString(v) {
+  return typeof v === "string";
+}
+
+function extractTargetPathFromPublicGcsUrl(url, bucketName) {
+  if (!isString(url) || !bucketName) return null;
+
+  const prefix = `https://storage.googleapis.com/${bucketName}/`;
+  if (!url.startsWith(prefix)) return null;
+
+  const rest = url.slice(prefix.length);
+  const pathOnly = rest.split("?")[0];
+
+  try {
+    return decodeURIComponent(pathOnly);
+  } catch {
+    return pathOnly;
+  }
+}
+
+async function signUserMediaUrlIfNeeded(url) {
+  if (!isString(url) || url.trim() === "") return url;
+
+  // ✅ Si ya es signed URL, no re-firmar
+  if (url.includes("X-Goog-Algorithm=") || url.includes("X-Goog-Signature=")) {
+    return url;
+  }
+
+  const gcs = getGcsForKey("user_media");
+  if (!gcs) return url;
+
+  const bucketName = gcs?.bucketName;
+
+  // Caso 1: ruta interna (path)
+  if (url.startsWith("users/") || url.startsWith("/users/")) {
+    const targetPath = url.replace(/^\/+/, "");
+    const signed = await gcs.getSignedReadUrlByPath({ targetPath });
+    return signed?.url || url;
+  }
+
+  // Caso 2: URL pública de GCS apuntando al bucket privado (no accesible)
+  const targetPath = extractTargetPathFromPublicGcsUrl(url, bucketName);
+  if (targetPath) {
+    const signed = await gcs.getSignedReadUrlByPath({ targetPath });
+    return signed?.url || url;
+  }
+
+  return url;
+}
+
+async function deepSignUserMediaLinks(node) {
+  if (node == null) return node;
+
+  if (Array.isArray(node)) {
+    for (let i = 0; i < node.length; i++) node[i] = await deepSignUserMediaLinks(node[i]);
+    return node;
+  }
+
+  if (typeof node === "object") {
+    for (const k of Object.keys(node)) {
+      const v = node[k];
+      if (
+        isString(v) &&
+        !v.startsWith("blob:") &&
+        (k.endsWith("_link") || k.includes("foto") || k.includes("image") || v.includes("storage.googleapis.com"))
+      ) {
+        node[k] = await signUserMediaUrlIfNeeded(v);
+      } else {
+        node[k] = await deepSignUserMediaLinks(v);
+      }
+    }
+    return node;
+  }
+
+  return node;
+}
+
 async function uploadAndRegisterArchivoForEnfoque({ args, meta, file, targetDir }) {
   if (!file || !file.buffer) {
     throw new Error(
@@ -558,7 +642,7 @@ listarSolicitudesCitaAdmin: async (args, meta) => {
 
       // clave SEGURA: incluye sesión (evita leaks por cache cross-user)
       // v2: incluye nuevos campos (image_url) en terapeutas/enfoques
-      const cacheKey = `cm:booking_bootstrap:v2:uid:${uid}:sid:${sid}:h:${p_incluir_horarios ? 1 : 0}`;
+      const cacheKey = `cm:booking_bootstrap:v3:uid:${uid}:sid:${sid}:h:${p_incluir_horarios ? 1 : 0}`;
 
       // TTL corto si hay horarios (porque dependen de NOW y de citas/bloqueos)
       const ttlSeconds = p_incluir_horarios ? 45 : 300;
@@ -577,6 +661,11 @@ listarSolicitudesCitaAdmin: async (args, meta) => {
 
       // la función retorna 1 columna: fn_booking_bootstrap
       const data = dbRes?.rows?.[0]?.fn_booking_bootstrap ?? null;
+
+      // Firmar URLs del bucket privado (user_media) para que el front pueda pintar imágenes
+      if (data) {
+        await deepSignUserMediaLinks(data);
+      }
 
       if (redisReady() && data) {
         await redisSetJson(cacheKey, data, ttlSeconds);
