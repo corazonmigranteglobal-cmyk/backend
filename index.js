@@ -9,7 +9,6 @@ require("./src/core/setupSecrets").setupSecrets();
 const db = require("./src/core/db/dbUitls");
 const { logger } = require("./src/core/logger");
 
-
 const { emailRoutes } = require("./src/routes/email.routes");
 const { filesRoutes } = require("./src/routes/files.routes");
 const { initRedis } = require("./src/core/cache/redis");
@@ -23,11 +22,38 @@ const { errorHandler } = require("./src/core/http/errorHandler");
 
 const app = express();
 
+// =====================================================
 // Middlewares globales
-app.use(helmet());
+// =====================================================
+
+app.use(
+  helmet({
+    // Evita X-Frame-Options: SAMEORIGIN / DENY
+    frameguard: false,
+
+    // Permite "frame-ancestors" para Google Translate
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "frame-ancestors": [
+          "'self'",
+          "https://translate.google.com",
+          "https://translate.googleusercontent.com",
+        ],
+      },
+    },
+  })
+);
+
 app.use(
   cors({
-    origin: ["https://dev.corazondemigrante.com/", "https://dev.corazondemigrante.com", "https://corazondemigrante.com", "http://localhost:5173"],
+    origin: [
+      "https://dev.corazondemigrante.com/",
+      "https://dev.corazondemigrante.com",
+      "https://corazondemigrante.com",
+      "http://localhost:5173",
+    ],
     allowedHeaders: ["Content-Type", "x-api-key", "Authorization"],
   })
 );
@@ -74,7 +100,10 @@ async function startServer() {
 
     console.log("MAIL_PROVIDER:", process.env.MAIL_PROVIDER);
     console.log("HAS_SENDGRID_KEY:", !!process.env.SENDGRID_API_KEY);
-    console.log("KEY_PREFIX:", (process.env.SENDGRID_API_KEY || "").slice(0, 3)); // debería ser "SG."
+    console.log(
+      "KEY_PREFIX:",
+      (process.env.SENDGRID_API_KEY || "").slice(0, 3)
+    ); // debería ser "SG."
 
     try {
       await initRedis();
@@ -84,8 +113,8 @@ async function startServer() {
 
     app.listen(PORT, () => {
       console.log(`Servidor escuchando en puerto ${PORT}`);
-      console.log(`Email direct endpoint (): http://localhost:${PORT}`);
-      console.log(`GCS direct endpoint: http://localhost:${PORT}`);
+      console.log(`Email listening`);
+      console.log(`GCS listening`);
     });
   } catch (error) {
     console.error("Error al conectar con la base de datos:", error);
@@ -94,7 +123,6 @@ async function startServer() {
 }
 
 startServer();
-
 
 /* 
 ========================================
