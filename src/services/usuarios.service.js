@@ -4,6 +4,7 @@ const path = require("path");
 const crypto = require("crypto");
 
 const { usuariosRepository } = require("../repository/usuarios.repository");
+const { resolveTimeZoneFromCityCountry } = require("./timezone.service");
 const { enqueueMessage } = require("../services/messageQueueService");
 const { signJwt } = require("../core/auth/jwt");
 const { getGcsForKey } = require("../services/gcsRegistry");
@@ -377,6 +378,27 @@ const usuariosService = {
 
   async updatePacienteFull(payload, trace) {
     try {
+      // Si viene ciudad/pais y no viene time_zone, resolver y cachear.
+      try {
+        const patch = payload?.p_patch;
+        const ciudad = patch?.ciudad;
+        const pais = patch?.pais;
+        const hasLocation = typeof ciudad !== "undefined" || typeof pais !== "undefined";
+        const hasTz = patch && Object.prototype.hasOwnProperty.call(patch, "time_zone") && String(patch.time_zone || "").trim() !== "";
+
+        if (patch && hasLocation && !hasTz) {
+          const resTz = await resolveTimeZoneFromCityCountry({ pais, ciudad }, trace);
+          if (resTz?.time_zone) {
+            payload = {
+              ...payload,
+              p_patch: { ...patch, time_zone: resTz.time_zone },
+            };
+          }
+        }
+      } catch (_) {
+        // Si falla la resolución, no bloqueamos el update.
+      }
+
       return await usuariosRepository.updatePacienteFull(payload, trace);
     } catch (err) {
       console.error("[service:error]", {
@@ -388,6 +410,27 @@ const usuariosService = {
   },
   async updateTerapeutaFull(payload, trace) {
     try {
+      // Si viene ciudad/pais y no viene time_zone, resolver y cachear.
+      try {
+        const patch = payload?.p_patch;
+        const ciudad = patch?.ciudad;
+        const pais = patch?.pais;
+        const hasLocation = typeof ciudad !== "undefined" || typeof pais !== "undefined";
+        const hasTz = patch && Object.prototype.hasOwnProperty.call(patch, "time_zone") && String(patch.time_zone || "").trim() !== "";
+
+        if (patch && hasLocation && !hasTz) {
+          const resTz = await resolveTimeZoneFromCityCountry({ pais, ciudad }, trace);
+          if (resTz?.time_zone) {
+            payload = {
+              ...payload,
+              p_patch: { ...patch, time_zone: resTz.time_zone },
+            };
+          }
+        }
+      } catch (_) {
+        // Si falla la resolución, no bloqueamos el update.
+      }
+
       return await usuariosRepository.updateTerapeutaFull(payload, trace);
     } catch (err) {
       console.error("[service:error]", {

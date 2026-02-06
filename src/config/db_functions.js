@@ -1650,6 +1650,24 @@ export const DB_FUNCTIONS = {
     { "name": "p_patch",         "type": "jsonb",   "hasDefault": false }
   ],
 },
+  "usuarios.fn_geo_timezone_cache_get": {
+    "name": "usuarios.fn_geo_timezone_cache_get",
+    "params": [
+      { "name": "p_pais", "type": "text", "hasDefault": false },
+      { "name": "p_ciudad", "type": "text", "hasDefault": false }
+    ]
+  },
+  "usuarios.fn_geo_timezone_cache_upsert": {
+    "name": "usuarios.fn_geo_timezone_cache_upsert",
+    "params": [
+      { "name": "p_pais", "type": "text", "hasDefault": false },
+      { "name": "p_ciudad", "type": "text", "hasDefault": false },
+      { "name": "p_time_zone", "type": "text", "hasDefault": false },
+      { "name": "p_lat", "type": "numeric", "hasDefault": true },
+      { "name": "p_lon", "type": "numeric", "hasDefault": true },
+      { "name": "p_provider", "type": "text", "hasDefault": true }
+    ]
+  },
   "contabilidad.fn_registrar_transaccion_venta": {
   "name": "contabilidad.fn_registrar_transaccion_venta",
   "params": [
