@@ -338,7 +338,9 @@ const usuariosService = {
       } catch (_) {}
 
       try {
-        await tryEnqueueSignupEmail({ tipo: "TERAPEUTA", payload, trace });
+        const data = row?.data || {};
+
+        await tryEnqueueSignupEmail({ tipo: "TERAPEUTA", payload: { ...payload, ...data }, trace });
       } catch (e) {
         console.error("[service:error]", {
           action: "usuarios.signupTerapeuta.enqueueMessage",
