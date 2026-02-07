@@ -68,7 +68,9 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // <-- CLAVE para preflight
+// Express 5 (path-to-regexp) ya no acepta "*" como patrón.
+// Usamos RegExp para capturar cualquier ruta y habilitar preflight.
+app.options(/.*/, cors(corsOptions)); // <-- CLAVE para preflight
 
 // Blindaje extra: si algún middleware/ruta bloquea OPTIONS
 app.use((req, res, next) => {
@@ -113,8 +115,7 @@ async function startServer() {
     console.log("[cwd]", process.cwd());
     console.log("[GAC raw]", process.env.GOOGLE_APPLICATION_CREDENTIALS);
 
-    if (!host) throw new Error("Missing env: PGHOST/DB_HOST");
-
+    const abs = path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
     console.log("[GAC abs]", abs);
     console.log("[GAC exists]", fs.existsSync(abs));
 
