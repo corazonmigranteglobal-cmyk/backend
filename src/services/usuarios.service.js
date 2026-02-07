@@ -48,13 +48,9 @@ function extractTargetPathFromPublicGcsUrl(url, bucketName) {
   }
 }
 
+
 async function signUserMediaUrlIfNeeded(url) {
   if (!isString(url) || url.trim() === "") return url;
-
-  // ✅ Si ya es signed URL, no re-firmar
-  if (url.includes("X-Goog-Algorithm=") || url.includes("X-Goog-Signature=")) {
-    return url;
-  }
 
   const gcs = getGcsForKey("user_media");
   if (!gcs) return url;
@@ -68,7 +64,11 @@ async function signUserMediaUrlIfNeeded(url) {
     return signed.url;
   }
 
-  // Caso 2: es URL pública de GCS apuntando al bucket privado (no accesible)
+  // Caso 2: es URL de GCS apuntando al bucket privado.
+  // 
+  // Importante: en la BD puede quedar guardado un signed URL (con query X-Goog-*)
+  // que expira. Para evitar "avatares que dejan de cargar" re-firmamos SIEMPRE
+  // que el URL apunte al bucket privado, aunque ya venga firmado.
   const targetPath = extractTargetPathFromPublicGcsUrl(url, bucketName);
   if (targetPath) {
     const signed = await gcs.getSignedReadUrlByPath({ targetPath });
