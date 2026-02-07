@@ -3,6 +3,7 @@ const path = require("path");
 const cors = require("cors");
 const helmet = require("helmet");
 require("dotenv").config();
+
 // Setup secrets (Google Credentials) from ENV if needed
 require("./src/core/setupSecrets").setupSecrets();
 
@@ -26,14 +27,9 @@ const app = express();
 // Middlewares globales
 // =====================================================
 
-// ✅ Permitir que translate.google.com embeba la web (PROD incluido)
-// Esto evita el error: "The website is not accessible through this address."
 app.use(
   helmet({
-    // Evita X-Frame-Options: SAMEORIGIN / DENY
     frameguard: false,
-
-    // Permite "frame-ancestors" para Google Translate
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
@@ -48,17 +44,37 @@ app.use(
   })
 );
 
-app.use(
-  cors({
-    origin: [
-      "https://dev.corazondemigrante.com/",
-      "https://dev.corazondemigrante.com",
-      "https://corazondemigrante.com",
-      "http://localhost:5173",
-    ],
-    allowedHeaders: ["Content-Type", "x-api-key", "Authorization"],
-  })
-);
+// ---- CORS robusto (soluciona preflight OPTIONS) ----
+const allowlist = [
+  "https://dev.corazondemigrante.com",
+  "https://corazondemigrante.com",
+  "http://localhost:5173",
+];
+
+const corsOptions = {
+  origin: (origin, cb) => {
+    // Requests sin Origin (Postman / server-to-server) => permitir
+    if (!origin) return cb(null, true);
+
+    // OJO: el browser manda origin sin "/" al final
+    if (allowlist.includes(origin)) return cb(null, true);
+
+    return cb(null, false);
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "x-api-key", "Authorization"],
+  credentials: true, // si usas cookies/sesión; no rompe si no las usas
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // <-- CLAVE para preflight
+
+// Blindaje extra: si algún middleware/ruta bloquea OPTIONS
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
 
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: true, limit: "25mb" }));
@@ -91,12 +107,14 @@ process.on("uncaughtException", (err) => {
 });
 
 const fs = require("fs");
+
 async function startServer() {
   try {
     console.log("[cwd]", process.cwd());
     console.log("[GAC raw]", process.env.GOOGLE_APPLICATION_CREDENTIALS);
 
-    const abs = path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+    if (!host) throw new Error("Missing env: PGHOST/DB_HOST");
+
     console.log("[GAC abs]", abs);
     console.log("[GAC exists]", fs.existsSync(abs));
 
@@ -105,7 +123,7 @@ async function startServer() {
     console.log(
       "KEY_PREFIX:",
       (process.env.SENDGRID_API_KEY || "").slice(0, 3)
-    ); // debería ser "SG."
+    );
 
     try {
       await initRedis();
@@ -125,15 +143,3 @@ async function startServer() {
 }
 
 startServer();
-
-/* 
-========================================
-npm instal express                     |
-npm body-parser                        |
-npm nodemon                            |
-npm helmet                             |
-npm corse                              |
-npm pg                                 |
-npm winston                            | 
-========================================
-*/
