@@ -1086,7 +1086,11 @@ export const DB_FUNCTIONS = {
       { "name": "p_actor_user_id", "type": "integer", "hasDefault": false },
       { "name": "p_id_sesion",     "type": "integer", "hasDefault": false },
       { "name": "p_limit",         "type": "integer", "hasDefault": true  },
-      { "name": "p_offset",        "type": "integer", "hasDefault": true  }
+      { "name": "p_offset",        "type": "integer", "hasDefault": true  },
+      
+      { "name": "p_id_usuario_paciente",        "type": "integer", "hasDefault": true  },
+      { "name": "p_id_usuario_terapeuta",        "type": "integer", "hasDefault": true  },
+
     ]
   },
 
@@ -1637,6 +1641,56 @@ export const DB_FUNCTIONS = {
       { "name": "p_metadata", "type": "jsonb", "hasDefault": true }
     ]
   },
+  "usuarios.fn_update_admin_full": {
+  "name": "usuarios.fn_update_admin_full",
+  "params": [
+    { "name": "p_actor_user_id", "type": "integer", "hasDefault": false },
+    { "name": "p_id_sesion",     "type": "integer", "hasDefault": false },
+    { "name": "p_user_id",       "type": "integer", "hasDefault": false },
+    { "name": "p_patch",         "type": "jsonb",   "hasDefault": false }
+  ],
+},
+  "usuarios.fn_geo_timezone_cache_get": {
+    "name": "usuarios.fn_geo_timezone_cache_get",
+    "params": [
+      { "name": "p_pais", "type": "text", "hasDefault": false },
+      { "name": "p_ciudad", "type": "text", "hasDefault": false }
+    ]
+  },
+  "usuarios.fn_geo_timezone_cache_upsert": {
+    "name": "usuarios.fn_geo_timezone_cache_upsert",
+    "params": [
+      { "name": "p_pais", "type": "text", "hasDefault": false },
+      { "name": "p_ciudad", "type": "text", "hasDefault": false },
+      { "name": "p_time_zone", "type": "text", "hasDefault": false },
+      { "name": "p_lat", "type": "numeric", "hasDefault": true },
+      { "name": "p_lon", "type": "numeric", "hasDefault": true },
+      { "name": "p_provider", "type": "text", "hasDefault": true }
+    ]
+  },
+  "contabilidad.fn_registrar_transaccion_venta": {
+  "name": "contabilidad.fn_registrar_transaccion_venta",
+  "params": [
+    { "name": "p_actor_user_id",       "type": "integer", "hasDefault": false },
+    { "name": "p_id_sesion",           "type": "integer", "hasDefault": false },
+    { "name": "p_fecha",              "type": "date",    "hasDefault": false },
+    { "name": "p_glosa",              "type": "text",    "hasDefault": false },
+    { "name": "p_referencia_externa", "type": "text",    "hasDefault": false },
+    { "name": "p_metadata",           "type": "jsonb",   "hasDefault": false },
+    { "name": "p_movimientos",        "type": "jsonb",   "hasDefault": false },
+    { "name": "p_cantidad",           "type": "integer", "hasDefault": false },
+    { "name": "p_id_producto",        "type": "integer", "hasDefault": false },
+    { "name": "p_id_cita",            "type": "integer", "hasDefault": true  }
+  ]
+},
+  "publico.fn_get_pagina_publica_assets": {
+    "name": "publico.fn_get_pagina_publica_assets",
+    "params": [
+      { "name": "p_id_pagina",  "type": "integer", "hasDefault": true },
+      { "name": "p_cod_pagina", "type": "text",    "hasDefault": true }
+    ]
+  },
+
 };
 
 export const DB_FUNCTION_NAMES = Object.keys(DB_FUNCTIONS);

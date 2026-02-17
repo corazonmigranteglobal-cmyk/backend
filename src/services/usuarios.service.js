@@ -4,6 +4,7 @@ const path = require("path");
 const crypto = require("crypto");
 
 const { usuariosRepository } = require("../repository/usuarios.repository");
+const { resolveTimeZoneFromCityCountry } = require("./timezone.service");
 const { enqueueMessage } = require("../services/messageQueueService");
 const { signJwt } = require("../core/auth/jwt");
 const { getGcsForKey } = require("../services/gcsRegistry");
@@ -47,13 +48,9 @@ function extractTargetPathFromPublicGcsUrl(url, bucketName) {
   }
 }
 
+
 async function signUserMediaUrlIfNeeded(url) {
   if (!isString(url) || url.trim() === "") return url;
-
-  // ✅ Si ya es signed URL, no re-firmar
-  if (url.includes("X-Goog-Algorithm=") || url.includes("X-Goog-Signature=")) {
-    return url;
-  }
 
   const gcs = getGcsForKey("user_media");
   if (!gcs) return url;
@@ -67,7 +64,11 @@ async function signUserMediaUrlIfNeeded(url) {
     return signed.url;
   }
 
-  // Caso 2: es URL pública de GCS apuntando al bucket privado (no accesible)
+  // Caso 2: es URL de GCS apuntando al bucket privado.
+  // 
+  // Importante: en la BD puede quedar guardado un signed URL (con query X-Goog-*)
+  // que expira. Para evitar "avatares que dejan de cargar" re-firmamos SIEMPRE
+  // que el URL apunte al bucket privado, aunque ya venga firmado.
   const targetPath = extractTargetPathFromPublicGcsUrl(url, bucketName);
   if (targetPath) {
     const signed = await gcs.getSignedReadUrlByPath({ targetPath });
@@ -274,7 +275,9 @@ const usuariosService = {
       } catch (_) {}
 
       try {
-        await tryEnqueueSignupEmail({ tipo: "ADMIN", payload, trace });
+        const row = result?.rows?.[0] || null;
+        const data = row?.data || {};
+        await tryEnqueueSignupEmail({ tipo: "ADMIN", payload: { ...payload, ...data }, trace });
       } catch (e) {
         console.error("[service:error]", {
           action: "usuarios.signupAdmin.enqueueMessage",
@@ -338,7 +341,9 @@ const usuariosService = {
       } catch (_) {}
 
       try {
-        await tryEnqueueSignupEmail({ tipo: "TERAPEUTA", payload, trace });
+        const row = result?.rows?.[0] || null;
+        const data = row?.data || {};
+        await tryEnqueueSignupEmail({ tipo: "TERAPEUTA", payload: { ...payload, ...data }, trace });
       } catch (e) {
         console.error("[service:error]", {
           action: "usuarios.signupTerapeuta.enqueueMessage",
@@ -373,6 +378,27 @@ const usuariosService = {
 
   async updatePacienteFull(payload, trace) {
     try {
+      // Si viene ciudad/pais y no viene time_zone, resolver y cachear.
+      try {
+        const patch = payload?.p_patch;
+        const ciudad = patch?.ciudad;
+        const pais = patch?.pais;
+        const hasLocation = typeof ciudad !== "undefined" || typeof pais !== "undefined";
+        const hasTz = patch && Object.prototype.hasOwnProperty.call(patch, "time_zone") && String(patch.time_zone || "").trim() !== "";
+
+        if (patch && hasLocation && !hasTz) {
+          const resTz = await resolveTimeZoneFromCityCountry({ pais, ciudad }, trace);
+          if (resTz?.time_zone) {
+            payload = {
+              ...payload,
+              p_patch: { ...patch, time_zone: resTz.time_zone },
+            };
+          }
+        }
+      } catch (_) {
+        // Si falla la resolución, no bloqueamos el update.
+      }
+
       return await usuariosRepository.updatePacienteFull(payload, trace);
     } catch (err) {
       console.error("[service:error]", {
@@ -382,7 +408,40 @@ const usuariosService = {
       throw err;
     }
   },
+  async updateTerapeutaFull(payload, trace) {
+    try {
+      // Si viene ciudad/pais y no viene time_zone, resolver y cachear.
+      try {
+        const patch = payload?.p_patch;
+        const ciudad = patch?.ciudad;
+        const pais = patch?.pais;
+        const hasLocation = typeof ciudad !== "undefined" || typeof pais !== "undefined";
+        const hasTz = patch && Object.prototype.hasOwnProperty.call(patch, "time_zone") && String(patch.time_zone || "").trim() !== "";
 
+        if (patch && hasLocation && !hasTz) {
+          const resTz = await resolveTimeZoneFromCityCountry({ pais, ciudad }, trace);
+          if (resTz?.time_zone) {
+            payload = {
+              ...payload,
+              p_patch: { ...patch, time_zone: resTz.time_zone },
+            };
+          }
+        }
+      } catch (_) {
+        // Si falla la resolución, no bloqueamos el update.
+      }
+
+      return await usuariosRepository.updateTerapeutaFull(payload, trace);
+    } catch (err) {
+      console.error("[service:error]", {
+        action: "usuarios.updateTerapeutaFull",
+        message: err?.message,
+        trace,
+      });
+      throw err;
+    }
+  },
+  
   async updateTerapeutaFullConArchivo(args, trace, file) {
     try {
       const p_actor_user_id = Number(args?.p_actor_user_id);
@@ -573,7 +632,53 @@ const usuariosService = {
 
   async superSetUsuarioEstado(payload, trace) {
     try {
-      return await usuariosRepository.superSetUsuarioEstado(payload, trace);
+      const result = await usuariosRepository.superSetUsuarioEstado(payload, trace);
+
+      // Encolar notificación (best-effort): habilitado/inhabilitado
+      // Si falla, NO tumba el endpoint.
+      try {
+        const row = result?.rows?.[0] ?? result?.data?.[0] ?? null;
+        const status = row?.status ?? row?.ok ?? null;
+        if (status === "ok" || status === true) {
+          const data = row?.data ?? row ?? {};
+          const activo = payload?.p_activo ?? payload?.activo ?? data?.activo ?? data?.p_activo;
+
+          const para =
+            data?.email ??
+            data?.to ??
+            data?.usuario?.email ??
+            payload?.p_email ??
+            payload?.email ??
+            null;
+
+          const templateKey = activo === false ? "usuario_inhabilitado" : "usuario_habilitado";
+
+          if (para) {
+            await enqueueMessage({
+              tipo: "USUARIO_ESTADO_CAMBIADO",
+              canal: "EMAIL",
+              prioridad: 5,
+              para,
+              templateKey,
+              payload: {
+                email: para,
+                activo: !!activo,
+                target_user_id: payload?.p_target_user_id ?? payload?.target_user_id ?? data?.target_user_id ?? data?.user_id,
+                nombre: data?.nombre ?? data?.usuario?.nombre,
+                apellido: data?.apellido ?? data?.usuario?.apellido,
+              },
+            });
+          }
+        }
+      } catch (e) {
+        console.error("[service:warn]", {
+          action: "usuarios.superSetUsuarioEstado.enqueueMessage",
+          message: e?.message || String(e),
+          trace,
+        });
+      }
+
+      return result;
     } catch (err) {
       console.error("[service:error]", {
         action: "usuarios.superSetUsuarioEstado",
@@ -833,6 +938,17 @@ const usuariosService = {
         action: "usuarios.actualizarUsuarioArchivoConArchivo",
         message: err?.message,
         trace,
+      });
+      throw err;
+    }
+  },
+  async updateAdminFull(payload, trace) {
+    try {
+      return await usuariosRepository.updateAdminFull(payload, trace);
+    } catch (err) {
+      console.error("[service:error]", {
+        action: "usuarios.updateAdminFull",
+        message: err?.message,
       });
       throw err;
     }

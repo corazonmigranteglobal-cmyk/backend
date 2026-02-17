@@ -220,6 +220,82 @@ const templates = {
   },
 
   // ------------------------------------------------------------
+  // 4) CITA CANCELADA
+  // ------------------------------------------------------------
+  CITA_CANCELADA: {
+    to: (ctx) => [getTo(ctx)].filter(Boolean),
+    subject: (ctx) => `Cita cancelada — ${ctx.appName || APP_DEFAULT}`,
+    text: (ctx) => {
+      const app = ctx.appName || APP_DEFAULT;
+      return (
+        `${hi(ctx.nombre)}\n\n` +
+        `Tu cita fue cancelada.\n` +
+        `${fmtLine("Fecha", ctx.citaFecha)}` +
+        `${fmtLine("Hora", ctx.citaHora)}` +
+        `${fmtLine("Terapeuta", ctx.terapeuta)}` +
+        `${fmtLine("Motivo", ctx.motivo)}` +
+        `${fmtLine("ID de cita", ctx.citaId)}\n\n` +
+        `Si necesitas volver a agendar, puedes hacerlo desde la plataforma.\n\n` +
+        `— Equipo ${app}`
+      );
+    },
+    html: (ctx) => {
+      const app = ctx.appName || APP_DEFAULT;
+      return wrapHtml(`
+        <h2 style="margin:0 0 10px 0;">Cita cancelada</h2>
+        <p style="margin:0 0 10px 0;">${hi(ctx.nombre)}</p>
+        <p style="margin:0 0 12px 0;">Tu cita fue <b>cancelada</b>.</p>
+        <ul style="margin:0 0 12px 18px;">
+          ${ctx.citaFecha ? `<li><b>Fecha:</b> ${ctx.citaFecha}</li>` : ""}
+          ${ctx.citaHora ? `<li><b>Hora:</b> ${ctx.citaHora}</li>` : ""}
+          ${ctx.terapeuta ? `<li><b>Terapeuta:</b> ${ctx.terapeuta}</li>` : ""}
+          ${ctx.motivo ? `<li><b>Motivo:</b> ${ctx.motivo}</li>` : ""}
+          ${ctx.citaId ? `<li><b>ID de cita:</b> ${ctx.citaId}</li>` : ""}
+        </ul>
+        <p style="margin:0;">Si necesitas volver a agendar, puedes hacerlo desde la plataforma.</p>
+        <p style="margin:10px 0 0 0;">— Equipo ${app}</p>
+      `);
+    },
+  },
+
+  // ------------------------------------------------------------
+  // 5) CITA COMPLETADA
+  // ------------------------------------------------------------
+  CITA_COMPLETADA: {
+    to: (ctx) => [getTo(ctx)].filter(Boolean),
+    subject: (ctx) => `Cita completada — ${ctx.appName || APP_DEFAULT}`,
+    text: (ctx) => {
+      const app = ctx.appName || APP_DEFAULT;
+      return (
+        `${hi(ctx.nombre)}\n\n` +
+        `Tu cita fue marcada como completada.\n` +
+        `${fmtLine("Fecha", ctx.citaFecha)}` +
+        `${fmtLine("Hora", ctx.citaHora)}` +
+        `${fmtLine("Terapeuta", ctx.terapeuta)}` +
+        `${fmtLine("ID de cita", ctx.citaId)}\n\n` +
+        `Gracias por tu confianza.\n\n` +
+        `— Equipo ${app}`
+      );
+    },
+    html: (ctx) => {
+      const app = ctx.appName || APP_DEFAULT;
+      return wrapHtml(`
+        <h2 style="margin:0 0 10px 0;">Cita completada</h2>
+        <p style="margin:0 0 10px 0;">${hi(ctx.nombre)}</p>
+        <p style="margin:0 0 12px 0;">Tu cita fue marcada como <b>completada</b>.</p>
+        <ul style="margin:0 0 12px 18px;">
+          ${ctx.citaFecha ? `<li><b>Fecha:</b> ${ctx.citaFecha}</li>` : ""}
+          ${ctx.citaHora ? `<li><b>Hora:</b> ${ctx.citaHora}</li>` : ""}
+          ${ctx.terapeuta ? `<li><b>Terapeuta:</b> ${ctx.terapeuta}</li>` : ""}
+          ${ctx.citaId ? `<li><b>ID de cita:</b> ${ctx.citaId}</li>` : ""}
+        </ul>
+        <p style="margin:0;">Gracias por tu confianza.</p>
+        <p style="margin:10px 0 0 0;">— Equipo ${app}</p>
+      `);
+    },
+  },
+
+  // ------------------------------------------------------------
   // 4) CITA RECHAZADA (NUEVA)
   // ------------------------------------------------------------
   CITA_RECHAZADA: {
@@ -471,6 +547,30 @@ templates.cita_confirmada = {
   html: (ctx) => templates.CITA_CONFIRMADA.html(mapCitaCtx(ctx)),
 };
 
+// cita_pendiente => reutiliza CITA_PENDIENTE
+templates.cita_pendiente = {
+  to: (ctx) => templates.CITA_PENDIENTE.to(mapCitaCtx(ctx)),
+  subject: (ctx) => templates.CITA_PENDIENTE.subject(mapCitaCtx(ctx)),
+  text: (ctx) => templates.CITA_PENDIENTE.text(mapCitaCtx(ctx)),
+  html: (ctx) => templates.CITA_PENDIENTE.html(mapCitaCtx(ctx)),
+};
+
+// cita_cancelada => reutiliza CITA_CANCELADA
+templates.cita_cancelada = {
+  to: (ctx) => templates.CITA_CANCELADA.to(mapCitaCtx(ctx)),
+  subject: (ctx) => templates.CITA_CANCELADA.subject(mapCitaCtx(ctx)),
+  text: (ctx) => templates.CITA_CANCELADA.text(mapCitaCtx(ctx)),
+  html: (ctx) => templates.CITA_CANCELADA.html(mapCitaCtx(ctx)),
+};
+
+// cita_completada => reutiliza CITA_COMPLETADA
+templates.cita_completada = {
+  to: (ctx) => templates.CITA_COMPLETADA.to(mapCitaCtx(ctx)),
+  subject: (ctx) => templates.CITA_COMPLETADA.subject(mapCitaCtx(ctx)),
+  text: (ctx) => templates.CITA_COMPLETADA.text(mapCitaCtx(ctx)),
+  html: (ctx) => templates.CITA_COMPLETADA.html(mapCitaCtx(ctx)),
+};
+
 // cita_pendiente_programacion => reutiliza CITA_PENDIENTE
 templates.cita_pendiente_programacion = {
   to: (ctx) => templates.CITA_PENDIENTE.to(mapCitaCtx(ctx)),
@@ -541,5 +641,139 @@ templates.password_recovery_pin = {
     `);
   },
 };
+
+// ------------------------------------------------------------
+// ALIASES (compatibilidad con REQUIRED_CTX / keys en mayúsculas)
+// ------------------------------------------------------------
+
+templates.PASSWORD_RECOVERY_PIN = templates.password_recovery_pin;
+templates.VERIFICACION_CUENTA = templates.VERIFICACION_CUENTA;
+
+// ------------------------------------------------------------
+// USUARIO (habilitado / inhabilitado)
+// ------------------------------------------------------------
+
+templates.USUARIO_HABILITADO = {
+  to: (ctx) => [getTo(ctx)].filter(Boolean),
+  subject: (ctx) => `Tu cuenta fue habilitada — ${ctx.appName || APP_DEFAULT}`,
+  text: (ctx) => {
+    const app = ctx.appName || APP_DEFAULT;
+    return (
+      `${hi(ctx.nombre)}\n\n` +
+      `Tu cuenta en ${app} fue habilitada y ya puedes ingresar.\n` +
+      `${fmtLine("Ingresar", ctx.appUrl || ctx.frontendUrl)}\n\n` +
+      `— Equipo ${app}`
+    );
+  },
+  html: (ctx) => {
+    const app = ctx.appName || APP_DEFAULT;
+    const url = ctx.appUrl || ctx.frontendUrl || "";
+    const btn = url
+      ? `<p style="margin:10px 0;"><a href="${url}" style="display:inline-block;padding:10px 14px;background:#111;color:#fff;text-decoration:none;border-radius:8px;">Ingresar</a></p>`
+      : "";
+    return wrapHtml(`
+      <h2 style="margin:0 0 10px 0;">Cuenta habilitada</h2>
+      <p style="margin:0 0 10px 0;">${hi(ctx.nombre)}</p>
+      <p style="margin:0 0 10px 0;">Tu cuenta en <b>${app}</b> fue habilitada.</p>
+      ${btn}
+      <p style="margin:10px 0 0 0;">— Equipo ${app}</p>
+    `);
+  },
+};
+
+templates.USUARIO_INHABILITADO = {
+  to: (ctx) => [getTo(ctx)].filter(Boolean),
+  subject: (ctx) => `Tu cuenta fue inhabilitada — ${ctx.appName || APP_DEFAULT}`,
+  text: (ctx) => {
+    const app = ctx.appName || APP_DEFAULT;
+    return (
+      `${hi(ctx.nombre)}\n\n` +
+      `Tu cuenta en ${app} fue inhabilitada.\n\n` +
+      `Si crees que es un error, responde a este correo para soporte.\n\n` +
+      `— Equipo ${app}`
+    );
+  },
+  html: (ctx) => {
+    const app = ctx.appName || APP_DEFAULT;
+    return wrapHtml(`
+      <h2 style="margin:0 0 10px 0;">Cuenta inhabilitada</h2>
+      <p style="margin:0 0 10px 0;">${hi(ctx.nombre)}</p>
+      <p style="margin:0 0 10px 0;">Tu cuenta en <b>${app}</b> fue inhabilitada.</p>
+      <p style="margin:0;">Si crees que es un error, responde a este correo para soporte.</p>
+      <p style="margin:10px 0 0 0;">— Equipo ${app}</p>
+    `);
+  },
+};
+
+templates.usuario_habilitado = templates.USUARIO_HABILITADO;
+templates.usuario_inhabilitado = templates.USUARIO_INHABILITADO;
+
+// ------------------------------------------------------------
+// PAGOS (confirmado / rechazado)
+// ------------------------------------------------------------
+
+templates.PAGO_CONFIRMADO = {
+  to: (ctx) => [getTo(ctx)].filter(Boolean),
+  subject: (ctx) => `Pago confirmado — ${ctx.appName || APP_DEFAULT}`,
+  text: (ctx) => {
+    const app = ctx.appName || APP_DEFAULT;
+    return (
+      `${hi(ctx.nombre)}\n\n` +
+      `Tu pago fue confirmado.\n` +
+      `${fmtLine("Referencia", ctx.referencia || ctx.referencia_externa)}` +
+      `${fmtLine("Monto", ctx.monto)}` +
+      `${fmtLine("Moneda", ctx.moneda)}` +
+      `\n— Equipo ${app}`
+    );
+  },
+  html: (ctx) => {
+    const app = ctx.appName || APP_DEFAULT;
+    return wrapHtml(`
+      <h2 style="margin:0 0 10px 0;">Pago confirmado</h2>
+      <p style="margin:0 0 10px 0;">${hi(ctx.nombre)}</p>
+      <p style="margin:0 0 12px 0;">Tu pago fue <b>confirmado</b>.</p>
+      <ul style="margin:0 0 12px 18px;">
+        ${(ctx.referencia || ctx.referencia_externa) ? `<li><b>Referencia:</b> ${ctx.referencia || ctx.referencia_externa}</li>` : ""}
+        ${ctx.monto ? `<li><b>Monto:</b> ${ctx.monto}</li>` : ""}
+        ${ctx.moneda ? `<li><b>Moneda:</b> ${ctx.moneda}</li>` : ""}
+      </ul>
+      <p style="margin:10px 0 0 0;">— Equipo ${app}</p>
+    `);
+  },
+};
+
+templates.PAGO_RECHAZADO = {
+  to: (ctx) => [getTo(ctx)].filter(Boolean),
+  subject: (ctx) => `Pago rechazado — ${ctx.appName || APP_DEFAULT}`,
+  text: (ctx) => {
+    const app = ctx.appName || APP_DEFAULT;
+    return (
+      `${hi(ctx.nombre)}\n\n` +
+      `Tu pago fue rechazado.\n` +
+      `${fmtLine("Motivo", ctx.motivo || ctx.reason)}` +
+      `${fmtLine("Referencia", ctx.referencia || ctx.referencia_externa)}` +
+      `\nSi necesitas ayuda, responde a este correo.\n\n` +
+      `— Equipo ${app}`
+    );
+  },
+  html: (ctx) => {
+    const app = ctx.appName || APP_DEFAULT;
+    const motivo = ctx.motivo || ctx.reason;
+    return wrapHtml(`
+      <h2 style="margin:0 0 10px 0;">Pago rechazado</h2>
+      <p style="margin:0 0 10px 0;">${hi(ctx.nombre)}</p>
+      <p style="margin:0 0 12px 0;">Tu pago fue <b>rechazado</b>.</p>
+      <ul style="margin:0 0 12px 18px;">
+        ${motivo ? `<li><b>Motivo:</b> ${motivo}</li>` : ""}
+        ${(ctx.referencia || ctx.referencia_externa) ? `<li><b>Referencia:</b> ${ctx.referencia || ctx.referencia_externa}</li>` : ""}
+      </ul>
+      <p style="margin:0;">Si necesitas ayuda, responde a este correo.</p>
+      <p style="margin:10px 0 0 0;">— Equipo ${app}</p>
+    `);
+  },
+};
+
+templates.pago_confirmado = templates.PAGO_CONFIRMADO;
+templates.pago_rechazado = templates.PAGO_RECHAZADO;
 
 module.exports = templates;

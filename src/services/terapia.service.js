@@ -14,6 +14,90 @@ function wrapError(scope, err, extra = {}) {
   throw e;
 }
 
+
+
+/* =========================
+   Signed URL helpers (bucket privado de usuarios)
+   - Booking público no puede consumir URL "https://storage.googleapis.com/<bucket_privado>/..."
+     porque el bucket es privado. Necesitamos devolver URLs firmadas.
+========================= */
+function isString(v) {
+  return typeof v === "string";
+}
+
+function extractTargetPathFromPublicGcsUrl(url, bucketName) {
+  if (!isString(url) || !bucketName) return null;
+
+  const prefix = `https://storage.googleapis.com/${bucketName}/`;
+  if (!url.startsWith(prefix)) return null;
+
+  const rest = url.slice(prefix.length);
+  const pathOnly = rest.split("?")[0];
+
+  try {
+    return decodeURIComponent(pathOnly);
+  } catch {
+    return pathOnly;
+  }
+}
+
+async function signUserMediaUrlIfNeeded(url) {
+  if (!isString(url) || url.trim() === "") return url;
+
+  // ✅ Si ya es signed URL, no re-firmar
+  if (url.includes("X-Goog-Algorithm=") || url.includes("X-Goog-Signature=")) {
+    return url;
+  }
+
+  const gcs = getGcsForKey("user_media");
+  if (!gcs) return url;
+
+  const bucketName = gcs?.bucketName;
+
+  // Caso 1: ruta interna (path)
+  if (url.startsWith("users/") || url.startsWith("/users/")) {
+    const targetPath = url.replace(/^\/+/, "");
+    const signed = await gcs.getSignedReadUrlByPath({ targetPath });
+    return signed?.url || url;
+  }
+
+  // Caso 2: URL pública de GCS apuntando al bucket privado (no accesible)
+  const targetPath = extractTargetPathFromPublicGcsUrl(url, bucketName);
+  if (targetPath) {
+    const signed = await gcs.getSignedReadUrlByPath({ targetPath });
+    return signed?.url || url;
+  }
+
+  return url;
+}
+
+async function deepSignUserMediaLinks(node) {
+  if (node == null) return node;
+
+  if (Array.isArray(node)) {
+    for (let i = 0; i < node.length; i++) node[i] = await deepSignUserMediaLinks(node[i]);
+    return node;
+  }
+
+  if (typeof node === "object") {
+    for (const k of Object.keys(node)) {
+      const v = node[k];
+      if (
+        isString(v) &&
+        !v.startsWith("blob:") &&
+        (k.endsWith("_link") || k.includes("foto") || k.includes("image") || v.includes("storage.googleapis.com"))
+      ) {
+        node[k] = await signUserMediaUrlIfNeeded(v);
+      } else {
+        node[k] = await deepSignUserMediaLinks(v);
+      }
+    }
+    return node;
+  }
+
+  return node;
+}
+
 async function uploadAndRegisterArchivoForEnfoque({ args, meta, file, targetDir }) {
   if (!file || !file.buffer) {
     throw new Error(
@@ -387,21 +471,107 @@ listarProductos: async (args, meta) => {
       // Encolar notificación (best-effort): si falla, NO debe tumbar el endpoint
       try {
         const row = result?.rows?.[0];
-        if (row?.status === "ok") {
+
+        const statusStr = String(row?.status ?? row?.estado ?? "").trim().toLowerCase();
+        if (statusStr === "ok") {
           const data = row.data || {};
-          await enqueueMessage({
-            tipo: "ACTUALIZACION_ESTADO_CITA",
-            canal: "EMAIL",
-            prioridad: 5,
-            para: data.email,
-            templateKey: "verify_pin",
-            payload: {
-              email: data.email,
-              userId: data.user_id,
-              contexto: "El estado de la cita ha sido actualizada",
-              expiresAt: data.expires_at,
-            },
-          });
+
+          // Estado nuevo: prioriza el input (contrato) y luego el retorno de DB
+          const rawEstado =
+            args?.p_nuevo_estado ??
+            args?.nuevo_estado ??
+            args?.estado ??
+            data?.nuevo_estado ??
+            data?.estado ??
+            data?.cita?.estado ??
+            null;
+
+          const estado = String(rawEstado || "").trim().toUpperCase();
+
+          // Mapeo 1:1 con tus estados válidos en DB (ck_cita_estado_valido)
+          const templateByEstado = {
+            PENDIENTE: "cita_pendiente",
+            PLANIFICADA: "cita_pendiente_programacion",
+            CONFIRMADA: "cita_confirmada",
+            CANCELADA: "cita_cancelada",
+            RECHAZADA: "cita_rechazada",
+            MODIFICADA: "cita_modificada",
+            COMPLETADA: "cita_completada",
+          };
+
+          const templateKey = templateByEstado[estado] || null;
+
+          // Detectar email "para" sin asumir nombres:
+          // - busca en data/cita cualquier campo típico (email/correo) y también por heurística
+          function pickEmail(obj) {
+            if (!obj || typeof obj !== "object") return null;
+
+            // 1) claves directas comunes
+            const direct =
+              obj.email ??
+              obj.correo ??
+              obj.mail ??
+              obj.to ??
+              obj.para ??
+              null;
+            if (direct && String(direct).includes("@")) return String(direct).trim();
+
+            // 2) búsqueda heurística por keys que contengan 'mail' o 'correo'
+            for (const [k, v] of Object.entries(obj)) {
+              if (!v) continue;
+              const kk = String(k).toLowerCase();
+              if (kk.includes("email") || kk.includes("correo") || kk.includes("mail")) {
+                const s = String(v).trim();
+                if (s.includes("@")) return s;
+              }
+            }
+            return null;
+          }
+
+          const para =
+            pickEmail(data) ??
+            pickEmail(data?.cita) ??
+            args?.p_email ??
+            args?.email ??
+            null;
+
+          if (!templateKey) {
+            console.warn("[enqueue:skip] estado sin template", { estado, trace });
+          } else if (!para) {
+            console.warn("[enqueue:skip] sin email destinatario", {
+              estado,
+              templateKey,
+              trace,
+              // te dejo trazas mínimas para depurar sin imprimir toda la cita
+              hasData: !!data,
+              hasCita: !!data?.cita,
+              keysData: data && typeof data === "object" ? Object.keys(data).slice(0, 20) : [],
+              keysCita: data?.cita && typeof data.cita === "object" ? Object.keys(data.cita).slice(0, 20) : [],
+            });
+          } else {
+            const enq = await enqueueMessage({
+              tipo: "ACTUALIZACION_ESTADO_CITA",
+              canal: "EMAIL",
+              prioridad: 5,
+              para,
+              templateKey,
+              payload: {
+                email: para,
+                estado,
+                ...(data?.cita ? data.cita : {}),
+                cita: data?.cita ?? undefined,
+                id_cita: data?.id_cita ?? data?.cita?.id_cita ?? args?.p_id_cita,
+              },
+            });
+
+            if (!enq?.ok) {
+              console.warn("[enqueue:fail]", { estado, templateKey, para, trace, error: enq?.error });
+            } else {
+              console.log("[enqueue:ok]", { estado, templateKey, para, trace, id_mensaje: enq?.job?.id_mensaje });
+            }
+          }
+        } else {
+          // No ok: no encolar
         }
       } catch (e) {
         console.error("[service:warn]", {
@@ -471,7 +641,8 @@ listarSolicitudesCitaAdmin: async (args, meta) => {
         incluir === true || incluir === "true" || incluir === 1 || incluir === "1";
 
       // clave SEGURA: incluye sesión (evita leaks por cache cross-user)
-      const cacheKey = `cm:booking_bootstrap:v1:uid:${uid}:sid:${sid}:h:${p_incluir_horarios ? 1 : 0}`;
+      // v2: incluye nuevos campos (image_url) en terapeutas/enfoques
+      const cacheKey = `cm:booking_bootstrap:v3:uid:${uid}:sid:${sid}:h:${p_incluir_horarios ? 1 : 0}`;
 
       // TTL corto si hay horarios (porque dependen de NOW y de citas/bloqueos)
       const ttlSeconds = p_incluir_horarios ? 45 : 300;
@@ -490,6 +661,11 @@ listarSolicitudesCitaAdmin: async (args, meta) => {
 
       // la función retorna 1 columna: fn_booking_bootstrap
       const data = dbRes?.rows?.[0]?.fn_booking_bootstrap ?? null;
+
+      // Firmar URLs del bucket privado (user_media) para que el front pueda pintar imágenes
+      if (data) {
+        await deepSignUserMediaLinks(data);
+      }
 
       if (redisReady() && data) {
         await redisSetJson(cacheKey, data, ttlSeconds);

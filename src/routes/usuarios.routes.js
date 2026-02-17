@@ -18,6 +18,7 @@ router.post("/signup/terapeuta", asyncHandler(usuariosController.signupTerapeuta
 router.post("/verify-pin", asyncHandler(usuariosController.verifyAuthPin));
 
 router.patch("/paciente/modificar", asyncHandler(usuariosController.updatePacienteFull));
+router.patch("/admin/modificar", asyncHandler(usuariosController.updateAdminFull));
 router.patch("/terapeuta/modificar", asyncHandler(usuariosController.updateTerapeutaFull));
 router.post("/auth-pin/request", asyncHandler(usuariosController.requestNewAuthPin));
 router.post("/password-recovery/request", asyncHandler(usuariosController.requestPasswordRecoveryPin));

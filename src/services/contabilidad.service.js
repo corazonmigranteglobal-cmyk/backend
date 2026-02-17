@@ -76,6 +76,7 @@ const contabilidadService = {
   apagarCuenta: async (args, meta) => contabilidadRepository.apagarCuenta(args, meta),
   apagarCentroCosto: async (args, meta) => contabilidadRepository.apagarCentroCosto(args, meta),
   apagarTransaccion: async (args, meta) => contabilidadRepository.apagarTransaccion(args, meta),
+crearTransaccionVenta: async (args, meta) => contabilidadRepository.crearTransaccionVenta(args, meta),
 
 };
 

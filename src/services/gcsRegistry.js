@@ -70,7 +70,7 @@ function getGcsForKey(key) {
     projectId: process.env.GCP_PROJECT_ID,
     bucketName: p.bucketName,
     uploadPrefix: p.uploadPrefix,
-    signedUrlTtlSeconds: Number(process.env.GCS_SIGNED_URL_TTL_SECONDS || 900),
+    signedUrlTtlSeconds: Number(process.env.GCS_SIGNED_URL_TTL_SECONDS || 21600),
     publicMode: p.publicMode,
   });
 

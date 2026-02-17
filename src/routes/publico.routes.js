@@ -27,7 +27,7 @@ router.post("/ui/servidores-archivos/listar", asyncHandler(publicoController.lis
 // UI PÚBLICA - BOOTSTRAP
 // =========================
 router.post("/ui/bootstrap", asyncHandler(publicoController.uiBootstrap));
-
+router.get("/ui/pagina-publica", asyncHandler(publicoController.obtenerPaginaPublicaBundle));
 
 // =========================
 // UI PÚBLICA - PÁGINAS

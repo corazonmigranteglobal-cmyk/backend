@@ -155,9 +155,7 @@ const usuariosRepository = {
     }
   },
 
-
-
-    archivoRegistrar: async (args, meta) => {
+  archivoRegistrar: async (args, meta) => {
     try {
       return await call_db({ fnName: "infraestructura.fn_archivo_registrar", args, meta });
     } catch (err) {
@@ -165,6 +163,13 @@ const usuariosRepository = {
     }
   },
 
+  updateAdminFull: async (args, meta) => {
+    try {
+      return await call_db({ fnName: "usuarios.fn_update_admin_full", args, meta });
+    } catch (err) {
+      wrapError("usuariosRepository.updateAdminFull", err, { fn: "usuarios.fn_update_admin_full", args });
+    }
+  },
 };
 
 module.exports = { usuariosRepository };

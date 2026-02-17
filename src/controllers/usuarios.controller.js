@@ -286,6 +286,53 @@ const usuariosController = {
       throw err;
     }
   },
+  async updateAdminFull(req, res) {
+    try {
+      const userId = resolveUserId(req);
+      if (!userId) {
+        return res.status(400).json({
+          ok: false,
+          error: "BAD_REQUEST",
+          message:
+            "user_id inválido o faltante (envía /admin/:user_id o incluye p_user_id en el body)",
+        });
+      }
+
+      const body = req.body || {};
+
+      // Soportamos 2 formatos:
+      // A) { p_patch: { ... } } (estilo DB)
+      // B) campos planos { p_nombre, p_apellido, p_telefono, p_is_super_admin, ... }
+      let p_patch = body?.p_patch;
+      if (!p_patch || typeof p_patch !== "object") {
+        const patch = {};
+
+        // usuario (tabla usuarios.usuario)
+        if (body.p_telefono !== undefined) patch.telefono = String(body.p_telefono ?? "");
+        if (body.p_nombre !== undefined) patch.nombre = String(body.p_nombre ?? "");
+        if (body.p_apellido !== undefined) patch.apellido = String(body.p_apellido ?? "");
+        if (body.p_sexo !== undefined) patch.sexo = String(body.p_sexo ?? "");
+        if (body.p_fecha_nacimiento !== undefined) patch.fecha_nacimiento = body.p_fecha_nacimiento;
+        if (body.p_foto_perfil_link !== undefined) patch.foto_perfil_link = String(body.p_foto_perfil_link ?? "");
+        if (body.p_foto_portada_link !== undefined) patch.foto_portada_link = String(body.p_foto_portada_link ?? "");
+
+        // admin (tabla usuarios.usuario_admin)
+        if (body.p_is_super_admin !== undefined) patch.is_super_admin = Boolean(body.p_is_super_admin);
+        if (body.p_can_manage_files !== undefined) patch.can_manage_files = Boolean(body.p_can_manage_files);
+        if (body.p_is_accounter !== undefined) patch.is_accounter = Boolean(body.p_is_accounter);
+        if (body.p_id_usuario_terapeuta !== undefined) patch.id_usuario_terapeuta = body.p_id_usuario_terapeuta;
+
+        p_patch = patch;
+      }
+
+      const payload = { ...body, p_user_id: userId, p_patch };
+      const result = await usuariosService.updateAdminFull(payload, traceFromReq(req));
+      return res.json(result);
+    } catch (err) {
+      console.error("[controller:error]", { route: "updateAdminFull", message: err?.message });
+      throw err;
+    }
+  },
 
 };
 

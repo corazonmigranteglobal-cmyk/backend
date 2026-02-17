@@ -247,8 +247,10 @@ async function move(req, res) {
 
 async function download(req, res) {
   try {
-    const targetPath = String(req.query.path || "").trim();
-    if (!targetPath) return res.status(400).json({ ok: false, error: "Falta query ?path=" });
+    const rawPath = String(req.query.path || "").trim();
+    if (!rawPath) return res.status(400).json({ ok: false, error: "Falta query ?path=" });
+
+    const targetPath = decodeURIComponent(rawPath.replace(/\+/g, " "));
 
     const gcs = getGcsFromReq(req);
 
