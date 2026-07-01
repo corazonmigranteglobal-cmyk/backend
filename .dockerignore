@@ -1,6 +1,0 @@
-.env
-logs/
-node_modules/
-test_module/
-DB/
-*.log
