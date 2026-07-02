@@ -13,13 +13,83 @@ function parseRedisUrl() {
   }
 }
 
+function cleanEnvValue(value?: string) {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+}
+
+function parseCredentialJson(raw: string, source: string) {
+  const cleaned = cleanEnvValue(raw);
+  if (!cleaned) return undefined;
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (firstError) {
+    // Caso común en paneles web: se pega {\"type\":\"service_account\",...}
+    // Eso no es JSON válido directo, así que intentamos desescaparlo una sola vez.
+    try {
+      const unescaped = cleaned.replace(/\\"/g, '"');
+      return JSON.parse(unescaped);
+    } catch {
+      const message = firstError instanceof Error ? firstError.message : String(firstError);
+      throw new Error(`${source} no contiene un JSON válido de Google Service Account: ${message}`);
+    }
+  }
+}
+
+function normalizeGoogleCredentials(credentials: unknown, source: string) {
+  if (!credentials || typeof credentials !== 'object') {
+    throw new Error(`${source} debe decodificar a un objeto JSON.`);
+  }
+
+  const serviceAccount = credentials as Record<string, unknown>;
+  if (typeof serviceAccount.private_key === 'string') {
+    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+  }
+
+  if (serviceAccount.type !== 'service_account') {
+    throw new Error(`${source} debe ser una credencial de tipo service_account.`);
+  }
+  if (!serviceAccount.project_id || typeof serviceAccount.project_id !== 'string') {
+    throw new Error(`${source} no tiene project_id.`);
+  }
+  if (!serviceAccount.client_email || typeof serviceAccount.client_email !== 'string') {
+    throw new Error(`${source} no tiene client_email.`);
+  }
+  if (!serviceAccount.private_key || typeof serviceAccount.private_key !== 'string') {
+    throw new Error(`${source} no tiene private_key.`);
+  }
+
+  return serviceAccount;
+}
+
 function parseGoogleCredentials() {
-  if (process.env.GOOGLE_CREDENTIALS_JSON) {
-    return JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+  // Prioridad deliberada: si existe Base64, se usa Base64 y se ignora JSON/ruta.
+  // Esto evita que una variable vieja GOOGLE_CREDENTIALS_JSON mal escapada rompa el arranque.
+  const base64 = cleanEnvValue(process.env.GOOGLE_CREDENTIALS_BASE64);
+  if (base64) {
+    const decoded = Buffer.from(base64.replace(/\s/g, ''), 'base64').toString('utf8');
+    return normalizeGoogleCredentials(
+      parseCredentialJson(decoded, 'GOOGLE_CREDENTIALS_BASE64'),
+      'GOOGLE_CREDENTIALS_BASE64',
+    );
   }
-  if (process.env.GOOGLE_CREDENTIALS_BASE64) {
-    return JSON.parse(Buffer.from(process.env.GOOGLE_CREDENTIALS_BASE64, 'base64').toString('utf8'));
+
+  const json = cleanEnvValue(process.env.GOOGLE_CREDENTIALS_JSON);
+  if (json) {
+    return normalizeGoogleCredentials(
+      parseCredentialJson(json, 'GOOGLE_CREDENTIALS_JSON'),
+      'GOOGLE_CREDENTIALS_JSON',
+    );
   }
+
   return undefined;
 }
 

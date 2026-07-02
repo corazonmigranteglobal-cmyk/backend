@@ -1,14 +1,13 @@
+.git
+.github
 node_modules
 dist
 coverage
 .env
 .env.*
-!.env.example
-!.env.production.example
-secrets/*.json
+secrets
 storage/uploads/*
 storage/tmp/*
-!storage/uploads/.gitkeep
 npm-debug.log*
 yarn-error.log*
 .DS_Store
