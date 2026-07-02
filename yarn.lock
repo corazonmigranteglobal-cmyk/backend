@@ -550,7 +550,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@google-cloud/storage@npm:^7.14.0":
+"@google-cloud/storage@npm:^7.21.0":
   version: 7.21.0
   resolution: "@google-cloud/storage@npm:7.21.0"
   dependencies:
@@ -3352,7 +3352,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "corazon-migrante-backend-reengineered@workspace:."
   dependencies:
-    "@google-cloud/storage": "npm:^7.14.0"
+    "@google-cloud/storage": "npm:^7.21.0"
     "@nestjs/cli": "npm:^11.0.23"
     "@nestjs/common": "npm:^11.1.27"
     "@nestjs/config": "npm:^4.0.4"

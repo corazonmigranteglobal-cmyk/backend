@@ -29,6 +29,8 @@ export default () => {
   const fromEmail = process.env.EMAIL_FROM_EMAIL ?? process.env.MAIL_FROM;
   const fromName = process.env.EMAIL_FROM_NAME ?? process.env.MAIL_FROM_NAME ?? 'Corazón Migrante';
   const gcsBucket = process.env.GCS_BUCKET ?? process.env.GCS_BUCKET_NAME_USER_MEDIA;
+  const gcsUserMediaBucket = process.env.GCS_BUCKET_NAME_USER_MEDIA ?? process.env.GCS_BUCKET;
+  const gcsPublicAssetsBucket = process.env.GCS_BUCKET_NAME_PUBLIC_ASSETS ?? process.env.GCS_BUCKET;
   const signedUrlExpiresSeconds = Number(
     process.env.FILE_SIGNED_URL_EXPIRES_SECONDS ?? process.env.GCS_SIGNED_URL_TTL_SECONDS ?? 900,
   );
@@ -75,6 +77,8 @@ export default () => {
       signedUrlExpiresSeconds,
       gcs: {
         bucket: gcsBucket,
+        userMediaBucket: gcsUserMediaBucket,
+        publicAssetsBucket: gcsPublicAssetsBucket,
         projectId: process.env.GCP_PROJECT_ID,
         publicBaseUrl: process.env.GCS_PUBLIC_BASE_URL,
         credentials: parseGoogleCredentials(),

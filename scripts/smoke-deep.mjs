@@ -61,7 +61,7 @@ const emails = {
   superadmin: process.env.SMOKE_SUPERADMIN_EMAIL || 'superadmin@corazonmigrante.test',
   accountant: process.env.SMOKE_ACCOUNTANT_EMAIL || 'contador@corazonmigrante.test',
 };
-const testEmail = process.env.SMOKE_TEST_EMAIL || 'pablirca@gmail.com';
+const testEmail = process.env.SMOKE_TEST_EMAIL || 'pabliarca@gmail.com';
 
 const tmpDir = join(tmpdir(), `cm-smoke-deep-node-${process.pid}`);
 mkdirSync(tmpDir, { recursive: true });
