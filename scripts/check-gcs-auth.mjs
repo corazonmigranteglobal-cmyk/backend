@@ -4,7 +4,9 @@ const base64 = process.env.GOOGLE_CREDENTIALS_BASE64;
 const bucketName = process.env.GCS_BUCKET_NAME_USER_MEDIA;
 
 if (!base64) {
-  throw new Error('Falta GOOGLE_CREDENTIALS_BASE64. Carga .env o define la variable en PowerShell.');
+  throw new Error(
+    'Falta GOOGLE_CREDENTIALS_BASE64. Carga .env o define la variable en PowerShell.',
+  );
 }
 
 if (!bucketName) {

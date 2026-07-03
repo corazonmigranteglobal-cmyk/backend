@@ -34,7 +34,12 @@
     "smoke:bash": "bash scripts/smoke.sh",
     "smoke:deep:bash": "bash scripts/smoke-deep.sh",
     "smoke:deep:bash:mutations": "bash scripts/smoke-deep.sh --mutations",
-    "smoke:deep:bash:external": "bash scripts/smoke-deep.sh --mutations --external"
+    "smoke:deep:bash:external": "bash scripts/smoke-deep.sh --mutations --external",
+    "typecheck": "tsc --noEmit",
+    "smoke:publications": "node scripts/smoke-content-advertising.mjs --publications",
+    "smoke:advertising": "node scripts/smoke-content-advertising.mjs --advertising",
+    "smoke:homepage": "node scripts/smoke-content-advertising.mjs --homepage",
+    "smoke:newspaper-internal": "node scripts/smoke-content-advertising.mjs --all"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.21.0",

@@ -69,11 +69,16 @@ export const envValidationSchema = Joi.object({
   if (env.STORAGE_PROVIDER === 'GCS') {
     if (!env.GCS_BUCKET && !env.GCS_BUCKET_NAME_USER_MEDIA) {
       return helpers.error('any.custom', {
-        message: 'Debe configurar GCS_BUCKET o GCS_BUCKET_NAME_USER_MEDIA cuando STORAGE_PROVIDER=GCS.',
+        message:
+          'Debe configurar GCS_BUCKET o GCS_BUCKET_NAME_USER_MEDIA cuando STORAGE_PROVIDER=GCS.',
       });
     }
 
-    if (!env.GOOGLE_CREDENTIALS_BASE64 && !env.GOOGLE_CREDENTIALS_JSON && !env.GOOGLE_APPLICATION_CREDENTIALS) {
+    if (
+      !env.GOOGLE_CREDENTIALS_BASE64 &&
+      !env.GOOGLE_CREDENTIALS_JSON &&
+      !env.GOOGLE_APPLICATION_CREDENTIALS
+    ) {
       return helpers.error('any.custom', {
         message:
           'Debe configurar GOOGLE_CREDENTIALS_BASE64 cuando STORAGE_PROVIDER=GCS. Recomendado: usar solo GOOGLE_CREDENTIALS_BASE64.',
@@ -84,8 +89,14 @@ export const envValidationSchema = Joi.object({
   const provider = env.EMAIL_PROVIDER ?? env.MAIL_PROVIDER ?? 'DEV_NULL';
   if (provider === 'SENDGRID') {
     const from = env.EMAIL_FROM_EMAIL ?? env.MAIL_FROM;
-    if (!from) return helpers.error('any.custom', { message: 'Debe configurar EMAIL_FROM_EMAIL o MAIL_FROM cuando SendGrid está activo.' });
-    if (!env.SENDGRID_API_KEY) return helpers.error('any.custom', { message: 'Debe configurar SENDGRID_API_KEY cuando SendGrid está activo.' });
+    if (!from)
+      return helpers.error('any.custom', {
+        message: 'Debe configurar EMAIL_FROM_EMAIL o MAIL_FROM cuando SendGrid está activo.',
+      });
+    if (!env.SENDGRID_API_KEY)
+      return helpers.error('any.custom', {
+        message: 'Debe configurar SENDGRID_API_KEY cuando SendGrid está activo.',
+      });
   }
   return env;
 });

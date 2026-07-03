@@ -34,8 +34,12 @@ export class FilesService {
   ) {
     if (this.storageProvider === STORAGE_PROVIDER_GCS) {
       const projectId = this.config.get<string>('files.gcs.projectId') || undefined;
-      const credentials = this.config.get<Record<string, unknown>>('files.gcs.credentials') || undefined;
-      this.gcs = new Storage({ ...(projectId ? { projectId } : {}), ...(credentials ? { credentials } : {}) });
+      const credentials =
+        this.config.get<Record<string, unknown>>('files.gcs.credentials') || undefined;
+      this.gcs = new Storage({
+        ...(projectId ? { projectId } : {}),
+        ...(credentials ? { credentials } : {}),
+      });
     }
   }
 
@@ -83,14 +87,15 @@ export class FilesService {
     const checksum = createHash('sha256').update(readFileSync(file.path)).digest('hex');
 
     const storageProvider = this.storageProvider;
-    const bucket = storageProvider === STORAGE_PROVIDER_GCS ? this.resolveGcsBucket(dto.module) : undefined;
+    const bucket =
+      storageProvider === STORAGE_PROVIDER_GCS ? this.resolveGcsBucket(dto.module) : undefined;
 
     let externalObjectCreated = false;
     try {
       if (storageProvider === STORAGE_PROVIDER_GCS) {
         await this.uploadToGcs(file, objectKey, bucket);
       } else {
-        this.moveToLocalStorage(file, objectKey, dto.module, user.sub);
+        this.moveToLocalStorage(file, objectKey);
       }
       externalObjectCreated = true;
 
@@ -203,21 +208,16 @@ export class FilesService {
     return file;
   }
 
-
   private buildObjectKey(module: string, userId: string, safeExt: string) {
     const moduleKey = module.toLowerCase();
     const userMediaPrefix = this.config.get<string>('files.gcs.userMediaPrefix') ?? 'users';
     const publicAssetsPrefix = this.config.get<string>('files.gcs.publicAssetsPrefix') ?? 'public';
-    const prefix = module === 'CMS' || module === 'THERAPY_CATALOG' ? publicAssetsPrefix : userMediaPrefix;
+    const prefix =
+      module === 'CMS' || module === 'THERAPY_CATALOG' ? publicAssetsPrefix : userMediaPrefix;
     return `${prefix}/${moduleKey}/${userId}/${randomUUID()}${safeExt}`;
   }
 
-  private moveToLocalStorage(
-    file: Express.Multer.File,
-    objectKey: string,
-    module: string,
-    userId: string,
-  ) {
+  private moveToLocalStorage(file: Express.Multer.File, objectKey: string) {
     const uploadDir = this.config.get<string>('files.uploadDir') ?? 'storage/uploads';
     mkdirSync(uploadDir, { recursive: true });
     const finalPath = join(uploadDir, objectKey);
@@ -287,8 +287,7 @@ export class FilesService {
             bucket: bucketName,
             objectKey,
             ...this.extractProviderError(error),
-            hint:
-              'Verifica GOOGLE_CREDENTIALS_BASE64/JSON, que el bucket exista y que la service account tenga storage.objects.create, storage.objects.get y storage.objects.delete.',
+            hint: 'Verifica GOOGLE_CREDENTIALS_BASE64/JSON, que el bucket exista y que la service account tenga storage.objects.create, storage.objects.get y storage.objects.delete.',
           },
         ],
       });
@@ -338,8 +337,7 @@ export class FilesService {
             bucket: file.bucket,
             objectKey: file.objectKey,
             ...this.extractProviderError(error),
-            hint:
-              'Verifica que la service account pueda firmar URLs y leer el objeto en el bucket.',
+            hint: 'Verifica que la service account pueda firmar URLs y leer el objeto en el bucket.',
           },
         ],
       });
