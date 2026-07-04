@@ -1,0 +1,26 @@
+--- orig_backend/backend/src/modules/cms/cms.module.ts	2026-07-01 22:48:05.000000000 +0000
++++ work_backend/backend/src/modules/cms/cms.module.ts	2026-07-03 17:57:41.069672086 +0000
+@@ -2,11 +2,21 @@
+ import { SequelizeModule } from '@nestjs/sequelize';
+ import { CmsElement, CmsPage } from '@/database/models';
+ import { AuditModule } from '../audit/audit.module';
+-import { CmsController, AdminCmsController } from './cms.controller';
++import {
++  AdminCmsController,
++  CmsController,
++  PublicCmsElementsController,
++  PublicViewsController,
++} from './cms.controller';
+ import { CmsService } from './cms.service';
+ @Module({
+   imports: [SequelizeModule.forFeature([CmsPage, CmsElement]), AuditModule],
+-  controllers: [CmsController, AdminCmsController],
++  controllers: [
++    CmsController,
++    PublicCmsElementsController,
++    PublicViewsController,
++    AdminCmsController,
++  ],
+   providers: [CmsService],
+ })
+ export class CmsModule {}

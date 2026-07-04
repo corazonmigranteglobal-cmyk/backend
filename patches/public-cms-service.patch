@@ -1,0 +1,102 @@
+--- orig_backend/backend/src/modules/cms/cms.service.ts	2026-07-01 22:48:05.000000000 +0000
++++ work_backend/backend/src/modules/cms/cms.service.ts	2026-07-03 17:58:02.092990555 +0000
+@@ -25,26 +25,33 @@
+    * 2. buscar elementos activos de esa pagina ordenados por sortOrder
+    */
+   async getPublicPage(slug: string) {
+-    const page = await this.pageModel.findOne({
+-      where: { slug, status: 'PUBLISHED' },
+-    });
++    const page = await this.findPublishedPage({ slug });
++    const elements = await this.findActiveElements(page.id);
++    return this.serializePage(page, elements);
++  }
+ 
+-    if (!page) {
+-      throw new NotFoundException({ code: 'CMS_PAGE_NOT_FOUND', message: 'Página no encontrada.' });
+-    }
++  async getPublicPageById(id: string) {
++    const page = await this.findPublishedPage({ id });
++    const elements = await this.findActiveElements(page.id);
++    return this.serializePage(page, elements);
++  }
+ 
+-    const elements = await this.elementModel.findAll({
+-      where: { pageId: page.id, status: 'ACTIVE' },
+-      order: [
+-        ['sortOrder', 'ASC'],
+-        ['createdAt', 'ASC'],
+-      ],
+-    });
++  async getPublicElementByCode(slug: string, code: string) {
++    const page = await this.findPublishedPage({ slug });
++    const element = await this.findActiveElement({ pageId: page.id, code });
++    return element.toJSON();
++  }
+ 
+-    return {
+-      ...page.toJSON(),
+-      elements: elements.map((element) => element.toJSON()),
+-    };
++  async getPublicElementByPageIdAndCode(pageId: string, code: string) {
++    const page = await this.findPublishedPage({ id: pageId });
++    const element = await this.findActiveElement({ pageId: page.id, code });
++    return element.toJSON();
++  }
++
++  async getPublicElementById(id: string) {
++    const element = await this.findActiveElement({ id });
++    await this.findPublishedPage({ id: element.pageId });
++    return element.toJSON();
+   }
+ 
+   async createPage(actorUserId: string, dto: CreatePageDto) {
+@@ -100,4 +107,48 @@
+       return element;
+     });
+   }
++
++  private async findPublishedPage(where: { id?: string; slug?: string }) {
++    const page = await this.pageModel.findOne({
++      where: { ...where, status: 'PUBLISHED' },
++    });
++
++    if (!page) {
++      throw new NotFoundException({ code: 'CMS_PAGE_NOT_FOUND', message: 'Página no encontrada.' });
++    }
++
++    return page;
++  }
++
++  private findActiveElements(pageId: string) {
++    return this.elementModel.findAll({
++      where: { pageId, status: 'ACTIVE' },
++      order: [
++        ['sortOrder', 'ASC'],
++        ['createdAt', 'ASC'],
++      ],
++    });
++  }
++
++  private async findActiveElement(where: { id?: string; pageId?: string; code?: string }) {
++    const element = await this.elementModel.findOne({
++      where: { ...where, status: 'ACTIVE' },
++    });
++
++    if (!element) {
++      throw new NotFoundException({
++        code: 'CMS_ELEMENT_NOT_FOUND',
++        message: 'Elemento público no encontrado.',
++      });
++    }
++
++    return element;
++  }
++
++  private serializePage(page: CmsPage, elements: CmsElement[]) {
++    return {
++      ...page.toJSON(),
++      elements: elements.map((element) => element.toJSON()),
++    };
++  }
+ }

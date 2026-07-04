@@ -13,8 +13,49 @@ import { CreateElementDto, CreatePageDto } from './dto/cms.dto';
 @Public()
 export class CmsController {
   constructor(private readonly service: CmsService) {}
-  @Get(':slug') get(@Param('slug') slug: string) {
+
+  @Get('by-id/:id')
+  getById(@Param('id') id: string) {
+    return this.service.getPublicPageById(id);
+  }
+
+  @Get(':slug/elements/:code')
+  getElementByCode(@Param('slug') slug: string, @Param('code') code: string) {
+    return this.service.getPublicElementByCode(slug, code);
+  }
+
+  @Get(':slug')
+  get(@Param('slug') slug: string) {
     return this.service.getPublicPage(slug);
+  }
+}
+
+@ApiTags('Public CMS')
+@Controller('public/page-elements')
+@Public()
+export class PublicCmsElementsController {
+  constructor(private readonly service: CmsService) {}
+
+  @Get(':id')
+  getElementById(@Param('id') id: string) {
+    return this.service.getPublicElementById(id);
+  }
+}
+
+@ApiTags('Public CMS')
+@Controller('public-views')
+@Public()
+export class PublicViewsController {
+  constructor(private readonly service: CmsService) {}
+
+  @Get(':id/elements/:code')
+  getElementByPageIdAndCode(@Param('id') id: string, @Param('code') code: string) {
+    return this.service.getPublicElementByPageIdAndCode(id, code);
+  }
+
+  @Get(':id')
+  getPageById(@Param('id') id: string) {
+    return this.service.getPublicPageById(id);
   }
 }
 
@@ -24,13 +65,16 @@ export class CmsController {
 @Roles('ADMIN', 'SUPER_ADMIN')
 export class AdminCmsController {
   constructor(private readonly service: CmsService) {}
-  @Post() @Permissions('cms:write') create(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreatePageDto,
-  ) {
+
+  @Post()
+  @Permissions('cms:write')
+  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreatePageDto) {
     return this.service.createPage(user.sub, dto);
   }
-  @Post(':pageId/elements') @Permissions('cms:write') addElement(
+
+  @Post(':pageId/elements')
+  @Permissions('cms:write')
+  addElement(
     @CurrentUser() user: AuthenticatedUser,
     @Param('pageId') pageId: string,
     @Body() dto: CreateElementDto,
