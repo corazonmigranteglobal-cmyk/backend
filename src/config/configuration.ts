@@ -124,6 +124,9 @@ export default () => {
       ssl: process.env.DATABASE_SSL === 'true',
       logging: process.env.DATABASE_LOGGING === 'true',
       connectionTimeoutMs: Number(process.env.DATABASE_CONNECTION_TIMEOUT_MS ?? 20000),
+      bootstrapOnStartup: process.env.DATABASE_BOOTSTRAP_ON_STARTUP !== 'false',
+      bootstrapFailFast: process.env.DATABASE_BOOTSTRAP_FAIL_FAST !== 'false',
+      seedPublicCmsOnStartup: process.env.DATABASE_SEED_PUBLIC_CMS_ON_STARTUP !== 'false',
     },
     redis: {
       host: process.env.REDIS_HOST ?? redisFromUrl.host ?? 'localhost',

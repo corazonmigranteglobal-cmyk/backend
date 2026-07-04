@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { databaseModels } from './models';
+import { DatabaseBootstrapService } from './bootstrap/database-bootstrap.service';
+import { DatabaseSchemaBootstrapService } from './bootstrap/database-schema-bootstrap.service';
+import { PublicCmsBootstrapService } from './bootstrap/public-cms-bootstrap.service';
 
 @Module({
   imports: [
@@ -24,6 +27,11 @@ import { databaseModels } from './models';
           : undefined,
       }),
     }),
+  ],
+  providers: [
+    DatabaseBootstrapService,
+    DatabaseSchemaBootstrapService,
+    PublicCmsBootstrapService,
   ],
   exports: [SequelizeModule],
 })
