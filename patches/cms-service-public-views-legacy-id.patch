@@ -1,0 +1,7 @@
+Reemplazar src/modules/cms/cms.service.ts por la versión incluida en este hotfix.
+
+Cambio clave:
+- Agrega resolvePublicPageLookup().
+- Evita consultar cms_pages.id con valores no UUID.
+- Mapea /public-views/1 a cms_pages.slug = 'inicio'.
+- Devuelve 404 controlado para números inválidos.

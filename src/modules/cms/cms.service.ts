@@ -4,6 +4,10 @@ import { CmsElement, CmsPage } from '@/database/models';
 import { AuditService } from '../audit/audit.service';
 import { CreateElementDto, CreatePageDto } from './dto/cms.dto';
 
+const LEGACY_PUBLIC_VIEW_SLUG_BY_ID: Record<string, string> = {
+  '1': 'inicio',
+};
+
 @Injectable()
 export class CmsService {
   constructor(
@@ -12,26 +16,14 @@ export class CmsService {
     private readonly audit: AuditService,
   ) {}
 
-  /**
-   * Endpoint publico: GET /public/pages/:slug
-   *
-   * Nota importante:
-   * No usamos `include + order` aqui porque en sequelize-typescript puede romperse
-   * si el alias generado para la relacion HasMany no coincide con el alias usado
-   * al ordenar. Eso fue lo que generaba 500 en /public/pages/inicio.
-   *
-   * Se hace en dos consultas simples y estables:
-   * 1. buscar pagina publicada
-   * 2. buscar elementos activos de esa pagina ordenados por sortOrder
-   */
   async getPublicPage(slug: string) {
     const page = await this.findPublishedPage({ slug });
     const elements = await this.findActiveElements(page.id);
     return this.serializePage(page, elements);
   }
 
-  async getPublicPageById(id: string) {
-    const page = await this.findPublishedPage({ id });
+  async getPublicPageById(idOrSlug: string) {
+    const page = await this.findPublishedPage(this.resolvePublicPageLookup(idOrSlug));
     const elements = await this.findActiveElements(page.id);
     return this.serializePage(page, elements);
   }
@@ -42,13 +34,20 @@ export class CmsService {
     return element.toJSON();
   }
 
-  async getPublicElementByPageIdAndCode(pageId: string, code: string) {
-    const page = await this.findPublishedPage({ id: pageId });
+  async getPublicElementByPageIdAndCode(idOrSlug: string, code: string) {
+    const page = await this.findPublishedPage(this.resolvePublicPageLookup(idOrSlug));
     const element = await this.findActiveElement({ pageId: page.id, code });
     return element.toJSON();
   }
 
   async getPublicElementById(id: string) {
+    if (!this.isUuid(id)) {
+      throw new NotFoundException({
+        code: 'CMS_ELEMENT_NOT_FOUND',
+        message: 'Elemento público no encontrado.',
+      });
+    }
+
     const element = await this.findActiveElement({ id });
     await this.findPublishedPage({ id: element.pageId });
     return element.toJSON();
@@ -108,6 +107,29 @@ export class CmsService {
     });
   }
 
+  private resolvePublicPageLookup(value: string): { id?: string; slug?: string } {
+    const normalized = String(value ?? '').trim();
+
+    if (!normalized) {
+      throw new NotFoundException({ code: 'CMS_PAGE_NOT_FOUND', message: 'Página no encontrada.' });
+    }
+
+    if (this.isUuid(normalized)) {
+      return { id: normalized };
+    }
+
+    const legacySlug = LEGACY_PUBLIC_VIEW_SLUG_BY_ID[normalized];
+    if (legacySlug) {
+      return { slug: legacySlug };
+    }
+
+    if (/^\d+$/.test(normalized)) {
+      throw new NotFoundException({ code: 'CMS_PAGE_NOT_FOUND', message: 'Página no encontrada.' });
+    }
+
+    return { slug: normalized };
+  }
+
   private async findPublishedPage(where: { id?: string; slug?: string }) {
     const page = await this.pageModel.findOne({
       where: { ...where, status: 'PUBLISHED' },
@@ -150,5 +172,9 @@ export class CmsService {
       ...page.toJSON(),
       elements: elements.map((element) => element.toJSON()),
     };
+  }
+
+  private isUuid(value: string) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
   }
 }
