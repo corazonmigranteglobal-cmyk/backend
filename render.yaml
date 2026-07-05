@@ -1,0 +1,29 @@
+# Render Blueprint para ejecutar el backup PostgreSQL -> Neon como Cron Job.
+# Ubicación esperada: raíz del repositorio del backend.
+# Si tu repo es monorepo, crea el servicio desde el Dashboard o agrega rootDir con la carpeta del backend.
+services:
+  - type: cron
+    name: corazon-migrante-neon-backup-sync
+    runtime: docker
+    plan: starter
+    schedule: '20 5 * * *' # 05:20 UTC = 01:20 Bolivia
+    dockerCommand: yarn db:backup:neon
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SOURCE_DATABASE_URL
+        sync: false
+      - key: BACKUP_TARGET_DATABASE_URL
+        sync: false
+      - key: BACKUP_CONFIRM_REMOTE_NEON
+        value: 'true'
+      - key: BACKUP_RESTORE_TO_NEON
+        value: 'true'
+      - key: BACKUP_DRY_RUN
+        value: 'false'
+      - key: BACKUP_LOCAL_RETENTION_DAYS
+        value: '1'
+      - key: BACKUP_DIR
+        value: /tmp/backups
+      - key: ALLOW_NON_NEON_BACKUP_TARGET
+        value: 'false'

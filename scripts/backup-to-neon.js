@@ -3,8 +3,8 @@
  * Backup job: PostgreSQL principal -> base remota de Neon.
  *
  * Este script NO contiene credenciales. Lee todo desde variables de entorno.
- * Requiere tener instalados los binarios: pg_dump y pg_restore.
- * En GitHub Actions se instalan con: sudo apt-get install -y postgresql-client
+ * Requiere tener disponibles los binarios: pg_dump y pg_restore.
+ * En Render/Nixpacks se agregan con nixpacks.toml -> postgresql_16.
  */
 
 const { spawnSync } = require('node:child_process');
@@ -125,9 +125,16 @@ const cleanupOldBackups = (backupDir, retentionDays) => {
   }
 };
 
+const buildTargetDatabaseUrl = () => {
+  if (process.env.NEON_BACKUP_DATABASE_URL) return process.env.NEON_BACKUP_DATABASE_URL;
+  if (process.env.BACKUP_TARGET_DATABASE_URL) return process.env.BACKUP_TARGET_DATABASE_URL;
+
+  throw new Error('Falta NEON_BACKUP_DATABASE_URL o BACKUP_TARGET_DATABASE_URL. Debe apuntar a la base remota de Neon destino.');
+};
+
 const main = () => {
   const sourceDatabaseUrl = buildSourceDatabaseUrl();
-  const targetDatabaseUrl = required('NEON_BACKUP_DATABASE_URL');
+  const targetDatabaseUrl = buildTargetDatabaseUrl();
   const restoreToNeon = bool(process.env.BACKUP_RESTORE_TO_NEON, true);
   const confirmRemoteNeon = bool(process.env.BACKUP_CONFIRM_REMOTE_NEON, false);
   const allowNonNeonTarget = bool(process.env.ALLOW_NON_NEON_BACKUP_TARGET, false);
