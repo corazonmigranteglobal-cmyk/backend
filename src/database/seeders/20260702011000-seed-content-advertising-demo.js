@@ -380,10 +380,13 @@ module.exports = {
 
     await query(
       queryInterface,
-      `INSERT INTO content_publication_tags (publication_id, tag_id)
-       VALUES (:publicationId, :tagId)
-       ON CONFLICT DO NOTHING`,
-      { publicationId: article.id, tagId: tag.id },
+      `INSERT INTO content_publication_tags (id, publication_id, tag_id)
+       SELECT :id, :publicationId, :tagId
+       WHERE NOT EXISTS (
+         SELECT 1 FROM content_publication_tags
+         WHERE publication_id = :publicationId AND tag_id = :tagId
+       )`,
+      { id: randomUUID(), publicationId: article.id, tagId: tag.id },
     );
 
     const company = await ensureCompany(queryInterface, now);
@@ -393,10 +396,13 @@ module.exports = {
 
     await query(
       queryInterface,
-      `INSERT INTO ads_campaign_placements (campaign_id, placement_id)
-       VALUES (:campaignId, :placementId)
-       ON CONFLICT DO NOTHING`,
-      { campaignId: campaign.id, placementId: placement.id },
+      `INSERT INTO ads_campaign_placements (id, campaign_id, placement_id)
+       SELECT :id, :campaignId, :placementId
+       WHERE NOT EXISTS (
+         SELECT 1 FROM ads_campaign_placements
+         WHERE campaign_id = :campaignId AND placement_id = :placementId
+       )`,
+      { id: randomUUID(), campaignId: campaign.id, placementId: placement.id },
     );
 
     await ensureHomepageSections(queryInterface, now);
