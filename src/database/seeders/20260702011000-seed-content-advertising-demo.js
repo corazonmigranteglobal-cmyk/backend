@@ -381,11 +381,8 @@ module.exports = {
     await query(
       queryInterface,
       `INSERT INTO content_publication_tags (id, publication_id, tag_id)
-       SELECT :id, :publicationId, :tagId
-       WHERE NOT EXISTS (
-         SELECT 1 FROM content_publication_tags
-         WHERE publication_id = :publicationId AND tag_id = :tagId
-       )`,
+       VALUES (:id, :publicationId, :tagId)
+       ON CONFLICT (publication_id, tag_id) DO NOTHING`,
       { id: randomUUID(), publicationId: article.id, tagId: tag.id },
     );
 
@@ -397,11 +394,8 @@ module.exports = {
     await query(
       queryInterface,
       `INSERT INTO ads_campaign_placements (id, campaign_id, placement_id)
-       SELECT :id, :campaignId, :placementId
-       WHERE NOT EXISTS (
-         SELECT 1 FROM ads_campaign_placements
-         WHERE campaign_id = :campaignId AND placement_id = :placementId
-       )`,
+       VALUES (:id, :campaignId, :placementId)
+       ON CONFLICT (campaign_id, placement_id) DO NOTHING`,
       { id: randomUUID(), campaignId: campaign.id, placementId: placement.id },
     );
 
