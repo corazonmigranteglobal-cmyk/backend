@@ -380,10 +380,10 @@ module.exports = {
 
     await query(
       queryInterface,
-      `INSERT INTO content_publication_tags (id, publication_id, tag_id)
-       VALUES (:id, :publicationId, :tagId)
-       ON CONFLICT (publication_id, tag_id) DO NOTHING`,
-      { id: randomUUID(), publicationId: article.id, tagId: tag.id },
+      `INSERT INTO content_publication_tags (publication_id, tag_id)
+       VALUES (:publicationId, :tagId)
+       ON CONFLICT DO NOTHING`,
+      { publicationId: article.id, tagId: tag.id },
     );
 
     const company = await ensureCompany(queryInterface, now);
@@ -393,10 +393,10 @@ module.exports = {
 
     await query(
       queryInterface,
-      `INSERT INTO ads_campaign_placements (id, campaign_id, placement_id)
-       VALUES (:id, :campaignId, :placementId)
-       ON CONFLICT (campaign_id, placement_id) DO NOTHING`,
-      { id: randomUUID(), campaignId: campaign.id, placementId: placement.id },
+      `INSERT INTO ads_campaign_placements (campaign_id, placement_id)
+       VALUES (:campaignId, :placementId)
+       ON CONFLICT DO NOTHING`,
+      { campaignId: campaign.id, placementId: placement.id },
     );
 
     await ensureHomepageSections(queryInterface, now);

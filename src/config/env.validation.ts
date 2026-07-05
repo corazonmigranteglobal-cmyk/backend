@@ -15,9 +15,6 @@ export const envValidationSchema = Joi.object({
   DATABASE_SSL: Joi.boolean().default(false),
   DATABASE_LOGGING: Joi.boolean().default(false),
   DATABASE_CONNECTION_TIMEOUT_MS: Joi.number().optional(),
-  DATABASE_BOOTSTRAP_ON_STARTUP: Joi.boolean().default(true),
-  DATABASE_BOOTSTRAP_FAIL_FAST: Joi.boolean().default(true),
-  DATABASE_SEED_PUBLIC_CMS_ON_STARTUP: Joi.boolean().default(true),
 
   REDIS_URL: Joi.string().allow('').optional(),
   REDIS_HOST: Joi.string().default('localhost'),
