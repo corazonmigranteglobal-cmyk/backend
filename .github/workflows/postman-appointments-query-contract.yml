@@ -1,0 +1,62 @@
+name: Postman - Appointments Pagination Contract
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Base URL con prefijo /api/v1. Ejemplo: https://api.corazondemigrante.com/api/v1'
+        required: false
+        default: 'https://api.corazondemigrante.com/api/v1'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'src/common/pagination/pagination.dto.ts'
+      - 'postman/CorazonMigrante.AppointmentsQueryContract.postman_collection.json'
+      - '.github/workflows/postman-appointments-query-contract.yml'
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'src/**'
+      - 'src/common/pagination/pagination.dto.ts'
+      - 'postman/CorazonMigrante.AppointmentsQueryContract.postman_collection.json'
+      - '.github/workflows/postman-appointments-query-contract.yml'
+
+jobs:
+  appointments-query-contract:
+    name: Validate appointments pagination aliases
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      CM_API_BASE_URL: ${{ github.event.inputs.base_url || vars.CM_API_BASE_URL || 'https://api.corazondemigrante.com/api/v1' }}
+      CM_POSTMAN_EMAIL: ${{ secrets.CM_POSTMAN_EMAIL }}
+      CM_POSTMAN_PASSWORD: ${{ secrets.CM_POSTMAN_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          if [ -z "$CM_POSTMAN_EMAIL" ] || [ -z "$CM_POSTMAN_PASSWORD" ]; then
+            echo "::error::Faltan secrets CM_POSTMAN_EMAIL y/o CM_POSTMAN_PASSWORD para ejecutar la colección Postman."
+            exit 1
+          fi
+
+      - name: Run Postman contract collection
+        shell: bash
+        run: |
+          npx --yes newman run postman/CorazonMigrante.AppointmentsQueryContract.postman_collection.json \
+            --env-var "baseUrl=$CM_API_BASE_URL" \
+            --env-var "authEmail=$CM_POSTMAN_EMAIL" \
+            --env-var "authPassword=$CM_POSTMAN_PASSWORD" \
+            --reporters cli \
+            --bail

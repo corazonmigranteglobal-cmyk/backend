@@ -1,0 +1,406 @@
+{
+  "info": {
+    "_postman_id": "85ef2948-2e53-4376-b8a8-2a440bd8e283",
+    "name": "Corazon Migrante - Appointments Query Contract",
+    "description": "Colección de contrato para detectar errores de paginación/query params en appointments. El backend debe aceptar la paginación canónica page/limit y también los aliases legacy p_page/p_limit que algunos frontends pueden enviar. Los parámetros realmente desconocidos siguen rechazándose con HTTP 400.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.corazondemigrante.com/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "authEmail",
+      "value": "paciente.demo@corazonmigrante.test",
+      "type": "string"
+    },
+    {
+      "key": "authPassword",
+      "value": "Demo123456!",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const baseUrl = pm.collectionVariables.get('baseUrl') || pm.environment.get('baseUrl');",
+          "if (!baseUrl) { throw new Error('Falta variable baseUrl. Ejemplo: https://api.corazondemigrante.com/api/v1'); }"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Login paciente para contrato",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('login responde 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "const token = json?.data?.accessToken || json?.accessToken;",
+              "pm.test('login devuelve accessToken', function () {",
+              "  pm.expect(token, 'accessToken').to.be.a('string').and.not.empty;",
+              "});",
+              "pm.collectionVariables.set('accessToken', token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\": \"{{authEmail}}\", \"password\": \"{{authPassword}}\"}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "description": "Inicia sesión para obtener accessToken. En CI sobrescribe authEmail/authPassword con secrets."
+      },
+      "response": []
+    },
+    {
+      "name": "Appointments mine - OK con page y limit",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const token = pm.collectionVariables.get('accessToken');",
+              "if (!token) { throw new Error('Falta accessToken. Ejecuta primero Auth - Login paciente para contrato.'); }"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('appointments/mine responde 200 usando solo page y limit', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('respuesta mantiene contrato paginado', function () {",
+              "  pm.expect(json).to.have.property('data');",
+              "  pm.expect(json.data).to.be.an('array');",
+              "  pm.expect(json).to.have.property('pagination');",
+              "  pm.expect(json.pagination.page).to.eql(1);",
+              "  pm.expect(json.pagination.limit || json.pagination.pageSize).to.eql(20);",
+              "});",
+              "",
+              "pm.test('no hay error HTTP_400 por query params sobrantes', function () {",
+              "  pm.expect(json).to.not.have.property('error');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/appointments/mine?page=1&limit=20",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "appointments",
+            "mine"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Página válida canónica."
+            },
+            {
+              "key": "limit",
+              "value": "20",
+              "description": "Límite válido canónico."
+            }
+          ]
+        },
+        "description": "Caso correcto canónico. Debe funcionar con page y limit."
+      },
+      "response": []
+    },
+    {
+      "name": "Appointments mine - OK con aliases legacy p_page y p_limit",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const token = pm.collectionVariables.get('accessToken');",
+              "if (!token) { throw new Error('Falta accessToken. Ejecuta primero Auth - Login paciente para contrato.'); }"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('appointments/mine acepta page/p_page/limit/p_limit sin HTTP_400', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('respuesta mantiene contrato paginado', function () {",
+              "  pm.expect(json).to.have.property('data');",
+              "  pm.expect(json.data).to.be.an('array');",
+              "  pm.expect(json).to.have.property('pagination');",
+              "  pm.expect(json.pagination.page).to.eql(1);",
+              "  pm.expect(json.pagination.limit || json.pagination.pageSize).to.eql(20);",
+              "});",
+              "",
+              "pm.test('no aparece el error reportado de p_page/p_limit sobrantes', function () {",
+              "  const payload = JSON.stringify(json);",
+              "  pm.expect(payload).to.not.include('property p_page should not exist');",
+              "  pm.expect(payload).to.not.include('property p_limit should not exist');",
+              "  pm.expect(json).to.not.have.property('error');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/appointments/mine?page=1&p_page=1&limit=20&p_limit=20",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "appointments",
+            "mine"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "p_page",
+              "value": "1",
+              "description": "Alias legacy aceptado por compatibilidad. page tiene prioridad si ambos llegan."
+            },
+            {
+              "key": "limit",
+              "value": "20"
+            },
+            {
+              "key": "p_limit",
+              "value": "20",
+              "description": "Alias legacy aceptado por compatibilidad. limit tiene prioridad si ambos llegan."
+            }
+          ]
+        },
+        "description": "Caso de compatibilidad que replica el problema real reportado: llegan page/p_page/limit/p_limit juntos. El endpoint debe normalizarlo y responder 200, no 400."
+      },
+      "response": []
+    },
+    {
+      "name": "Appointments mine - OK solo con p_page y p_limit",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const token = pm.collectionVariables.get('accessToken');",
+              "if (!token) { throw new Error('Falta accessToken. Ejecuta primero Auth - Login paciente para contrato.'); }"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('appointments/mine acepta aliases legacy sin page/limit canónicos', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test('p_page y p_limit se normalizan a paginación real', function () {",
+              "  pm.expect(json).to.have.property('data');",
+              "  pm.expect(json.data).to.be.an('array');",
+              "  pm.expect(json).to.have.property('pagination');",
+              "  pm.expect(json.pagination.page).to.eql(2);",
+              "  pm.expect(json.pagination.limit || json.pagination.pageSize).to.eql(5);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/appointments/mine?p_page=2&p_limit=5",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "appointments",
+            "mine"
+          ],
+          "query": [
+            {
+              "key": "p_page",
+              "value": "2",
+              "description": "Alias legacy de page."
+            },
+            {
+              "key": "p_limit",
+              "value": "5",
+              "description": "Alias legacy de limit."
+            }
+          ]
+        },
+        "description": "Caso de compatibilidad puro: no llegan page/limit, solo p_page/p_limit. Debe responder 200 y normalizar pagination.page/pagination.limit."
+      },
+      "response": []
+    },
+    {
+      "name": "Appointments mine - 400 si llega query param desconocido",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const token = pm.collectionVariables.get('accessToken');",
+              "if (!token) { throw new Error('Falta accessToken. Ejecuta primero Auth - Login paciente para contrato.'); }"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('backend rechaza query params no declarados con 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "const payload = JSON.stringify(json);",
+              "pm.test('mensaje identifica el parámetro sobrante', function () {",
+              "  pm.expect(payload).to.include('property debug should not exist');",
+              "});",
+              "pm.test('contrato de error usa HTTP_400', function () {",
+              "  pm.expect(json.error.code).to.eql('HTTP_400');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/appointments/mine?page=1&limit=20&debug=true",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "appointments",
+            "mine"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "20"
+            },
+            {
+              "key": "debug",
+              "value": "true",
+              "description": "Parámetro no declarado. Debe producir 400."
+            }
+          ]
+        },
+        "description": "Caso negativo real: los aliases conocidos p_page/p_limit sí se aceptan, pero cualquier query param desconocido debe seguir fallando para no abrir contrato de API sin control."
+      },
+      "response": []
+    }
+  ]
+}
