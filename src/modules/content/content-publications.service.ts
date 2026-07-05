@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Includeable } from 'sequelize';
 import { ContentAuthor, ContentCategory, ContentPublication, ContentTag } from '@/database/models';
-import { buildPagination, toLimitOffset } from '@/common/pagination/pagination.dto';
+import { buildPagination, buildSafeOrder, toLimitOffset } from '@/common/pagination/pagination.dto';
 import { toSlug } from '@/common/utils/slug.util';
 import { ContentPublicationAuditService } from './content-publication-audit.service';
 import { ContentPublicationRelationsService } from './content-publication-relations.service';
@@ -36,7 +36,28 @@ export class ContentPublicationsService {
       distinct: true,
       where: buildAdminPublicationWhere(query),
       include: this.baseInclude,
-      order: [[query.sort, query.order]],
+      order: buildSafeOrder(
+        query,
+        {
+          id: 'id',
+          title: 'title',
+          slug: 'slug',
+          status: 'status',
+          publicationType: 'publicationType',
+          publication_type: 'publicationType',
+          accessType: 'accessType',
+          access_type: 'accessType',
+          publishedAt: 'publishedAt',
+          published_at: 'publishedAt',
+          scheduledAt: 'scheduledAt',
+          scheduled_at: 'scheduledAt',
+          createdAt: 'createdAt',
+          created_at: 'createdAt',
+          updatedAt: 'updatedAt',
+          updated_at: 'updatedAt',
+        },
+        'createdAt',
+      ),
     });
     return { items: rows.map(toPublicationCard), pagination: buildPagination(query, count) };
   }

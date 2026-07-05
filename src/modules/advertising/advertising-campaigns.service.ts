@@ -8,7 +8,12 @@ import {
   AdsCompany,
   AdsPlacement,
 } from '@/database/models';
-import { buildPagination, toLimitOffset } from '@/common/pagination/pagination.dto';
+import {
+  buildPagination,
+  buildSafeOrder,
+  getEffectiveStatusFilter,
+  toLimitOffset,
+} from '@/common/pagination/pagination.dto';
 import { AuditService } from '../audit/audit.service';
 import { AdvertisingQueryDto } from './dto/advertising-query.dto';
 import {
@@ -18,6 +23,39 @@ import {
 } from './dto/campaign.dto';
 import { toAdsCampaignDto } from './mappers/advertising.mapper';
 import { assertCampaignDates } from './policies/campaign-date.policy';
+
+
+const CAMPAIGN_STATUS_ALIASES: Record<string, string> = {
+  ACTIVE: 'ACTIVE',
+  ACTIVO: 'ACTIVE',
+  ACTIVA: 'ACTIVE',
+  DRAFT: 'DRAFT',
+  BORRADOR: 'DRAFT',
+  PAUSED: 'PAUSED',
+  PAUSADO: 'PAUSED',
+  PAUSADA: 'PAUSED',
+  ENDED: 'ENDED',
+  FINALIZADO: 'ENDED',
+  FINALIZADA: 'ENDED',
+  CANCELLED: 'CANCELLED',
+  CANCELADO: 'CANCELLED',
+  CANCELADA: 'CANCELLED',
+  REJECTED: 'REJECTED',
+  RECHAZADO: 'REJECTED',
+  RECHAZADA: 'REJECTED',
+};
+
+function normalizeCampaignStatusFilter(value?: string) {
+  if (!value) return undefined;
+  const token = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_');
+  if (!token || ['ALL', 'TODOS', 'TODAS', '*'].includes(token)) return undefined;
+  return CAMPAIGN_STATUS_ALIASES[token] ?? token;
+}
 
 @Injectable()
 export class AdvertisingCampaignsService {
@@ -37,15 +75,36 @@ export class AdvertisingCampaignsService {
   ) {}
 
   async list(query: AdvertisingQueryDto) {
+    const status = normalizeCampaignStatusFilter(getEffectiveStatusFilter(query));
     const { rows, count } = await this.campaignModel.findAndCountAll({
       ...toLimitOffset(query),
       distinct: true,
       where: {
-        ...(query.status ? { status: query.status } : {}),
+        ...(status ? { status } : {}),
         ...(query.companyId ? { companyId: query.companyId } : {}),
       },
       include: this.include,
-      order: [[query.sort, query.order]],
+      order: buildSafeOrder(
+        query,
+        {
+          id: 'id',
+          name: 'name',
+          status: 'status',
+          objective: 'objective',
+          startsAt: 'startsAt',
+          starts_at: 'startsAt',
+          endsAt: 'endsAt',
+          ends_at: 'endsAt',
+          budgetAmount: 'budgetAmount',
+          budget_amount: 'budgetAmount',
+          priority: 'priority',
+          createdAt: 'createdAt',
+          created_at: 'createdAt',
+          updatedAt: 'updatedAt',
+          updated_at: 'updatedAt',
+        },
+        'createdAt',
+      ),
     });
     return { items: rows.map(toAdsCampaignDto), pagination: buildPagination(query, count) };
   }

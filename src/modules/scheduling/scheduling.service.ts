@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import { DateTime } from 'luxon';
 import {
   Appointment,
@@ -16,6 +16,8 @@ import {
 } from './dto/scheduling.dto';
 
 const ACTIVE_APPOINTMENT_STATUSES = ['REQUESTED', 'CONFIRMED'];
+
+type UnavailableInterval = { startAt: Date | string; endAt: Date | string };
 
 @Injectable()
 export class SchedulingService {
@@ -138,22 +140,21 @@ export class SchedulingService {
     });
     const startUtc = from.toUTC().toJSDate();
     const endUtc = to.toUTC().toJSDate();
-    const blocks = await this.blockedModel.findAll({
-      where: {
-        therapistUserId: query.therapistUserId,
-        status: 'ACTIVE',
-        startAt: { [Op.lt]: endUtc },
-        endAt: { [Op.gt]: startUtc },
+    const unavailable = await this.scheduleModel.sequelize!.query<UnavailableInterval>(
+      `SELECT start_at AS "startAt", end_at AS "endAt"
+       FROM v_therapist_unavailable_intervals
+       WHERE therapist_user_id = :therapistUserId
+         AND start_at < :endUtc
+         AND end_at > :startUtc`,
+      {
+        replacements: {
+          therapistUserId: query.therapistUserId,
+          startUtc,
+          endUtc,
+        },
+        type: QueryTypes.SELECT,
       },
-    });
-    const appointments = await this.appointmentModel.findAll({
-      where: {
-        therapistUserId: query.therapistUserId,
-        status: ACTIVE_APPOINTMENT_STATUSES,
-        scheduledStartAt: { [Op.lt]: endUtc },
-        scheduledEndAt: { [Op.gt]: startUtc },
-      } as any,
-    });
+    );
 
     const duration = product.durationMinutes;
     const slots: { startAt: string; endAt: string; timezone: string }[] = [];
@@ -176,8 +177,7 @@ export class SchedulingService {
           const slotStart = cursor.toUTC();
           const slotEnd = cursor.plus({ minutes: duration }).toUTC();
           if (
-            !this.overlapsAny(slotStart.toJSDate(), slotEnd.toJSDate(), blocks) &&
-            !this.overlapsAny(slotStart.toJSDate(), slotEnd.toJSDate(), appointments)
+            !this.overlapsAny(slotStart.toJSDate(), slotEnd.toJSDate(), unavailable)
           ) {
             slots.push({
               startAt: slotStart.toISO()!,
@@ -215,11 +215,18 @@ export class SchedulingService {
   private overlapsAny(
     start: Date,
     end: Date,
-    list: Array<{ startAt?: Date; endAt?: Date; scheduledStartAt?: Date; scheduledEndAt?: Date }>,
+    list: Array<{
+      startAt?: Date | string;
+      endAt?: Date | string;
+      scheduledStartAt?: Date | string;
+      scheduledEndAt?: Date | string;
+    }>,
   ) {
     return list.some((item) => {
-      const itemStart = item.startAt ?? item.scheduledStartAt!;
-      const itemEnd = item.endAt ?? item.scheduledEndAt!;
+      const rawStart = item.startAt ?? item.scheduledStartAt!;
+      const rawEnd = item.endAt ?? item.scheduledEndAt!;
+      const itemStart = rawStart instanceof Date ? rawStart : new Date(rawStart);
+      const itemEnd = rawEnd instanceof Date ? rawEnd : new Date(rawEnd);
       return itemStart < end && itemEnd > start;
     });
   }

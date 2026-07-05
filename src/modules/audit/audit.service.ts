@@ -5,6 +5,7 @@ import { AuditLog } from '@/database/models';
 import {
   PaginationQueryDto,
   buildPagination,
+  buildSafeOrder,
   toLimitOffset,
 } from '@/common/pagination/pagination.dto';
 
@@ -31,7 +32,22 @@ export class AuditService {
   async list(query: PaginationQueryDto) {
     const { rows, count } = await this.auditModel.findAndCountAll({
       ...toLimitOffset(query),
-      order: [[query.sort, query.order]],
+      order: buildSafeOrder(
+        query,
+        {
+          id: 'id',
+          action: 'action',
+          entityType: 'entityType',
+          entity_type: 'entityType',
+          entityId: 'entityId',
+          entity_id: 'entityId',
+          actorUserId: 'actorUserId',
+          actor_user_id: 'actorUserId',
+          createdAt: 'createdAt',
+          created_at: 'createdAt',
+        },
+        'createdAt',
+      ),
     });
     return { items: rows, pagination: buildPagination(query, count) };
   }

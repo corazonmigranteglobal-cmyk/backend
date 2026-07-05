@@ -1,15 +1,94 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
-import { AdminProfile, PatientProfile, TherapistProfile, User } from '@/database/models';
+import { AdminProfile, PatientProfile, Role, TherapistProfile, User } from '@/database/models';
 import {
   PaginationQueryDto,
   buildPagination,
+  buildSafeOrder,
+  getEffectiveRoleFilter,
+  getEffectiveSearch,
+  getEffectiveStatusFilter,
   toLimitOffset,
 } from '@/common/pagination/pagination.dto';
 import { RolesPermissionsService } from '../roles-permissions/roles-permissions.service';
 import { AuditService } from '../audit/audit.service';
 import { UpdatePatientProfileDto, UpdateTherapistProfileDto } from './dto/update-profile.dto';
+
+const IGNORED_FILTER_VALUES = new Set(['ALL', 'TODOS', 'TODAS', '*']);
+
+const STATUS_ALIASES: Record<string, string> = {
+  ACTIVE: 'ACTIVE',
+  ACTIVO: 'ACTIVE',
+  ACTIVA: 'ACTIVE',
+  ENABLED: 'ACTIVE',
+  HABILITADO: 'ACTIVE',
+  HABILITADA: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  INACTIVO: 'INACTIVE',
+  INACTIVA: 'INACTIVE',
+  DISABLED: 'INACTIVE',
+  DESHABILITADO: 'INACTIVE',
+  DESHABILITADA: 'INACTIVE',
+  BLOCKED: 'BLOCKED',
+  BLOQUEADO: 'BLOCKED',
+  BLOQUEADA: 'BLOCKED',
+  LOCKED: 'BLOCKED',
+  PENDING: 'PENDING',
+  PENDIENTE: 'PENDING',
+  PENDING_APPROVAL: 'PENDING_APPROVAL',
+  PENDIENTE_APROBACION: 'PENDING_APPROVAL',
+  PENDIENTE_DE_APROBACION: 'PENDING_APPROVAL',
+};
+
+const ROLE_ALIASES: Record<string, string> = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  SUPERADMIN: 'SUPER_ADMIN',
+  ADMINISTRADOR_TOTAL: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
+  ADMINISTRADOR: 'ADMIN',
+  ACCOUNTANT: 'ACCOUNTANT',
+  CONTADOR: 'ACCOUNTANT',
+  CONTADORA: 'ACCOUNTANT',
+  THERAPIST: 'THERAPIST',
+  TERAPEUTA: 'THERAPIST',
+  PSICOLOGO: 'THERAPIST',
+  PSICOLOGA: 'THERAPIST',
+  PATIENT: 'PATIENT',
+  PACIENTE: 'PATIENT',
+};
+
+const ROLE_LABELS_ES: Record<string, string> = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
+  ACCOUNTANT: 'CONTADOR',
+  THERAPIST: 'TERAPEUTA',
+  PATIENT: 'PACIENTE',
+};
+
+function normalizeToken(value?: string) {
+  if (!value) return undefined;
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_');
+}
+
+function normalizeFilter(value?: string, aliases?: Record<string, string>) {
+  const token = normalizeToken(value);
+  if (!token || IGNORED_FILTER_VALUES.has(token)) return undefined;
+  return aliases?.[token] ?? token;
+}
+
+function displayNameFromProfiles(user: User) {
+  const profile = user.patientProfile ?? user.therapistProfile ?? user.adminProfile;
+  const firstName = String((profile as any)?.firstName ?? '').trim();
+  const lastName = String((profile as any)?.lastName ?? '').trim();
+  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+  return fullName || user.email;
+}
 
 @Injectable()
 export class UsersService {
@@ -91,19 +170,91 @@ export class UsersService {
   }
 
   async list(query: PaginationQueryDto) {
-    const where = query.search ? { email: { [Op.iLike]: `%${query.search}%` } } : undefined;
+    const where: any = {};
+    const search = getEffectiveSearch(query);
+    const normalizedStatus = normalizeFilter(getEffectiveStatusFilter(query), STATUS_ALIASES);
+    const normalizedRole = normalizeFilter(getEffectiveRoleFilter(query), ROLE_ALIASES);
+
+    if (normalizedStatus) {
+      where.status = normalizedStatus;
+    }
+
+    if (search) {
+      const term = `%${search}%`;
+      where[Op.or] = [
+        { email: { [Op.iLike]: term } },
+        { '$roles.code$': { [Op.iLike]: term } },
+        { '$roles.name$': { [Op.iLike]: term } },
+        { '$patientProfile.firstName$': { [Op.iLike]: term } },
+        { '$patientProfile.lastName$': { [Op.iLike]: term } },
+        { '$therapistProfile.firstName$': { [Op.iLike]: term } },
+        { '$therapistProfile.lastName$': { [Op.iLike]: term } },
+        { '$therapistProfile.title$': { [Op.iLike]: term } },
+        { '$therapistProfile.mainSpecialty$': { [Op.iLike]: term } },
+        { '$adminProfile.firstName$': { [Op.iLike]: term } },
+        { '$adminProfile.lastName$': { [Op.iLike]: term } },
+      ];
+    }
+
+    const include: any[] = [
+      {
+        model: Role,
+        attributes: ['id', 'code', 'name'],
+        through: { attributes: [] },
+        required: Boolean(normalizedRole),
+        ...(normalizedRole ? { where: { code: normalizedRole } } : {}),
+      },
+      { model: PatientProfile, required: false },
+      { model: TherapistProfile, required: false },
+      { model: AdminProfile, required: false },
+    ];
+
     const { rows, count } = await this.userModel.findAndCountAll({
       where,
+      include,
+      distinct: true,
+      subQuery: false,
       ...toLimitOffset(query),
-      order: [[query.sort, query.order]],
+      order: buildSafeOrder(
+        query,
+        {
+          id: 'id',
+          email: 'email',
+          status: 'status',
+          createdAt: 'createdAt',
+          created_at: 'createdAt',
+          updatedAt: 'updatedAt',
+          updated_at: 'updatedAt',
+          lastLoginAt: 'lastLoginAt',
+          last_login_at: 'lastLoginAt',
+          emailVerifiedAt: 'emailVerifiedAt',
+          email_verified_at: 'emailVerifiedAt',
+        },
+        'createdAt',
+      ),
     });
+
     return {
-      items: rows.map((u) => ({
-        id: u.id,
-        email: u.email,
-        status: u.status,
-        createdAt: u.createdAt,
-      })),
+      items: rows.map((u) => {
+        const roleCodes = (u.roles ?? []).map((role) => role.code).filter(Boolean);
+        const primaryRole = roleCodes[0] ?? null;
+        return {
+          id: u.id,
+          email: u.email,
+          name: displayNameFromProfiles(u),
+          fullName: displayNameFromProfiles(u),
+          status: u.status,
+          role: primaryRole,
+          rol: primaryRole ? ROLE_LABELS_ES[primaryRole] ?? primaryRole : null,
+          roles: roleCodes,
+          rolesDisplay: roleCodes.map((role) => ROLE_LABELS_ES[role] ?? role),
+          patientProfile: u.patientProfile,
+          therapistProfile: u.therapistProfile,
+          adminProfile: u.adminProfile,
+          createdAt: u.createdAt,
+          updatedAt: u.updatedAt,
+        };
+      }),
       pagination: buildPagination(query, count),
     };
   }
