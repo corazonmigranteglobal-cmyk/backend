@@ -49,8 +49,6 @@ tags:
   - name: Public CMS
   - name: Admin CMS
   - name: Publications public
-  - name: Content subscriptions
-  - name: Premium content
   - name: Content admin
   - name: Homepage public
   - name: Homepage admin
@@ -271,6 +269,7 @@ paths:
         - $ref: '#/components/parameters/PLimit'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
         - $ref: '#/components/parameters/Sort'
         - $ref: '#/components/parameters/SortBy'
         - $ref: '#/components/parameters/Order'
@@ -295,6 +294,7 @@ paths:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
 
@@ -308,6 +308,7 @@ paths:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
 
@@ -320,6 +321,7 @@ paths:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
     post:
@@ -358,6 +360,7 @@ paths:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
     post:
@@ -542,7 +545,11 @@ paths:
         - $ref: '#/components/parameters/PLimit'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/SortBy'
         - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/SortDir'
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
         '401': { $ref: '#/components/responses/UnauthorizedError' }
@@ -573,6 +580,7 @@ paths:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
 
@@ -644,40 +652,6 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
         '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
-  /public-views/{id}:
-    get:
-      tags: [Public CMS]
-      summary: Obtener vista pública legacy por ID
-      description: 'Público. Alias de compatibilidad. Ejemplo: `1` mapea a la landing/inicio.'
-      security: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string, example: '1' }
-      responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
-  /public-views/{id}/elements/{code}:
-    get:
-      tags: [Public CMS]
-      summary: Obtener elemento de vista pública legacy
-      description: Público. Alias para frontends antiguos que consultan elementos específicos por código.
-      security: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string, example: '1' }
-        - name: code
-          in: path
-          required: true
-          schema: { type: string, example: hero }
-      responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
         '404': { $ref: '#/components/responses/NotFoundError' }
 
   /admin/cms/pages:
@@ -813,104 +787,6 @@ paths:
         '200': { $ref: '#/components/responses/OkEnvelope' }
         '400': { $ref: '#/components/responses/ValidationError' }
 
-  /publications/subscribers:
-    post:
-      tags: [Content subscriptions]
-      summary: Suscribirse al boletín/noticias
-      description: |
-        Público. Registra o reactiva un correo como suscriptor de contenido.
-        Crea suscripción `FREE` por defecto; la asignación `PREMIUM` se realiza desde administración.
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/SubscribeNewsletterRequest' }
-            example:
-              email: lector@correo.com
-              displayName: María Pérez
-              source: homepage_footer
-              consentMetadata:
-                acceptedPrivacyPolicy: true
-                channel: web
-      responses:
-        '201':
-          description: Suscripción registrada o actualizada.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/EnvelopeObject'
-                  - type: object
-                    properties:
-                      data: { $ref: '#/components/schemas/ContentSubscriber' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-
-  /me/news-subscription:
-    get:
-      tags: [Content subscriptions]
-      summary: Obtener mi estado de suscripción a noticias
-      description: Requiere autenticación. Devuelve la suscripción vinculada al usuario o a su correo.
-      responses:
-        '200':
-          description: Estado de suscripción del usuario autenticado.
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/EnvelopeObject'
-                  - type: object
-                    properties:
-                      data: { $ref: '#/components/schemas/ContentSubscriberStatus' }
-        '401': { $ref: '#/components/responses/UnauthorizedError' }
-
-  /premium/publications/news/{slug}:
-    get:
-      tags: [Premium content]
-      summary: Obtener noticia premium por slug
-      description: |
-        Requiere autenticación. Si la publicación tiene `accessType=PREMIUM`, exige suscripción premium activa.
-        Las publicaciones públicas también pueden resolverse por esta ruta autenticada con cuerpo completo.
-      parameters:
-        - name: slug
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '401': { $ref: '#/components/responses/UnauthorizedError' }
-        '403':
-          description: Suscripción premium requerida o insuficiente.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
-              example:
-                error:
-                  code: CONTENT_PREMIUM_SUBSCRIPTION_REQUIRED
-                  message: Esta publicación requiere una suscripción premium activa.
-                  details: []
-                meta:
-                  requestId: 315c2096-df71-447a-92ad-2f9329316896
-                  timestamp: '2026-07-05T15:13:13.536Z'
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
-  /premium/publications/columns/{slug}:
-    get:
-      tags: [Premium content]
-      summary: Obtener columna premium por slug
-      description: |
-        Requiere autenticación. Si la publicación tiene `accessType=PREMIUM`, exige suscripción premium activa.
-      parameters:
-        - name: slug
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '401': { $ref: '#/components/responses/UnauthorizedError' }
-        '403': { $ref: '#/components/responses/ForbiddenError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
   /admin/content/publications:
     get:
       tags: [Content admin]
@@ -925,6 +801,7 @@ paths:
         - $ref: '#/components/parameters/Sort'
         - $ref: '#/components/parameters/Order'
         - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
         - name: status
           in: query
           schema: { type: string, enum: [DRAFT, IN_REVIEW, SCHEDULED, PUBLISHED, ARCHIVED] }
@@ -980,7 +857,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreatePublicationRequest' }
+            schema: { $ref: '#/components/schemas/UpdatePublicationRequest' }
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
         '400': { $ref: '#/components/responses/ValidationError' }
@@ -1031,63 +908,6 @@ paths:
         '400': { $ref: '#/components/responses/ValidationError' }
         '404': { $ref: '#/components/responses/NotFoundError' }
 
-  /admin/content/subscribers:
-    get:
-      tags: [Content admin]
-      summary: Listar suscriptores de contenido
-      description: Requiere `content:read`. Permite auditar usuarios FREE/PREMIUM y fechas de vigencia.
-      parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PPage'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PLimit'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Sort'
-        - $ref: '#/components/parameters/Order'
-      responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-    post:
-      tags: [Content admin]
-      summary: Crear o registrar suscriptor desde administración
-      description: Requiere `content:write`. Permite vincular usuario existente y asignar tier premium.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/UpsertContentSubscriberRequest' }
-            example:
-              email: lector.premium@correo.com
-              displayName: Lector Premium
-              status: ACTIVE
-              subscriptionTier: PREMIUM
-              premiumUntil: '2026-12-31T23:59:59.000Z'
-              source: admin
-      responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-
-  /admin/content/subscribers/{id}:
-    patch:
-      tags: [Content admin]
-      summary: Actualizar suscriptor de contenido
-      description: Requiere `content:write`. Cambia estado, tier, correo vinculado, vigencia premium o metadata.
-      parameters:
-        - $ref: '#/components/parameters/Id'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/UpdateContentSubscriberRequest' }
-            example:
-              subscriptionTier: PREMIUM
-              premiumUntil: '2027-01-31T23:59:59.000Z'
-              status: ACTIVE
-      responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
   /admin/content/categories:
     get:
       tags: [Content admin]
@@ -1118,7 +938,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateContentCategoryRequest' }
+            schema: { $ref: '#/components/schemas/UpdateContentCategoryRequest' }
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
         '400': { $ref: '#/components/responses/ValidationError' }
@@ -1175,7 +995,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateContentAuthorRequest' }
+            schema: { $ref: '#/components/schemas/UpdateContentAuthorRequest' }
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
         '400': { $ref: '#/components/responses/ValidationError' }
@@ -1277,7 +1097,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateAdsCompanyRequest' }
+            schema: { $ref: '#/components/schemas/UpdateAdsCompanyRequest' }
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
 
@@ -1308,7 +1128,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateAdsPlacementRequest' }
+            schema: { $ref: '#/components/schemas/UpdateAdsPlacementRequest' }
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
 
@@ -1318,7 +1138,16 @@ paths:
       summary: Listar campañas publicitarias
       parameters:
         - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PPage'
         - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PLimit'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/SortDir'
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
         - name: status
           in: query
           schema: { type: string, enum: [DRAFT, ACTIVE, PAUSED, ENDED, CANCELLED, REJECTED] }
@@ -1355,7 +1184,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateAdsCampaignRequest' }
+            schema: { $ref: '#/components/schemas/UpdateAdsCampaignRequest' }
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
 
@@ -1410,7 +1239,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateAdsCreativeRequest' }
+            schema: { $ref: '#/components/schemas/UpdateAdsCreativeRequest' }
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
 
@@ -1421,7 +1250,16 @@ paths:
       description: Requiere `accounting:read`.
       parameters:
         - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PPage'
         - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PLimit'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/SortDir'
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
     post:
@@ -1442,7 +1280,16 @@ paths:
       summary: Listar cuentas contables
       parameters:
         - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PPage'
         - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PLimit'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/SortDir'
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
     post:
@@ -1503,7 +1350,16 @@ paths:
       description: Requiere rol `ADMIN` o `SUPER_ADMIN` y permiso `analytics:read`.
       parameters:
         - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PPage'
         - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PLimit'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/SortDir'
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
 
@@ -1514,7 +1370,16 @@ paths:
       description: Requiere `messaging:read`. Alias también disponible bajo `/admin/mensajeria/outbox`.
       parameters:
         - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PPage'
         - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PLimit'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/SortDir'
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
 
@@ -1553,7 +1418,16 @@ paths:
       summary: Alias español para listar outbox
       parameters:
         - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PPage'
         - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PLimit'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/SortDir'
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
 
@@ -1594,6 +1468,7 @@ paths:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Q'
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
 
@@ -1654,6 +1529,13 @@ components:
       in: query
       required: false
       schema: { type: string }
+      description: Búsqueda textual canónica.
+    Q:
+      name: q
+      in: query
+      required: false
+      schema: { type: string }
+      description: Alias corto para búsqueda. `search` tiene prioridad cuando ambos llegan.
     Sort:
       name: sort
       in: query
@@ -1797,9 +1679,9 @@ components:
       required: [data, meta]
       properties:
         data:
-          nullable: true
           oneOf:
             - type: object
+              nullable: true
             - type: array
               items: {}
             - type: string
@@ -1861,9 +1743,10 @@ components:
         email: { type: string, format: email }
     PasswordResetConfirmRequest:
       type: object
-      required: [token, newPassword]
+      required: [email, pin, newPassword]
       properties:
-        token: { type: string }
+        email: { type: string, format: email }
+        pin: { type: string, minLength: 6, maxLength: 6, example: '123456' }
         newPassword: { type: string, format: password, minLength: 8 }
     AuthSession:
       type: object
@@ -1906,6 +1789,11 @@ components:
         mainSpecialty: { type: string }
         bio: { type: string }
         personalPhrase: { type: string }
+        youtubeUrl: { type: string, format: uri }
+        licenseNumber: { type: string }
+        country: { type: string }
+        city: { type: string }
+        baseSessionPrice: { type: number, minimum: 0 }
     UpdatePatientProfileRequest:
       type: object
       properties:
@@ -1957,8 +1845,8 @@ components:
           minimum: 0
           maximum: 6
           description: Día de semana. 0 domingo, 1 lunes, ..., 6 sábado.
-        startTime: { type: string, pattern: '^\\d{2}:\\d{2}$', example: '09:00' }
-        endTime: { type: string, pattern: '^\\d{2}:\\d{2}$', example: '13:00' }
+        startTime: { type: string, pattern: '^\d{2}:\d{2}$', example: '09:00' }
+        endTime: { type: string, pattern: '^\d{2}:\d{2}$', example: '13:00' }
         timezone: { type: string, example: America/La_Paz }
         effectiveFrom: { type: string, format: date, example: '2026-07-01' }
         effectiveTo: { type: string, format: date, nullable: true }
@@ -2009,8 +1897,8 @@ components:
       properties:
         slug: { type: string, example: inicio }
         title: { type: string }
-        status: { type: string, enum: [DRAFT, PUBLISHED, ARCHIVED] }
-        metadata: { type: object, additionalProperties: true }
+        status: { type: string, enum: [DRAFT, PUBLISHED] }
+        seoMetadata: { type: object, additionalProperties: true }
     CreateCmsElementRequest:
       type: object
       required: [code, type, content]
@@ -2046,72 +1934,30 @@ components:
           maxItems: 20
           items: { type: string, format: uuid }
         seoMetadata: { type: object, additionalProperties: true }
-    SubscribeNewsletterRequest:
-      type: object
-      required: [email]
-      properties:
-        email: { type: string, format: email, example: lector@correo.com }
-        displayName: { type: string, example: María Pérez }
-        source: { type: string, example: homepage_footer }
-        consentMetadata:
-          type: object
-          additionalProperties: true
-          example:
-            acceptedPrivacyPolicy: true
-            channel: web
-
-    UpsertContentSubscriberRequest:
-      allOf:
-        - $ref: '#/components/schemas/SubscribeNewsletterRequest'
-        - type: object
-          properties:
-            userId: { type: string, format: uuid }
-            status: { type: string, enum: [ACTIVE, UNSUBSCRIBED, SUSPENDED], default: ACTIVE }
-            subscriptionTier: { type: string, enum: [FREE, PREMIUM], default: FREE }
-            premiumUntil:
-              type: string
-              format: date-time
-              description: Fecha de vencimiento de premium. Si está vencida, no habilita contenido premium.
-            metadata: { type: object, additionalProperties: true }
-
-    UpdateContentSubscriberRequest:
+    UpdatePublicationRequest:
       type: object
       properties:
-        userId: { type: string, format: uuid }
-        email: { type: string, format: email }
-        displayName: { type: string }
-        status: { type: string, enum: [ACTIVE, UNSUBSCRIBED, SUSPENDED] }
-        subscriptionTier: { type: string, enum: [FREE, PREMIUM] }
-        premiumUntil: { type: string, format: date-time }
-        source: { type: string }
-        consentMetadata: { type: object, additionalProperties: true }
-        metadata: { type: object, additionalProperties: true }
-
-    ContentSubscriber:
-      type: object
-      properties:
-        id: { type: string, format: uuid }
-        userId: { type: string, format: uuid, nullable: true }
-        email: { type: string, format: email }
-        displayName: { type: string, nullable: true }
-        status: { type: string, enum: [ACTIVE, UNSUBSCRIBED, SUSPENDED] }
-        subscriptionTier: { type: string, enum: [FREE, PREMIUM] }
-        premiumUntil: { type: string, format: date-time, nullable: true }
-        source: { type: string, nullable: true }
-        consentMetadata: { type: object, additionalProperties: true }
-        metadata: { type: object, additionalProperties: true }
-        createdAt: { type: string, format: date-time }
-        updatedAt: { type: string, format: date-time }
-
-    ContentSubscriberStatus:
-      allOf:
-        - $ref: '#/components/schemas/ContentSubscriber'
-        - type: object
-          properties:
-            isPremiumActive:
-              type: boolean
-              description: Verdadero solo si `subscriptionTier=PREMIUM`, `status=ACTIVE` y `premiumUntil` no está vencido.
-
+        authorId: { type: string, format: uuid }
+        categoryId: { type: string, format: uuid }
+        coverFileId: { type: string, format: uuid }
+        title: { type: string, minLength: 4, maxLength: 220 }
+        slug:
+          type: string
+          minLength: 4
+          maxLength: 240
+        summary: { type: string, minLength: 10, maxLength: 1000 }
+        body: { type: string, minLength: 20, maxLength: 50000 }
+        audioTranscript: { type: string }
+        publicationType: { type: string, enum: [NEWS, COLUMN, OPINION, INTERVIEW, REPORT, ANALYSIS] }
+        accessType: { type: string, enum: [PUBLIC, PREMIUM, INTERNAL_ONLY] }
+        scheduledAt: { type: string, format: date-time }
+        commentsEnabled: { type: boolean }
+        reactionsEnabled: { type: boolean }
+        tagIds:
+          type: array
+          maxItems: 20
+          items: { type: string, format: uuid }
+        seoMetadata: { type: object, additionalProperties: true }
     CreateContentCategoryRequest:
       type: object
       required: [name]
@@ -2120,23 +1966,42 @@ components:
         slug: { type: string }
         description: { type: string }
         isActive: { type: boolean, default: true }
-        sortOrder: { type: integer, minimum: 0 }
+        sortOrder: { type: integer, minimum: 0, maximum: 10000 }
+    UpdateContentCategoryRequest:
+      type: object
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        slug: { type: string, minLength: 2, maxLength: 140 }
+        description: { type: string }
+        isActive: { type: boolean }
+        sortOrder: { type: integer, minimum: 0, maximum: 10000 }
     CreateContentTagRequest:
       type: object
       required: [name]
       properties:
-        name: { type: string }
-        slug: { type: string }
+        name: { type: string, minLength: 2, maxLength: 80 }
+        slug: { type: string, minLength: 2, maxLength: 100 }
     CreateContentAuthorRequest:
       type: object
       required: [displayName]
       properties:
-        displayName: { type: string }
-        slug: { type: string }
+        displayName: { type: string, minLength: 2, maxLength: 180 }
+        userId: { type: string, format: uuid }
+        headline: { type: string, minLength: 2, maxLength: 220 }
         bio: { type: string }
         avatarFileId: { type: string, format: uuid }
-        email: { type: string, format: email }
         status: { type: string, enum: [ACTIVE, INACTIVE] }
+        metadata: { type: object, additionalProperties: true }
+    UpdateContentAuthorRequest:
+      type: object
+      properties:
+        displayName: { type: string, minLength: 2, maxLength: 180 }
+        userId: { type: string, format: uuid }
+        headline: { type: string, minLength: 2, maxLength: 220 }
+        bio: { type: string }
+        avatarFileId: { type: string, format: uuid }
+        status: { type: string, enum: [ACTIVE, INACTIVE] }
+        metadata: { type: object, additionalProperties: true }
 
     UpdateHomepageLayoutRequest:
       type: object
@@ -2179,12 +2044,32 @@ components:
         contactPhone: { type: string }
         status: { type: string, enum: [ACTIVE, INACTIVE, BLOCKED] }
         metadata: { type: object, additionalProperties: true }
+    UpdateAdsCompanyRequest:
+      type: object
+      properties:
+        businessName: { type: string, minLength: 2, maxLength: 180 }
+        commercialName: { type: string, minLength: 2, maxLength: 180 }
+        taxId: { type: string }
+        contactName: { type: string }
+        contactEmail: { type: string, format: email }
+        contactPhone: { type: string }
+        status: { type: string, enum: [ACTIVE, INACTIVE, BLOCKED] }
+        metadata: { type: object, additionalProperties: true }
     CreateAdsPlacementRequest:
       type: object
       required: [code, name]
       properties:
         code: { type: string, example: home_hero }
         name: { type: string }
+        description: { type: string }
+        context: { type: string, enum: [HOME, ARTICLE, CATEGORY] }
+        isActive: { type: boolean }
+        dimensions: { type: object, additionalProperties: true }
+    UpdateAdsPlacementRequest:
+      type: object
+      properties:
+        code: { type: string, example: home_hero, minLength: 2, maxLength: 80 }
+        name: { type: string, minLength: 2, maxLength: 140 }
         description: { type: string }
         context: { type: string, enum: [HOME, ARTICLE, CATEGORY] }
         isActive: { type: boolean }
@@ -2206,6 +2091,21 @@ components:
           maxItems: 20
           items: { type: string, format: uuid }
         notes: { type: string }
+    UpdateAdsCampaignRequest:
+      type: object
+      properties:
+        companyId: { type: string, format: uuid }
+        name: { type: string, minLength: 2, maxLength: 180 }
+        objective: { type: string, enum: [AWARENESS, TRAFFIC, PUBLIC_SERVICE, SPONSORSHIP] }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        budgetAmount: { type: number, minimum: 0 }
+        priority: { type: integer, minimum: 1, maximum: 1000 }
+        placementIds:
+          type: array
+          maxItems: 20
+          items: { type: string, format: uuid }
+        notes: { type: string }
     SetAdsCampaignStatusRequest:
       type: object
       required: [status]
@@ -2221,6 +2121,20 @@ components:
         assetUrl: { type: string, format: uri }
         destinationUrl: { type: string, format: uri }
         altText: { type: string }
+        mimeType: { type: string }
+        width: { type: integer, minimum: 1 }
+        height: { type: integer, minimum: 1 }
+        sizeBytes: { type: integer, minimum: 0 }
+        isPrimary: { type: boolean }
+    UpdateAdsCreativeRequest:
+      type: object
+      properties:
+        title: { type: string, minLength: 2, maxLength: 180 }
+        mediaType: { type: string, enum: [IMAGE, VIDEO, HTML, NATIVE_CARD] }
+        fileId: { type: string, format: uuid }
+        assetUrl: { type: string, format: uri }
+        destinationUrl: { type: string, format: uri }
+        altText: { type: string, minLength: 2, maxLength: 220 }
         mimeType: { type: string }
         width: { type: integer, minimum: 1 }
         height: { type: integer, minimum: 1 }

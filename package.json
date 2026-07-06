@@ -39,7 +39,8 @@
     "smoke:publications": "node scripts/smoke-content-advertising.mjs --publications",
     "smoke:advertising": "node scripts/smoke-content-advertising.mjs --advertising",
     "smoke:homepage": "node scripts/smoke-content-advertising.mjs --homepage",
-    "smoke:newspaper-internal": "node scripts/smoke-content-advertising.mjs --all"
+    "smoke:newspaper-internal": "node scripts/smoke-content-advertising.mjs --all",
+    "smoke:validation-lax": "node scripts/check-validation-lax.mjs"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.21.0",
@@ -50,7 +51,6 @@
     "@nestjs/platform-express": "^11.1.27",
     "@nestjs/sequelize": "^11.0.1",
     "@nestjs/swagger": "^11.4.4",
-    "@nestjs/throttler": "^6.5.0",
     "@sendgrid/mail": "^8.1.4",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",

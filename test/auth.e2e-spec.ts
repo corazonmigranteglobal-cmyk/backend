@@ -10,7 +10,13 @@ describe('Auth e2e', () => {
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix(process.env.API_PREFIX ?? 'api/v1');
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: false,
+        forbidUnknownValues: false,
+        transform: true,
+        transformOptions: { enableImplicitConversion: true },
+      }),
     );
     await app.init();
   });
