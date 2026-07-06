@@ -5,7 +5,6 @@ import {
   IsISO8601,
   IsOptional,
   IsString,
-  IsUUID,
   Max,
   Min,
   Matches,
@@ -25,9 +24,28 @@ export class CreateBlockedTimeDto {
   @ApiPropertyOptional() @IsOptional() @IsString() reason?: string;
 }
 export class AvailabilityQueryDto {
-  @ApiProperty() @IsUUID() therapistUserId: string;
-  @ApiProperty() @IsUUID() productId: string;
-  @ApiProperty({ example: '2026-07-01' }) @IsDateString() from: string;
-  @ApiProperty({ example: '2026-07-14' }) @IsDateString() to: string;
-  @ApiProperty({ example: 'America/La_Paz' }) @IsString() timezone: string;
+  @ApiPropertyOptional({ description: 'UUID del usuario terapeuta. También se toleran aliases legacy en el servicio.' })
+  @IsOptional()
+  @IsString()
+  therapistUserId?: string;
+
+  @ApiPropertyOptional({ description: 'UUID del producto/servicio de terapia.' })
+  @IsOptional()
+  @IsString()
+  productId?: string;
+
+  @ApiPropertyOptional({ example: '2026-07-01', description: 'Fecha inicial. Acepta YYYY-MM-DD o ISO.' })
+  @IsOptional()
+  @IsString()
+  from?: string;
+
+  @ApiPropertyOptional({ example: '2026-07-14', description: 'Fecha final. Acepta YYYY-MM-DD o ISO.' })
+  @IsOptional()
+  @IsString()
+  to?: string;
+
+  @ApiPropertyOptional({ example: 'America/La_Paz' })
+  @IsOptional()
+  @IsString()
+  timezone?: string;
 }

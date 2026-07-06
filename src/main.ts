@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { mkdirSync } from 'fs';
@@ -29,6 +29,19 @@ async function bootstrap() {
       forbidUnknownValues: false,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
+      exceptionFactory: (errors) =>
+        new BadRequestException({
+          code: 'VALIDATION_ERROR',
+          message: 'La solicitud contiene datos con un formato inválido.',
+          details: errors.map((error) => ({
+            field: error.property,
+            constraints: error.constraints ?? {},
+            children: (error.children ?? []).map((child) => ({
+              field: child.property,
+              constraints: child.constraints ?? {},
+            })),
+          })),
+        }),
     }),
   );
   app.useGlobalFilters(new HttpExceptionFilter());

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, QueryTypes } from 'sequelize';
-import { DateTime } from 'luxon';
+import { DateTime, IANAZone } from 'luxon';
 import {
   Appointment,
   TherapistBlockedTime,
@@ -18,6 +18,50 @@ import {
 const ACTIVE_APPOINTMENT_STATUSES = ['REQUESTED', 'CONFIRMED'];
 
 type UnavailableInterval = { startAt: Date | string; endAt: Date | string };
+type NormalizedAvailabilityQuery = {
+  therapistUserId: string;
+  productId: string;
+  from: string;
+  to: string;
+  timezone: string;
+};
+
+const UUID_LIKE_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function firstNonEmptyString(
+  source: Record<string, unknown>,
+  keys: string[],
+): string | undefined {
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (Array.isArray(value)) {
+      const item = value.find((entry) => typeof entry === 'string' && entry.trim());
+      if (typeof item === 'string') return item.trim();
+    }
+  }
+  return undefined;
+}
+
+function normalizeIsoDate(value?: string): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  const dateOnly = trimmed.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (dateOnly) return dateOnly[1];
+
+  const parsed = DateTime.fromISO(trimmed, { setZone: true });
+  if (parsed.isValid) return parsed.toISODate() ?? undefined;
+
+  const jsDate = new Date(trimmed);
+  if (!Number.isNaN(jsDate.getTime())) return DateTime.fromJSDate(jsDate).toISODate() ?? undefined;
+
+  return undefined;
+}
+
+function normalizeTimezone(value?: string): string {
+  const timezone = value?.trim() || 'America/La_Paz';
+  return IANAZone.isValidZone(timezone) ? timezone : 'America/La_Paz';
+}
 
 @Injectable()
 export class SchedulingService {
@@ -115,7 +159,58 @@ export class SchedulingService {
     });
   }
 
-  async getAvailability(query: AvailabilityQueryDto) {
+  private normalizeAvailabilityQuery(query: AvailabilityQueryDto): NormalizedAvailabilityQuery {
+    const source = query as Record<string, unknown>;
+    const therapistUserId = firstNonEmptyString(source, [
+      'therapistUserId',
+      'therapistId',
+      'therapist_user_id',
+      'idTerapeuta',
+      'terapeutaId',
+    ]);
+    const productId = firstNonEmptyString(source, [
+      'productId',
+      'therapyProductId',
+      'product_id',
+      'serviceId',
+      'servicioId',
+    ]);
+    const from = normalizeIsoDate(
+      firstNonEmptyString(source, ['from', 'startDate', 'start', 'dateFrom', 'fechaDesde', 'fecha']),
+    );
+    const to =
+      normalizeIsoDate(
+        firstNonEmptyString(source, ['to', 'endDate', 'end', 'dateTo', 'fechaHasta']),
+      ) ?? from;
+    const timezone = normalizeTimezone(
+      firstNonEmptyString(source, ['timezone', 'timeZone', 'tz', 'zonaHoraria']),
+    );
+
+    const details: string[] = [];
+    if (!therapistUserId) details.push('therapistUserId es requerido.');
+    if (!productId) details.push('productId es requerido.');
+    if (!from) details.push('from debe ser una fecha válida, por ejemplo 2026-07-10.');
+    if (!to) details.push('to debe ser una fecha válida, por ejemplo 2026-07-10.');
+    if (therapistUserId && !UUID_LIKE_PATTERN.test(therapistUserId)) {
+      details.push('therapistUserId debe ser un UUID válido.');
+    }
+    if (productId && !UUID_LIKE_PATTERN.test(productId)) {
+      details.push('productId debe ser un UUID válido.');
+    }
+
+    if (details.length) {
+      throw new BadRequestException({
+        code: 'AVAILABILITY_QUERY_INVALID',
+        message: 'No se pudo consultar disponibilidad porque faltan datos obligatorios o algún valor no es válido.',
+        details,
+      });
+    }
+
+    return { therapistUserId: therapistUserId!, productId: productId!, from: from!, to: to!, timezone };
+  }
+
+  async getAvailability(rawQuery: AvailabilityQueryDto) {
+    const query = this.normalizeAvailabilityQuery(rawQuery);
     const product = await this.productModel.findByPk(query.productId);
     if (!product)
       throw new NotFoundException({
@@ -128,6 +223,13 @@ export class SchedulingService {
       throw new BadRequestException({
         code: 'AVAILABILITY_INVALID_RANGE',
         message: 'Rango de fechas inválido.',
+        details: [
+          `from=${query.from}`,
+          `to=${query.to}`,
+          `timezone=${query.timezone}`,
+          from.invalidExplanation ?? from.invalidReason ?? '',
+          to.invalidExplanation ?? to.invalidReason ?? '',
+        ].filter(Boolean),
       });
     if (to.diff(from, 'days').days > 31)
       throw new BadRequestException({
