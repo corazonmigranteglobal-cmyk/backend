@@ -23,6 +23,13 @@ info:
     - Resta bloqueos activos de agenda (`therapist_blocked_times`).
     - Resta citas activas/ocupadas (`appointments` con status `REQUESTED` o `CONFIRMED`).
     - El rango máximo soportado es 31 días.
+
+    Límites de uso (rate limiting):
+    - Límite global por IP: 120 solicitudes / 60s. Al excederlo, la API responde `429`
+      con `{ error: { code: "HTTP_429", ... } }`.
+    - `POST /auth/login`, `/auth/register/*`: 10 solicitudes / 60s por IP.
+    - `POST /auth/password-reset/request` y `/confirm`: 5 solicitudes / 60s por IP.
+    - El cuerpo de las solicitudes JSON está limitado a 2 MB (`413` si se excede).
 servers:
   - url: https://api.corazondemigrante.com/api/v1
     description: Producción
@@ -96,6 +103,7 @@ paths:
         '201': { $ref: '#/components/responses/CreatedEnvelope' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '409': { $ref: '#/components/responses/ConflictError' }
+        '429': { $ref: '#/components/responses/TooManyRequestsError' }
 
   /auth/register/therapist:
     post:
@@ -113,6 +121,7 @@ paths:
         '201': { $ref: '#/components/responses/CreatedEnvelope' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '409': { $ref: '#/components/responses/ConflictError' }
+        '429': { $ref: '#/components/responses/TooManyRequestsError' }
 
   /auth/login:
     post:
@@ -141,7 +150,9 @@ paths:
                     properties:
                       data:
                         $ref: '#/components/schemas/AuthSession'
+        '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/UnauthorizedError' }
+        '429': { $ref: '#/components/responses/TooManyRequestsError' }
 
   /auth/refresh:
     post:
@@ -173,6 +184,7 @@ paths:
               $ref: '#/components/schemas/RefreshTokenRequest'
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
 
   /auth/password-reset/request:
     post:
@@ -188,6 +200,8 @@ paths:
               $ref: '#/components/schemas/PasswordResetRequest'
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/TooManyRequestsError' }
 
   /auth/password-reset/confirm:
     post:
@@ -204,6 +218,7 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
         '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/TooManyRequestsError' }
 
   /me:
     get:
@@ -628,6 +643,7 @@ paths:
           schema: { type: string, example: inicio }
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '404': { $ref: '#/components/responses/NotFoundError' }
 
   /public-views/{id}:
@@ -676,6 +692,8 @@ paths:
             schema: { $ref: '#/components/schemas/CreateCmsPageRequest' }
       responses:
         '201': { $ref: '#/components/responses/CreatedEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409': { $ref: '#/components/responses/ConflictError' }
 
   /admin/cms/pages/{pageId}/elements:
     post:
@@ -693,6 +711,9 @@ paths:
             schema: { $ref: '#/components/schemas/CreateCmsElementRequest' }
       responses:
         '201': { $ref: '#/components/responses/CreatedEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+        '409': { $ref: '#/components/responses/ConflictError' }
 
   /publications/news:
     get:
@@ -718,6 +739,7 @@ paths:
           description: Búsqueda pública por título, resumen o cuerpo.
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
 
   /publications/columns:
     get:
@@ -743,6 +765,7 @@ paths:
           description: Búsqueda pública por título, resumen o cuerpo.
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
 
   /publications/news/{slug}:
     get:
@@ -779,6 +802,7 @@ paths:
       security: []
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
 
   /publications/tags:
     get:
@@ -787,6 +811,7 @@ paths:
       security: []
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
 
   /publications/subscribers:
     post:
@@ -920,6 +945,7 @@ paths:
           schema: { type: string, format: uuid }
       responses:
         '200': { $ref: '#/components/responses/PaginatedEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
     post:
       tags: [Content admin]
       summary: Crear publicación
@@ -931,6 +957,9 @@ paths:
             schema: { $ref: '#/components/schemas/CreatePublicationRequest' }
       responses:
         '201': { $ref: '#/components/responses/CreatedEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+        '409': { $ref: '#/components/responses/ConflictError' }
 
   /admin/content/publications/{id}:
     get:
@@ -940,6 +969,8 @@ paths:
         - $ref: '#/components/parameters/Id'
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
     patch:
       tags: [Content admin]
       summary: Actualizar publicación
@@ -952,6 +983,9 @@ paths:
             schema: { $ref: '#/components/schemas/CreatePublicationRequest' }
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+        '409': { $ref: '#/components/responses/ConflictError' }
 
   /admin/content/publications/{id}/publish:
     post:
@@ -961,6 +995,8 @@ paths:
         - $ref: '#/components/parameters/Id'
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
 
   /admin/content/publications/{id}/schedule:
     post:
@@ -981,6 +1017,8 @@ paths:
                   format: date-time
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
 
   /admin/content/publications/{id}/archive:
     post:
@@ -990,6 +1028,8 @@ paths:
         - $ref: '#/components/parameters/Id'
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
 
   /admin/content/subscribers:
     get:
@@ -1054,6 +1094,7 @@ paths:
       summary: Listar categorías de contenido
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
     post:
       tags: [Content admin]
       summary: Crear categoría de contenido
@@ -1064,6 +1105,8 @@ paths:
             schema: { $ref: '#/components/schemas/CreateContentCategoryRequest' }
       responses:
         '201': { $ref: '#/components/responses/CreatedEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409': { $ref: '#/components/responses/ConflictError' }
 
   /admin/content/categories/{id}:
     patch:
@@ -1078,6 +1121,9 @@ paths:
             schema: { $ref: '#/components/schemas/CreateContentCategoryRequest' }
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+        '409': { $ref: '#/components/responses/ConflictError' }
 
   /admin/content/tags:
     get:
@@ -1085,6 +1131,7 @@ paths:
       summary: Listar tags de contenido
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
     post:
       tags: [Content admin]
       summary: Crear tag de contenido
@@ -1095,6 +1142,8 @@ paths:
             schema: { $ref: '#/components/schemas/CreateContentTagRequest' }
       responses:
         '201': { $ref: '#/components/responses/CreatedEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409': { $ref: '#/components/responses/ConflictError' }
 
   /admin/content/authors:
     get:
@@ -1102,6 +1151,7 @@ paths:
       summary: Listar autores de contenido
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
     post:
       tags: [Content admin]
       summary: Crear autor de contenido
@@ -1112,6 +1162,8 @@ paths:
             schema: { $ref: '#/components/schemas/CreateContentAuthorRequest' }
       responses:
         '201': { $ref: '#/components/responses/CreatedEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409': { $ref: '#/components/responses/ConflictError' }
 
   /admin/content/authors/{id}:
     patch:
@@ -1126,6 +1178,9 @@ paths:
             schema: { $ref: '#/components/schemas/CreateContentAuthorRequest' }
       responses:
         '200': { $ref: '#/components/responses/OkEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+        '409': { $ref: '#/components/responses/ConflictError' }
 
   /homepage:
     get:
@@ -1716,6 +1771,19 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+    TooManyRequestsError:
+      description: Límite de solicitudes excedido (rate limiting).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          example:
+            error:
+              code: HTTP_429
+              message: 'ThrottlerException: Too Many Requests'
+              details: []
+            meta:
+              requestId: 315c2096-df71-447a-92ad-2f9329316896
+              timestamp: '2026-07-05T15:13:13.536Z'
 
   schemas:
     Meta:
