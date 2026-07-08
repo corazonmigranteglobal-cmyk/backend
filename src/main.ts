@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { mkdirSync } from 'fs';
@@ -24,7 +24,7 @@ async function bootstrap() {
 
   app.use(helmet());
   app.enableCors({ origin: corsOrigins.length ? corsOrigins : true, credentials: true });
-  app.setGlobalPrefix(apiPrefix);
+  app.setGlobalPrefix(apiPrefix, { exclude: [{ path: 'health', method: RequestMethod.GET }] });
   app.useGlobalPipes(
     new ValidationPipe({
       // Modo compatible con frontend: conserva validación de tipos/campos obligatorios,
