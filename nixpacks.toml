@@ -8,4 +8,4 @@ cmds = ["corepack enable", "corepack prepare yarn@1.22.22 --activate", "yarn ins
 cmds = ["yarn build"]
 
 [start]
-cmd = "yarn start:prod"
+cmd = "yarn db:deploy && yarn start:prod"

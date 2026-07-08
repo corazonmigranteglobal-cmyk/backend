@@ -59,6 +59,26 @@ export class AdvertisingCompaniesService {
     });
   }
 
+  async remove(actorUserId: string, id: string) {
+    const company = await this.find(id);
+    const before = company.toJSON();
+    return company.sequelize!.transaction(async (transaction) => {
+      await company.destroy({ transaction });
+      await this.audit.log(
+        {
+          actorUserId,
+          action: 'advertising.company.delete',
+          entityType: 'AdsCompany',
+          entityId: id,
+          before,
+          after: { deleted: true },
+        },
+        { transaction },
+      );
+      return { id, deleted: true };
+    });
+  }
+
   async find(id: string) {
     const company = await this.companyModel.findByPk(id);
     if (!company) {

@@ -27,6 +27,9 @@ export class AdsCampaignContentTarget extends Model<AdsCampaignContentTarget> {
   })
   targetingMode: string;
 
+  @Column({ type: DataType.STRING(240), field: 'page_slug' })
+  pageSlug?: string;
+
   @Column({ type: DataType.TEXT })
   reason?: string;
 }

@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsObject, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { IsIn, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 export class CreatePageDto {
   @ApiProperty() @IsString() slug: string;
   @ApiProperty() @IsString() title: string;
@@ -14,4 +14,12 @@ export class CreateElementDto {
   @ApiProperty() @IsString() type: string;
   @ApiProperty() @IsObject() content: Record<string, unknown>;
   @ApiPropertyOptional() @IsOptional() sortOrder?: number;
+}
+
+export class UpdatePageDto extends PartialType(CreatePageDto) {}
+
+export class AttachPublicationToPageDto {
+  @ApiProperty()
+  @IsUUID()
+  publicationId: string;
 }

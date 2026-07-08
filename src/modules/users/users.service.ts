@@ -1,93 +1,54 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
-import { AdminProfile, PatientProfile, Role, TherapistProfile, User } from '@/database/models';
+import { AdminProfile, FileAsset, PatientProfile, TherapistProfile, User } from '@/database/models';
 import {
   PaginationQueryDto,
   buildPagination,
-  buildSafeOrder,
-  getEffectiveRoleFilter,
   getEffectiveSearch,
   getEffectiveStatusFilter,
+  buildSafeOrder,
   toLimitOffset,
 } from '@/common/pagination/pagination.dto';
 import { RolesPermissionsService } from '../roles-permissions/roles-permissions.service';
 import { AuditService } from '../audit/audit.service';
 import { UpdatePatientProfileDto, UpdateTherapistProfileDto } from './dto/update-profile.dto';
 
-const IGNORED_FILTER_VALUES = new Set(['ALL', 'TODOS', 'TODAS', '*']);
-
-const STATUS_ALIASES: Record<string, string> = {
+const USER_STATUSES = ['ACTIVE', 'INACTIVE', 'BLOCKED', 'PENDING'];
+const USER_STATUS_ALIASES: Record<string, string> = {
   ACTIVE: 'ACTIVE',
   ACTIVO: 'ACTIVE',
   ACTIVA: 'ACTIVE',
-  ENABLED: 'ACTIVE',
-  HABILITADO: 'ACTIVE',
-  HABILITADA: 'ACTIVE',
   INACTIVE: 'INACTIVE',
   INACTIVO: 'INACTIVE',
   INACTIVA: 'INACTIVE',
-  DISABLED: 'INACTIVE',
-  DESHABILITADO: 'INACTIVE',
-  DESHABILITADA: 'INACTIVE',
   BLOCKED: 'BLOCKED',
   BLOQUEADO: 'BLOCKED',
   BLOQUEADA: 'BLOCKED',
-  LOCKED: 'BLOCKED',
   PENDING: 'PENDING',
   PENDIENTE: 'PENDING',
-  PENDING_APPROVAL: 'PENDING_APPROVAL',
-  PENDIENTE_APROBACION: 'PENDING_APPROVAL',
-  PENDIENTE_DE_APROBACION: 'PENDING_APPROVAL',
 };
 
-const ROLE_ALIASES: Record<string, string> = {
-  SUPER_ADMIN: 'SUPER_ADMIN',
-  SUPERADMIN: 'SUPER_ADMIN',
-  ADMINISTRADOR_TOTAL: 'SUPER_ADMIN',
-  ADMIN: 'ADMIN',
-  ADMINISTRADOR: 'ADMIN',
-  ACCOUNTANT: 'ACCOUNTANT',
-  CONTADOR: 'ACCOUNTANT',
-  CONTADORA: 'ACCOUNTANT',
-  THERAPIST: 'THERAPIST',
-  TERAPEUTA: 'THERAPIST',
-  PSICOLOGO: 'THERAPIST',
-  PSICOLOGA: 'THERAPIST',
-  PATIENT: 'PATIENT',
-  PACIENTE: 'PATIENT',
-};
-
-const ROLE_LABELS_ES: Record<string, string> = {
-  SUPER_ADMIN: 'SUPER_ADMIN',
-  ADMIN: 'ADMIN',
-  ACCOUNTANT: 'CONTADOR',
-  THERAPIST: 'TERAPEUTA',
-  PATIENT: 'PACIENTE',
-};
-
-function normalizeToken(value?: string) {
+function normalizeStatusFilter(value?: string) {
   if (!value) return undefined;
-  return value
+  const token = value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
     .toUpperCase()
     .replace(/[\s-]+/g, '_');
+  if (!token || ['ALL', 'TODOS', 'TODAS', '*'].includes(token)) return undefined;
+  return USER_STATUS_ALIASES[token] ?? token;
 }
 
-function normalizeFilter(value?: string, aliases?: Record<string, string>) {
-  const token = normalizeToken(value);
-  if (!token || IGNORED_FILTER_VALUES.has(token)) return undefined;
-  return aliases?.[token] ?? token;
-}
-
-function displayNameFromProfiles(user: User) {
-  const profile = user.patientProfile ?? user.therapistProfile ?? user.adminProfile;
-  const firstName = String((profile as any)?.firstName ?? '').trim();
-  const lastName = String((profile as any)?.lastName ?? '').trim();
-  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
-  return fullName || user.email;
+function compactDto<T extends Record<string, unknown>>(dto: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(dto).filter(([, value]) => {
+      if (value === undefined || value === null) return false;
+      if (typeof value === 'string' && value.trim() === '') return false;
+      return true;
+    }).map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value]),
+  ) as Partial<T>;
 }
 
 @Injectable()
@@ -97,9 +58,27 @@ export class UsersService {
     @InjectModel(PatientProfile) private readonly patientProfileModel: typeof PatientProfile,
     @InjectModel(TherapistProfile) private readonly therapistProfileModel: typeof TherapistProfile,
     @InjectModel(AdminProfile) private readonly adminProfileModel: typeof AdminProfile,
+    @InjectModel(FileAsset) private readonly fileModel: typeof FileAsset,
     private readonly rolesPermissions: RolesPermissionsService,
     private readonly audit: AuditService,
   ) {}
+
+  private buildAvatarUrl(avatarFileId?: string | null) {
+    if (!avatarFileId) return undefined;
+    const baseUrl = (process.env.PUBLIC_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`).replace(/\/+$/, '');
+    const apiPrefix = (process.env.API_PREFIX ?? 'api/v1').replace(/^\/+|\/+$/g, '');
+    return `${baseUrl}/${apiPrefix}/files/${avatarFileId}/download`;
+  }
+
+  private serializeProfileWithAvatar(profile: any) {
+    if (!profile) return profile;
+    const plain = typeof profile.toJSON === 'function' ? profile.toJSON() : { ...(profile as Record<string, unknown>) };
+    const avatarFileId = String(plain.avatarFileId ?? plain.avatar_file_id ?? '');
+    return {
+      ...plain,
+      avatarUrl: this.buildAvatarUrl(avatarFileId),
+    };
+  }
 
   async me(userId: string) {
     const user = await this.userModel.findByPk(userId, {
@@ -113,30 +92,31 @@ export class UsersService {
       email: user.email,
       status: user.status,
       ...auth,
-      patientProfile: user.patientProfile,
-      therapistProfile: user.therapistProfile,
+      patientProfile: this.serializeProfileWithAvatar(user.patientProfile),
+      therapistProfile: this.serializeProfileWithAvatar(user.therapistProfile),
       adminProfile: user.adminProfile,
     };
   }
 
-  async updatePatientProfile(userId: string, dto: UpdatePatientProfileDto) {
+  async updatePatientProfile(userId: string, dto: UpdatePatientProfileDto, actorUserId = userId) {
     const profile = await this.patientProfileModel.findByPk(userId);
     if (!profile)
       throw new NotFoundException({
         code: 'PATIENT_PROFILE_NOT_FOUND',
         message: 'Perfil paciente no encontrado.',
       });
+    const payload = compactDto(dto as any);
     const before = profile.toJSON();
     return this.patientProfileModel.sequelize!.transaction(async (transaction) => {
-      await profile.update(dto as any, { transaction });
+      await profile.update(payload as any, { transaction });
       await this.audit.log(
         {
-          actorUserId: userId,
+          actorUserId,
           action: 'users.update_patient_profile',
           entityType: 'PatientProfile',
           entityId: userId,
           before,
-          after: dto as any,
+          after: payload as any,
         },
         { transaction },
       );
@@ -144,24 +124,26 @@ export class UsersService {
     });
   }
 
-  async updateTherapistProfile(userId: string, dto: UpdateTherapistProfileDto) {
+  async updateTherapistProfile(userId: string, dto: UpdateTherapistProfileDto, actorUserId = userId) {
     const profile = await this.therapistProfileModel.findByPk(userId);
     if (!profile)
       throw new NotFoundException({
         code: 'THERAPIST_PROFILE_NOT_FOUND',
         message: 'Perfil terapeuta no encontrado.',
+        details: [`userId=${userId}`],
       });
+    const payload = compactDto(dto as any);
     const before = profile.toJSON();
     return this.therapistProfileModel.sequelize!.transaction(async (transaction) => {
-      await profile.update(dto as any, { transaction });
+      await profile.update(payload as any, { transaction });
       await this.audit.log(
         {
-          actorUserId: userId,
-          action: 'users.update_therapist_profile',
+          actorUserId,
+          action: actorUserId === userId ? 'users.update_therapist_profile' : 'users.admin_update_therapist_profile',
           entityType: 'TherapistProfile',
           entityId: userId,
           before,
-          after: dto as any,
+          after: payload as any,
         },
         { transaction },
       );
@@ -169,51 +151,112 @@ export class UsersService {
     });
   }
 
-  async list(query: PaginationQueryDto) {
-    const where: any = {};
+
+  async updateUserAvatar(userId: string, avatarFileId: string, actorUserId: string) {
+    const file = await this.fileModel.findByPk(avatarFileId);
+    if (!file) {
+      throw new NotFoundException({
+        code: 'FILE_NOT_FOUND',
+        message: 'Archivo de foto no encontrado.',
+        details: [`avatarFileId=${avatarFileId}`],
+      });
+    }
+
+    const module = String((file as any).module ?? '').toUpperCase();
+    const entityId = String((file as any).entityId ?? '');
+    if (module !== 'USER_PROFILE' || (entityId && entityId !== userId)) {
+      throw new BadRequestException({
+        code: 'USER_AVATAR_FILE_INVALID',
+        message: 'El archivo no corresponde a una foto de perfil de este usuario.',
+        details: [`module=${module}`, `entityId=${entityId}`, `userId=${userId}`],
+      });
+    }
+
+    const [therapistProfile, patientProfile] = await Promise.all([
+      this.therapistProfileModel.findByPk(userId),
+      this.patientProfileModel.findByPk(userId),
+    ]);
+
+    const profile = therapistProfile ?? patientProfile;
+    if (!profile) {
+      throw new NotFoundException({
+        code: 'USER_PROFILE_NOT_FOUND',
+        message: 'No se encontró un perfil paciente o terapeuta para vincular la foto.',
+        details: [`userId=${userId}`],
+      });
+    }
+
+    const before = profile.toJSON();
+    return profile.sequelize!.transaction(async (transaction) => {
+      await (profile as any).update({ avatarFileId } as any, { transaction });
+      await this.audit.log(
+        {
+          actorUserId,
+          action: 'users.admin_update_avatar',
+          entityType: therapistProfile ? 'TherapistProfile' : 'PatientProfile',
+          entityId: userId,
+          before,
+          after: { avatarFileId },
+        },
+        { transaction },
+      );
+      return { userId, avatarFileId, avatarUrl: this.buildAvatarUrl(avatarFileId) };
+    });
+  }
+
+  async updateUserStatus(userId: string, status: string, actorUserId: string) {
+    const normalizedStatus = String(status ?? '').trim().toUpperCase();
+    if (!USER_STATUSES.includes(normalizedStatus)) {
+      throw new BadRequestException({
+        code: 'USER_STATUS_INVALID',
+        message: 'Estado de usuario inválido.',
+        details: [`status=${status}`, `allowed=${USER_STATUSES.join(',')}`],
+      });
+    }
+    const user = await this.userModel.findByPk(userId);
+    if (!user)
+      throw new NotFoundException({
+        code: 'USER_NOT_FOUND',
+        message: 'Usuario no encontrado.',
+        details: [`userId=${userId}`],
+      });
+    const before = user.toJSON();
+    return this.userModel.sequelize!.transaction(async (transaction) => {
+      await user.update({ status: normalizedStatus } as any, { transaction });
+      await this.audit.log(
+        {
+          actorUserId,
+          action: 'users.admin_update_status',
+          entityType: 'User',
+          entityId: user.id,
+          before,
+          after: { status: normalizedStatus },
+        },
+        { transaction },
+      );
+      return { id: user.id, email: user.email, status: user.status };
+    });
+  }
+
+  async listPatients(query: PaginationQueryDto) {
     const search = getEffectiveSearch(query);
-    const normalizedStatus = normalizeFilter(getEffectiveStatusFilter(query), STATUS_ALIASES);
-    const normalizedRole = normalizeFilter(getEffectiveRoleFilter(query), ROLE_ALIASES);
-
-    if (normalizedStatus) {
-      where.status = normalizedStatus;
-    }
-
-    if (search) {
-      const term = `%${search}%`;
-      where[Op.or] = [
-        { email: { [Op.iLike]: term } },
-        { '$roles.code$': { [Op.iLike]: term } },
-        { '$roles.name$': { [Op.iLike]: term } },
-        { '$patientProfile.firstName$': { [Op.iLike]: term } },
-        { '$patientProfile.lastName$': { [Op.iLike]: term } },
-        { '$therapistProfile.firstName$': { [Op.iLike]: term } },
-        { '$therapistProfile.lastName$': { [Op.iLike]: term } },
-        { '$therapistProfile.title$': { [Op.iLike]: term } },
-        { '$therapistProfile.mainSpecialty$': { [Op.iLike]: term } },
-        { '$adminProfile.firstName$': { [Op.iLike]: term } },
-        { '$adminProfile.lastName$': { [Op.iLike]: term } },
-      ];
-    }
-
-    const include: any[] = [
-      {
-        model: Role,
-        attributes: ['id', 'code', 'name'],
-        through: { attributes: [] },
-        required: Boolean(normalizedRole),
-        ...(normalizedRole ? { where: { code: normalizedRole } } : {}),
-      },
-      { model: PatientProfile, required: false },
-      { model: TherapistProfile, required: false },
-      { model: AdminProfile, required: false },
-    ];
-
+    const status = normalizeStatusFilter(getEffectiveStatusFilter(query));
+    const where = {
+      ...(status ? { status } : {}),
+      ...(search
+        ? {
+            [Op.or]: [
+              { email: { [Op.iLike]: `%${search}%` } },
+              { '$patientProfile.firstName$': { [Op.iLike]: `%${search}%` } },
+              { '$patientProfile.lastName$': { [Op.iLike]: `%${search}%` } },
+            ],
+          }
+        : {}),
+    } as any;
     const { rows, count } = await this.userModel.findAndCountAll({
       where,
-      include,
+      include: [{ model: PatientProfile, required: true }],
       distinct: true,
-      subQuery: false,
       ...toLimitOffset(query),
       order: buildSafeOrder(
         query,
@@ -225,37 +268,80 @@ export class UsersService {
           created_at: 'createdAt',
           updatedAt: 'updatedAt',
           updated_at: 'updatedAt',
-          lastLoginAt: 'lastLoginAt',
-          last_login_at: 'lastLoginAt',
-          emailVerifiedAt: 'emailVerifiedAt',
-          email_verified_at: 'emailVerifiedAt',
         },
         'createdAt',
       ),
     });
 
-    return {
-      items: rows.map((u) => {
-        const roleCodes = (u.roles ?? []).map((role) => role.code).filter(Boolean);
-        const primaryRole = roleCodes[0] ?? null;
+    const items = rows.map((u) => ({
+      id: u.id,
+      email: u.email,
+      status: u.status,
+      role: 'PACIENTE',
+      roles: ['PACIENTE'],
+      createdAt: u.createdAt,
+      patientProfile: this.serializeProfileWithAvatar(u.patientProfile),
+    }));
+
+    return { items, pagination: buildPagination(query, count) };
+  }
+
+  async list(query: PaginationQueryDto) {
+    const search = getEffectiveSearch(query);
+    const status = normalizeStatusFilter(getEffectiveStatusFilter(query));
+    const where = {
+      ...(status ? { status } : {}),
+      ...(search
+        ? {
+            [Op.or]: [
+              { email: { [Op.iLike]: `%${search}%` } },
+              { '$patientProfile.firstName$': { [Op.iLike]: `%${search}%` } },
+              { '$patientProfile.lastName$': { [Op.iLike]: `%${search}%` } },
+              { '$therapistProfile.firstName$': { [Op.iLike]: `%${search}%` } },
+              { '$therapistProfile.lastName$': { [Op.iLike]: `%${search}%` } },
+            ],
+          }
+        : {}),
+    } as any;
+    const { rows, count } = await this.userModel.findAndCountAll({
+      where,
+      include: [PatientProfile, TherapistProfile, AdminProfile],
+      distinct: true,
+      ...toLimitOffset(query),
+      order: buildSafeOrder(
+        query,
+        {
+          id: 'id',
+          email: 'email',
+          status: 'status',
+          createdAt: 'createdAt',
+          created_at: 'createdAt',
+          updatedAt: 'updatedAt',
+          updated_at: 'updatedAt',
+        },
+        'createdAt',
+      ),
+    });
+
+    const items = await Promise.all(
+      rows.map(async (u) => {
+        const auth = await this.rolesPermissions.getUserRolesAndPermissions(u.id);
+        const primaryRole = auth.roles[0] ?? 'NO_EXPUESTO';
         return {
           id: u.id,
           email: u.email,
-          name: displayNameFromProfiles(u),
-          fullName: displayNameFromProfiles(u),
           status: u.status,
           role: primaryRole,
-          rol: primaryRole ? ROLE_LABELS_ES[primaryRole] ?? primaryRole : null,
-          roles: roleCodes,
-          rolesDisplay: roleCodes.map((role) => ROLE_LABELS_ES[role] ?? role),
-          patientProfile: u.patientProfile,
-          therapistProfile: u.therapistProfile,
-          adminProfile: u.adminProfile,
+          roles: auth.roles,
+          permissions: auth.permissions,
           createdAt: u.createdAt,
-          updatedAt: u.updatedAt,
+          patientProfile: this.serializeProfileWithAvatar(u.patientProfile),
+          therapistProfile: this.serializeProfileWithAvatar(u.therapistProfile),
+          adminProfile: u.adminProfile,
         };
       }),
-      pagination: buildPagination(query, count),
-    };
+    );
+
+    return { items, pagination: buildPagination(query, count) };
   }
 }

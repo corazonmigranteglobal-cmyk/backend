@@ -6,6 +6,18 @@ export class CreateAppointmentDto {
   @ApiProperty() @IsISO8601() scheduledStartAt: string;
   @ApiProperty({ example: 'America/La_Paz' }) @IsString() timezone: string;
   @ApiPropertyOptional() @IsOptional() @IsString() notesForTherapist?: string;
+  @ApiPropertyOptional({
+    description:
+      'Solo para booking asistido (ADMIN/SUPER_ADMIN/THERAPIST vía POST /appointments/admin): ID del paciente para el que se registra la cita.',
+  })
+  @IsOptional()
+  @IsUUID()
+  patientUserId?: string;
+}
+export class CreateAppointmentForPatientDto extends CreateAppointmentDto {
+  @ApiProperty({ description: 'ID del paciente para el que se registra la cita.' })
+  @IsUUID()
+  patientUserId: string;
 }
 export class UpdateAppointmentStatusDto {
   @ApiProperty({

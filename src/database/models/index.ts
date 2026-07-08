@@ -39,6 +39,7 @@ export { ContentCategory } from './content-category.model';
 export { ContentTag } from './content-tag.model';
 export { ContentPublication } from './content-publication.model';
 export { ContentPublicationTag } from './content-publication-tag.model';
+export { ContentSubscriber } from './content-subscriber.model';
 export { AdsCompany } from './ads-company.model';
 export { AdsPlacement } from './ads-placement.model';
 export { AdsCampaign } from './ads-campaign.model';
@@ -90,6 +91,7 @@ import { ContentCategory } from './content-category.model';
 import { ContentTag } from './content-tag.model';
 import { ContentPublication } from './content-publication.model';
 import { ContentPublicationTag } from './content-publication-tag.model';
+import { ContentSubscriber } from './content-subscriber.model';
 import { AdsCompany } from './ads-company.model';
 import { AdsPlacement } from './ads-placement.model';
 import { AdsCampaign } from './ads-campaign.model';
@@ -141,6 +143,7 @@ export const databaseModels = [
   ContentTag,
   ContentPublication,
   ContentPublicationTag,
+  ContentSubscriber,
   AdsCompany,
   AdsPlacement,
   AdsCampaign,

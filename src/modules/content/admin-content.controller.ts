@@ -3,9 +3,11 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Permissions } from '@/common/decorators/permissions.decorator';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
+import { PaginationQueryDto } from '@/common/pagination/pagination.dto';
 import { ContentAuthorsService } from './content-authors.service';
 import { ContentPublicationsService } from './content-publications.service';
 import { ContentTaxonomyService } from './content-taxonomy.service';
+import { ContentSubscribersService } from './content-subscribers.service';
 import { CreateContentAuthorDto, UpdateContentAuthorDto } from './dto/author.dto';
 import { ContentPublicationQueryDto } from './dto/content-query.dto';
 import {
@@ -18,6 +20,7 @@ import {
   CreateContentTagDto,
   UpdateContentCategoryDto,
 } from './dto/taxonomy.dto';
+import { UpdateContentSubscriberDto, UpsertContentSubscriberDto } from './dto/subscriber.dto';
 
 @ApiTags('Administración de contenido')
 @ApiBearerAuth()
@@ -27,6 +30,7 @@ export class AdminContentController {
     private readonly authors: ContentAuthorsService,
     private readonly publications: ContentPublicationsService,
     private readonly taxonomy: ContentTaxonomyService,
+    private readonly subscribers: ContentSubscribersService,
   ) {}
 
   @Get('publications')
@@ -137,4 +141,41 @@ export class AdminContentController {
   ) {
     return this.authors.update(user.sub, id, dto);
   }
+
+
+  @Get('subscribers')
+  @Permissions('content:read')
+  listSubscribers(@Query() query: PaginationQueryDto) {
+    return this.subscribers.list(query);
+  }
+
+  @Post('subscribers')
+  @Permissions('content:write')
+  upsertSubscriber(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpsertContentSubscriberDto,
+  ) {
+    return this.subscribers.upsert(user.sub, dto);
+  }
+
+  @Patch('subscribers/:userId/subscription')
+  @Permissions('content:write')
+  updateSubscriberByUserId(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('userId') userId: string,
+    @Body() dto: UpdateContentSubscriberDto,
+  ) {
+    return this.subscribers.updateByUserId(user.sub, userId, dto);
+  }
+
+  @Patch('subscribers/:id')
+  @Permissions('content:write')
+  updateSubscriber(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateContentSubscriberDto,
+  ) {
+    return this.subscribers.update(user.sub, id, dto);
+  }
+
 }

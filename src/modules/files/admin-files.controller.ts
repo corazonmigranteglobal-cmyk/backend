@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   Post,
-  Res,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -13,20 +15,29 @@ import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { mkdirSync } from 'fs';
 import { randomUUID } from 'crypto';
-import { Response } from 'express';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { Public } from '@/common/decorators/public.decorator';
+import { Roles } from '@/common/decorators/roles.decorator';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
+import { PaginationQueryDto } from '@/common/pagination/pagination.dto';
 import { FilesService } from './files.service';
-import { CloudinaryUploadSignatureDto, CompleteCloudinaryUploadDto, UploadFileDto } from './dto/file.dto';
+import { CloudinaryUploadSignatureDto, CompleteCloudinaryUploadDto, UpdateFileDto, UploadFileDto } from './dto/file.dto';
 
-@ApiTags('Files')
+@ApiTags('Admin files')
 @ApiBearerAuth()
-@Controller('files')
-export class FilesController {
+@Roles('ADMIN', 'SUPER_ADMIN')
+@Controller('admin/files')
+export class AdminFilesController {
   constructor(private readonly service: FilesService) {}
 
+  @Get()
+  list(@Query() query: PaginationQueryDto) {
+    return this.service.listAdmin(query);
+  }
 
+  @Get(':id')
+  get(@Param('id') id: string) {
+    return this.service.getAdmin(id);
+  }
 
   @Post('cloudinary/signature')
   createCloudinarySignature(
@@ -53,7 +64,7 @@ export class FilesController {
           mkdirSync('storage/tmp', { recursive: true });
           cb(null, 'storage/tmp');
         },
-        filename: (_req, file, cb) => cb(null, `${Date.now()}-${randomUUID()}`),
+        filename: (_req, _file, cb) => cb(null, `${Date.now()}-${randomUUID()}`),
       }),
     }),
   )
@@ -65,19 +76,17 @@ export class FilesController {
     return this.service.upload(user, dto, file);
   }
 
-  @Get(':id/signed-url')
-  @Public()
-  signedUrl(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.service.getDownloadInfo(user, id);
-  }
-
-  @Get(':id/download')
-  @Public()
-  download(
+  @Patch(':id')
+  update(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
-    @Res({ passthrough: true }) response: Response,
+    @Body() dto: UpdateFileDto,
   ) {
-    return this.service.downloadLocal(user, id, response);
+    return this.service.updateAdmin(user.sub, id, dto);
+  }
+
+  @Delete(':id')
+  remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.service.deleteAdmin(user.sub, id);
   }
 }

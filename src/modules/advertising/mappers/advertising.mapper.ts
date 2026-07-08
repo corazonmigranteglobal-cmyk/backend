@@ -1,4 +1,4 @@
-import { AdsCampaign, AdsCampaignCreative, AdsCompany, AdsPlacement } from '@/database/models';
+import { AdsCampaign, AdsCampaignContentTarget, AdsCampaignCreative, AdsCompany, AdsPlacement } from '@/database/models';
 
 export function toAdsCompanyDto(company: AdsCompany) {
   return {
@@ -45,6 +45,19 @@ export function toAdsCreativeDto(creative: AdsCampaignCreative) {
   };
 }
 
+
+export function toAdsContentTargetDto(target: AdsCampaignContentTarget) {
+  return {
+    id: target.id,
+    campaignId: target.campaignId,
+    publicationId: target.publicationId,
+    categoryId: target.categoryId,
+    pageSlug: target.pageSlug,
+    targetingMode: target.targetingMode,
+    reason: target.reason,
+  };
+}
+
 export function toAdsCampaignDto(campaign: AdsCampaign) {
   return {
     id: campaign.id,
@@ -62,5 +75,6 @@ export function toAdsCampaignDto(campaign: AdsCampaign) {
     notes: campaign.notes,
     creatives: campaign.creatives?.map(toAdsCreativeDto) ?? [],
     placements: campaign.placements?.map(toAdsPlacementDto) ?? [],
+    contentTargets: campaign.contentTargets?.map(toAdsContentTargetDto) ?? [],
   };
 }

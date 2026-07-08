@@ -70,6 +70,11 @@ export class ContentPublicationQueryDto extends PaginationQueryDto {
   @IsString()
   tagSlug?: string;
 
+  @ApiPropertyOptional({ description: 'Slug de página pública donde debe aparecer/incrustarse la publicación.' })
+  @IsOptional()
+  @IsString()
+  pageSlug?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()
@@ -86,6 +91,11 @@ export class PublicContentQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   tagSlug?: string;
+
+  @ApiPropertyOptional({ description: 'Slug de página pública donde debe aparecer/incrustarse la publicación.' })
+  @IsOptional()
+  @IsString()
+  pageSlug?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

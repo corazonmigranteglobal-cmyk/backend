@@ -13,6 +13,16 @@ export class AdvertisingCreativesService {
     private readonly audit: AuditService,
   ) {}
 
+  async listAll() {
+    const creatives = await this.creativeModel.findAll({
+      order: [
+        ['createdAt', 'DESC'],
+        ['isPrimary', 'DESC'],
+      ],
+    });
+    return creatives.map(toAdsCreativeDto);
+  }
+
   async list(campaignId: string) {
     await this.assertCampaign(campaignId);
     const creatives = await this.creativeModel.findAll({
@@ -70,6 +80,26 @@ export class AdvertisingCreativesService {
         { transaction },
       );
       return toAdsCreativeDto(creative);
+    });
+  }
+
+  async remove(actorUserId: string, id: string) {
+    const creative = await this.find(id);
+    const before = creative.toJSON();
+    return creative.sequelize!.transaction(async (transaction) => {
+      await creative.destroy({ transaction });
+      await this.audit.log(
+        {
+          actorUserId,
+          action: 'advertising.creative.delete',
+          entityType: 'AdsCampaignCreative',
+          entityId: id,
+          before,
+          after: { deleted: true },
+        },
+        { transaction },
+      );
+      return { id, deleted: true };
     });
   }
 

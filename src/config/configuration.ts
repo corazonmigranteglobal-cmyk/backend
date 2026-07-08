@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from 'fs';
 function parseRedisUrl() {
   const redisUrl = process.env.REDIS_URL;
   if (!redisUrl) return {};
@@ -23,6 +24,21 @@ function cleanEnvValue(value?: string) {
     return trimmed.slice(1, -1).trim();
   }
   return trimmed;
+}
+
+
+function looksLikeInlineCredential(value?: string) {
+  const cleaned = cleanEnvValue(value);
+  return !!cleaned && (cleaned.startsWith('{') || cleaned.startsWith('eyJ'));
+}
+
+function resolveGoogleCredentialsPath() {
+  const value = cleanEnvValue(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+  if (!value) return undefined;
+  // GOOGLE_APPLICATION_CREDENTIALS normalmente es una ruta a JSON. Si alguien pega el JSON
+  // completo o base64 en esa variable desde Coolify/.env, no se debe pasar como keyFilename.
+  if (looksLikeInlineCredential(value)) return undefined;
+  return existsSync(value) ? value : undefined;
 }
 
 function parseCredentialJson(raw: string, source: string) {
@@ -70,29 +86,86 @@ function normalizeGoogleCredentials(credentials: unknown, source: string) {
   return serviceAccount;
 }
 
+function firstCleanEnv(...names: string[]) {
+  for (const name of names) {
+    const value = cleanEnvValue(process.env[name]);
+    if (value) return { name, value };
+  }
+  return undefined;
+}
+
+
+function decodeBase64Credential(raw: string, source: string) {
+  const cleaned = cleanEnvValue(raw)?.replace(/^data:application\/json;base64,/i, '').replace(/\s/g, '');
+  if (!cleaned) return undefined;
+  const normalized = cleaned.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+  const decoded = Buffer.from(padded, 'base64').toString('utf8').replace(/^\uFEFF/, '').trim();
+  if (!decoded.startsWith('{')) {
+    throw new Error(`${source} no decodifica a JSON. Verifica que hayas codificado el service-account JSON completo en base64.`);
+  }
+  return decoded;
+}
+
+function credentialsFromSplitEnv() {
+  const clientEmail = firstCleanEnv('GOOGLE_CLIENT_EMAIL', 'GCP_CLIENT_EMAIL');
+  const privateKey = firstCleanEnv('GOOGLE_PRIVATE_KEY', 'GCP_PRIVATE_KEY');
+  if (!clientEmail || !privateKey) return undefined;
+
+  return normalizeGoogleCredentials(
+    {
+      type: 'service_account',
+      project_id: cleanEnvValue(process.env.GCP_PROJECT_ID) ?? cleanEnvValue(process.env.GOOGLE_PROJECT_ID),
+      private_key_id: cleanEnvValue(process.env.GOOGLE_PRIVATE_KEY_ID) ?? cleanEnvValue(process.env.GCP_PRIVATE_KEY_ID),
+      private_key: privateKey.value,
+      client_email: clientEmail.value,
+    },
+    `${clientEmail.name}+${privateKey.name}`,
+  );
+}
+
 function parseGoogleCredentials() {
-  // Prioridad deliberada: si existe Base64, se usa Base64 y se ignora JSON/ruta.
-  // Esto evita que una variable vieja GOOGLE_CREDENTIALS_JSON mal escapada rompa el arranque.
-  const base64 = cleanEnvValue(process.env.GOOGLE_CREDENTIALS_BASE64);
+  // Prioridad deliberada: Base64 > JSON directo > archivo GOOGLE_APPLICATION_CREDENTIALS.
+  // Así se soportan .env.local, Coolify y nombres comunes de variables sin romper por aliases viejos.
+  const base64 = firstCleanEnv(
+    'GOOGLE_CREDENTIALS_BASE64',
+    'GOOGLE_APPLICATION_CREDENTIALS_BASE64',
+    'GOOGLE_SERVICE_ACCOUNT_BASE64',
+    'GCP_SERVICE_ACCOUNT_BASE64',
+  );
   if (base64) {
-    const decoded = Buffer.from(base64.replace(/\s/g, ''), 'base64').toString('utf8');
+    const decoded = decodeBase64Credential(base64.value, base64.name)!;
+    return normalizeGoogleCredentials(parseCredentialJson(decoded, base64.name), base64.name);
+  }
+
+  const json = firstCleanEnv('GOOGLE_APPLICATION_CREDENTIALS_JSON', 'GOOGLE_CREDENTIALS_JSON', 'GOOGLE_CREDENTIALS');
+  if (json) {
+    return normalizeGoogleCredentials(parseCredentialJson(json.value, json.name), json.name);
+  }
+
+  const splitCredentials = credentialsFromSplitEnv();
+  if (splitCredentials) return splitCredentials;
+
+  const googleApplicationCredentials = cleanEnvValue(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+  if (looksLikeInlineCredential(googleApplicationCredentials)) {
+    const raw = googleApplicationCredentials!;
+    const decoded = raw.startsWith('eyJ') ? decodeBase64Credential(raw, 'GOOGLE_APPLICATION_CREDENTIALS')! : raw;
     return normalizeGoogleCredentials(
-      parseCredentialJson(decoded, 'GOOGLE_CREDENTIALS_BASE64'),
-      'GOOGLE_CREDENTIALS_BASE64',
+      parseCredentialJson(decoded, 'GOOGLE_APPLICATION_CREDENTIALS'),
+      'GOOGLE_APPLICATION_CREDENTIALS',
     );
   }
 
-  const json = cleanEnvValue(process.env.GOOGLE_CREDENTIALS_JSON);
-  if (json) {
+  const credentialsPath = resolveGoogleCredentialsPath();
+  if (credentialsPath) {
     return normalizeGoogleCredentials(
-      parseCredentialJson(json, 'GOOGLE_CREDENTIALS_JSON'),
-      'GOOGLE_CREDENTIALS_JSON',
+      parseCredentialJson(readFileSync(credentialsPath, 'utf8'), 'GOOGLE_APPLICATION_CREDENTIALS'),
+      'GOOGLE_APPLICATION_CREDENTIALS',
     );
   }
 
   return undefined;
 }
-
 export default () => {
   const redisFromUrl = parseRedisUrl();
   const emailProvider = process.env.EMAIL_PROVIDER ?? process.env.MAIL_PROVIDER ?? 'DEV_NULL';
@@ -104,6 +177,14 @@ export default () => {
   const signedUrlExpiresSeconds = Number(
     process.env.FILE_SIGNED_URL_EXPIRES_SECONDS ?? process.env.GCS_SIGNED_URL_TTL_SECONDS ?? 900,
   );
+  const gcsFallbackRaw = process.env.GCS_UPLOAD_FALLBACK_TO_LOCAL ?? process.env.FILES_GCS_FALLBACK_TO_LOCAL;
+  // En desarrollo local el fallback queda activo incluso si antes se dejó la variable en false.
+  // Eso evita que una credencial/bucket de GCS mal configurado bloquee pruebas visuales de CMS/fotos.
+  // En producción sigue apagado salvo que se active explícitamente con GCS_UPLOAD_FALLBACK_TO_LOCAL=true.
+  const gcsUploadFallbackToLocal =
+    process.env.NODE_ENV !== 'production' || String(gcsFallbackRaw ?? '').toLowerCase() === 'true';
+  const gcsCredentialsPath = resolveGoogleCredentialsPath();
+  const cloudinaryFolder = process.env.CLOUDINARY_FOLDER ?? process.env.CLOUDINARY_UPLOAD_FOLDER ?? 'corazon-migrante';
 
   return {
     app: {
@@ -124,6 +205,9 @@ export default () => {
       ssl: process.env.DATABASE_SSL === 'true',
       logging: process.env.DATABASE_LOGGING === 'true',
       connectionTimeoutMs: Number(process.env.DATABASE_CONNECTION_TIMEOUT_MS ?? 20000),
+      bootstrapOnStartup: process.env.DATABASE_BOOTSTRAP_ON_STARTUP !== 'false',
+      bootstrapFailFast: process.env.DATABASE_BOOTSTRAP_FAIL_FAST !== 'false',
+      seedPublicCmsOnStartup: process.env.DATABASE_SEED_PUBLIC_CMS_ON_STARTUP !== 'false',
     },
     redis: {
       host: process.env.REDIS_HOST ?? redisFromUrl.host ?? 'localhost',
@@ -140,7 +224,7 @@ export default () => {
       bcryptRounds: Number(process.env.BCRYPT_ROUNDS ?? 10),
     },
     files: {
-      storageProvider: process.env.STORAGE_PROVIDER ?? 'LOCAL',
+      storageProvider: process.env.STORAGE_PROVIDER ?? 'CLOUDINARY',
       uploadDir: process.env.UPLOAD_DIR ?? 'storage/uploads',
       maxUploadMb: Number(process.env.MAX_UPLOAD_MB ?? 8),
       publicBaseUrl: process.env.PUBLIC_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`,
@@ -152,9 +236,39 @@ export default () => {
         projectId: process.env.GCP_PROJECT_ID,
         publicBaseUrl: process.env.GCS_PUBLIC_BASE_URL,
         credentials: parseGoogleCredentials(),
+        keyFilename: gcsCredentialsPath,
+        uploadFallbackToLocal: gcsUploadFallbackToLocal,
         userMediaPrefix: process.env.GCS_UPLOAD_PREFIX_USER_MEDIA ?? 'users',
         publicAssetsPrefix: process.env.GCS_UPLOAD_PREFIX_PUBLIC_ASSETS ?? 'public',
       },
+      cloudinary: {
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+        apiKey: process.env.CLOUDINARY_API_KEY,
+        apiSecret: process.env.CLOUDINARY_API_SECRET,
+        folder: cloudinaryFolder,
+        userMediaPrefix:
+          process.env.CLOUDINARY_UPLOAD_PREFIX_USER_MEDIA ??
+          process.env.GCS_UPLOAD_PREFIX_USER_MEDIA ??
+          'users',
+        publicAssetsPrefix:
+          process.env.CLOUDINARY_UPLOAD_PREFIX_PUBLIC_ASSETS ??
+          process.env.GCS_UPLOAD_PREFIX_PUBLIC_ASSETS ??
+          'public',
+      },
+    },
+    content: {
+      subscriptionQrFileId:
+        process.env.NEWS_SUBSCRIPTION_QR_FILE_ID ?? process.env.PREMIUM_SUBSCRIPTION_QR_FILE_ID,
+      subscriptionInstructionsFileId:
+        process.env.NEWS_SUBSCRIPTION_INSTRUCTIONS_FILE_ID ??
+        process.env.PREMIUM_SUBSCRIPTION_INSTRUCTIONS_FILE_ID,
+      subscriptionPaymentTitle:
+        process.env.NEWS_SUBSCRIPTION_PAYMENT_TITLE ?? 'Suscripción premium',
+      subscriptionPaymentInstructions:
+        process.env.NEWS_SUBSCRIPTION_PAYMENT_INSTRUCTIONS ??
+        'Escanea el QR, realiza el pago y envía el comprobante al equipo de Corazón Migrante para activar tu acceso premium.',
+      subscriptionAmountBob: Number(process.env.NEWS_SUBSCRIPTION_AMOUNT_BOB ?? 0),
+      subscriptionCurrency: process.env.NEWS_SUBSCRIPTION_CURRENCY ?? 'BOB',
     },
     email: {
       provider: emailProvider,

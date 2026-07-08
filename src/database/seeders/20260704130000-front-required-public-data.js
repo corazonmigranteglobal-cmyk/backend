@@ -805,7 +805,7 @@ async function ensureCreative(qi, campaignId, now) {
        WHERE id = :id`,
       {
         id: existing.id,
-        assetUrl: 'https://storage.googleapis.com/vistas_publicas_assets/global_assets/media/LOGO%20CORAZON%20MIGRANTE.png',
+        assetUrl: 'https://res.cloudinary.com/demo/image/upload/corazon-migrante/global_assets/media/logo-corazon-migrante.png',
         destinationUrl: 'https://corazondemigrante.com/biblioteca',
         altText: 'Corazón Migrante - Biblioteca pública',
         now,
@@ -823,7 +823,7 @@ async function ensureCreative(qi, campaignId, now) {
     {
       id,
       campaignId,
-      assetUrl: 'https://storage.googleapis.com/vistas_publicas_assets/global_assets/media/LOGO%20CORAZON%20MIGRANTE.png',
+      assetUrl: 'https://res.cloudinary.com/demo/image/upload/corazon-migrante/global_assets/media/logo-corazon-migrante.png',
       destinationUrl: 'https://corazondemigrante.com/biblioteca',
       altText: 'Corazón Migrante - Biblioteca pública',
       now,

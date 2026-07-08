@@ -40,7 +40,12 @@
     "smoke:advertising": "node scripts/smoke-content-advertising.mjs --advertising",
     "smoke:homepage": "node scripts/smoke-content-advertising.mjs --homepage",
     "smoke:newspaper-internal": "node scripts/smoke-content-advertising.mjs --all",
-    "smoke:validation-lax": "node scripts/check-validation-lax.mjs"
+    "smoke:validation-lax": "node scripts/check-validation-lax.mjs",
+    "db:deploy": "node scripts/deploy-db.mjs",
+    "db:deploy:with-seeds": "node scripts/deploy-db.mjs --seeders",
+    "db:deploy:rerun-seeds": "node scripts/deploy-db.mjs --rerun-seeders",
+    "smoke:plan-action": "node scripts/smoke-plan-action.mjs",
+    "smoke:plan-action:mutations": "node scripts/smoke-plan-action.mjs --mutations"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.21.0",
@@ -64,6 +69,7 @@
     "multer": "2.2.0",
     "pg": "^8.13.1",
     "pg-hstore": "^2.3.4",
+    "pino": "^10.3.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "sequelize": "^6.37.5",

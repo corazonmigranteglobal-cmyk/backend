@@ -31,7 +31,14 @@ export class AppointmentsService {
     private readonly messaging: MessagingService,
   ) {}
 
+  /**
+   * Booking propio (rol PATIENT) y booking asistido (ADMIN/SUPER_ADMIN/THERAPIST vía
+   * POST /appointments/admin) comparten este método: si el dto trae `patientUserId`
+   * explícito (booking asistido) se usa ese; si no, se toma del JWT del actor.
+   */
   async create(user: AuthenticatedUser, dto: CreateAppointmentDto) {
+    const patientUserId = dto.patientUserId ?? user.sub;
+    const isAssisted = Boolean(dto.patientUserId) && dto.patientUserId !== user.sub;
     const product = await this.productModel.findByPk(dto.productId);
     if (!product)
       throw new NotFoundException({
@@ -52,7 +59,7 @@ export class AppointmentsService {
     return this.appointmentModel.sequelize!.transaction(async (transaction) => {
       const appointment = await this.appointmentModel.create(
         {
-          patientUserId: user.sub,
+          patientUserId,
           therapistUserId: dto.therapistUserId,
           productId: dto.productId,
           scheduledStartAt: startAt,
@@ -71,14 +78,14 @@ export class AppointmentsService {
           fromStatus: null,
           toStatus: 'REQUESTED',
           changedByUserId: user.sub,
-          reason: 'Creación de cita',
+          reason: isAssisted ? `Creación de cita asistida por ${user.email}` : 'Creación de cita',
         } as any,
         { transaction },
       );
       await this.audit.log(
         {
           actorUserId: user.sub,
-          action: 'appointments.create',
+          action: isAssisted ? 'appointments.create_for_patient' : 'appointments.create',
           entityType: 'Appointment',
           entityId: appointment.id,
           after: appointment.toJSON(),

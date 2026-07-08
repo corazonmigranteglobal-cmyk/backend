@@ -5,16 +5,21 @@ import {
   ContentCategory,
   ContentPublication,
   ContentPublicationTag,
+  ContentSubscriber,
   ContentTag,
+  PatientProfile,
+  User,
 } from '@/database/models';
 import { AuditModule } from '../audit/audit.module';
 import { AdminContentController } from './admin-content.controller';
-import { PublicContentController } from './public-content.controller';
+import { PublicContentAliasController, PublicContentController } from './public-content.controller';
+import { PremiumContentController } from './premium-content.controller';
 import { ContentAuthorsService } from './content-authors.service';
 import { ContentPublicationAuditService } from './content-publication-audit.service';
 import { ContentPublicationRelationsService } from './content-publication-relations.service';
 import { ContentPublicationsService } from './content-publications.service';
 import { ContentTaxonomyService } from './content-taxonomy.service';
+import { ContentSubscribersService } from './content-subscribers.service';
 
 @Module({
   imports: [
@@ -23,18 +28,22 @@ import { ContentTaxonomyService } from './content-taxonomy.service';
       ContentCategory,
       ContentPublication,
       ContentPublicationTag,
+      ContentSubscriber,
       ContentTag,
+      PatientProfile,
+      User,
     ]),
     AuditModule,
   ],
-  controllers: [PublicContentController, AdminContentController],
+  controllers: [PublicContentController, PublicContentAliasController, AdminContentController, PremiumContentController],
   providers: [
     ContentAuthorsService,
     ContentPublicationAuditService,
     ContentPublicationRelationsService,
     ContentPublicationsService,
     ContentTaxonomyService,
+    ContentSubscribersService,
   ],
-  exports: [ContentPublicationsService, ContentTaxonomyService],
+  exports: [ContentPublicationsService, ContentTaxonomyService, ContentSubscribersService],
 })
 export class ContentModule {}

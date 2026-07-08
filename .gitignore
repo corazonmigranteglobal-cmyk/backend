@@ -8,7 +8,9 @@ coverage
 secrets/*.json
 storage/uploads/*
 storage/tmp/*
+storage/logs/*
 !storage/uploads/.gitkeep
+!storage/logs/.gitkeep
 npm-debug.log*
 yarn-error.log*
 .DS_Store

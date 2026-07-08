@@ -69,6 +69,30 @@ export class CreateAdsCampaignDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({ type: [String], description: 'Publicaciones específicas donde se mostrará la campaña.' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsUUID('4', { each: true })
+  @Type(() => String)
+  publicationIds?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Categorías editoriales donde se mostrará la campaña.' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsUUID('4', { each: true })
+  @Type(() => String)
+  categoryIds?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Slugs de páginas públicas donde se mostrará la campaña.' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsString({ each: true })
+  @Type(() => String)
+  pageSlugs?: string[];
 }
 
 export class UpdateAdsCampaignDto {
@@ -123,6 +147,30 @@ export class UpdateAdsCampaignDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({ type: [String], description: 'Publicaciones específicas donde se mostrará la campaña.' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsUUID('4', { each: true })
+  @Type(() => String)
+  publicationIds?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Categorías editoriales donde se mostrará la campaña.' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsUUID('4', { each: true })
+  @Type(() => String)
+  categoryIds?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Slugs de páginas públicas donde se mostrará la campaña.' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsString({ each: true })
+  @Type(() => String)
+  pageSlugs?: string[];
 }
 
 export class SetAdsCampaignStatusDto {

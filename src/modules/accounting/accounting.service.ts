@@ -76,6 +76,11 @@ export class AccountingService {
       return row;
     });
   }
+  listCostCenters(query: PaginationQueryDto) {
+    return this.costCenterModel
+      .findAndCountAll({ ...toLimitOffset(query), order: [['code', 'ASC']] })
+      .then(({ rows, count }) => ({ items: rows, pagination: buildPagination(query, count) }));
+  }
   createCostCenter(actorUserId: string, dto: CreateCostCenterDto) {
     return this.costCenterModel.sequelize!.transaction(async (transaction) => {
       const row = await this.costCenterModel.create({ ...dto, status: 'ACTIVE' } as any, {
@@ -93,6 +98,15 @@ export class AccountingService {
       );
       return row;
     });
+  }
+  listTransactions(query: PaginationQueryDto) {
+    return this.txModel
+      .findAndCountAll({
+        ...toLimitOffset(query),
+        include: [{ model: this.entryModel }],
+        order: [['date', 'DESC']],
+      })
+      .then(({ rows, count }) => ({ items: rows, pagination: buildPagination(query, count) }));
   }
   async createTransaction(actorUserId: string, dto: CreateTransactionDto) {
     const debit = dto.entries.reduce((sum, e) => sum + Number(e.debit), 0);

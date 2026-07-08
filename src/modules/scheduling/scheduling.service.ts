@@ -1,23 +1,28 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op, QueryTypes } from 'sequelize';
+import { Op } from 'sequelize';
 import { DateTime, IANAZone } from 'luxon';
 import {
   Appointment,
+  FileAsset,
   TherapistBlockedTime,
+  TherapistProduct,
+  TherapistProfile,
   TherapistSchedule,
   TherapyProduct,
+  User,
 } from '@/database/models';
 import { AuditService } from '../audit/audit.service';
 import {
   AvailabilityQueryDto,
   CreateBlockedTimeDto,
   CreateScheduleDto,
+  UpdateScheduleDto,
 } from './dto/scheduling.dto';
 
 const ACTIVE_APPOINTMENT_STATUSES = ['REQUESTED', 'CONFIRMED'];
 
-type UnavailableInterval = { startAt: Date | string; endAt: Date | string };
+type UnavailableInterval = { startAt?: Date | string; endAt?: Date | string; scheduledStartAt?: Date | string; scheduledEndAt?: Date | string };
 type NormalizedAvailabilityQuery = {
   therapistUserId: string;
   productId: string;
@@ -26,12 +31,18 @@ type NormalizedAvailabilityQuery = {
   timezone: string;
 };
 
+type ScheduleRangeInput = {
+  weekday: number;
+  startTime: string;
+  endTime: string;
+  effectiveFrom?: string;
+  effectiveTo?: string | null;
+  status?: string;
+};
+
 const UUID_LIKE_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function firstNonEmptyString(
-  source: Record<string, unknown>,
-  keys: string[],
-): string | undefined {
+function firstNonEmptyString(source: Record<string, unknown>, keys: string[]): string | undefined {
   for (const key of keys) {
     const value = source[key];
     if (typeof value === 'string' && value.trim()) return value.trim();
@@ -63,6 +74,23 @@ function normalizeTimezone(value?: string): string {
   return IANAZone.isValidZone(timezone) ? timezone : 'America/La_Paz';
 }
 
+function normalizeTime(value: string) {
+  return value.length >= 5 ? value.slice(0, 5) : value;
+}
+
+function compactScheduleDto(dto: CreateScheduleDto | UpdateScheduleDto) {
+  const payload: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(dto)) {
+    if (value === undefined) continue;
+    if (typeof value === 'string' && value.trim() === '') {
+      if (key === 'effectiveTo') payload[key] = null;
+      continue;
+    }
+    payload[key] = typeof value === 'string' ? value.trim() : value;
+  }
+  return payload;
+}
+
 @Injectable()
 export class SchedulingService {
   constructor(
@@ -70,33 +98,163 @@ export class SchedulingService {
     @InjectModel(TherapistBlockedTime) private readonly blockedModel: typeof TherapistBlockedTime,
     @InjectModel(Appointment) private readonly appointmentModel: typeof Appointment,
     @InjectModel(TherapyProduct) private readonly productModel: typeof TherapyProduct,
+    @InjectModel(TherapistProfile) private readonly therapistProfileModel: typeof TherapistProfile,
+    @InjectModel(TherapistProduct) private readonly therapistProductModel: typeof TherapistProduct,
+    @InjectModel(User) private readonly userModel: typeof User,
+    @InjectModel(FileAsset) private readonly fileModel: typeof FileAsset,
     private readonly audit: AuditService,
   ) {}
 
-  async createSchedule(therapistUserId: string, dto: CreateScheduleDto) {
-    if (dto.endTime <= dto.startTime)
+  private assertValidScheduleRange(input: ScheduleRangeInput) {
+    if (input.endTime <= input.startTime) {
       throw new BadRequestException({
         code: 'SCHEDULE_INVALID_RANGE',
-        message: 'endTime debe ser mayor a startTime.',
+        message: 'La hora final debe ser mayor a la hora inicial.',
+        details: [`startTime=${input.startTime}`, `endTime=${input.endTime}`],
       });
-    const overlaps = await this.scheduleModel.findOne({
-      where: {
-        therapistUserId,
-        weekday: dto.weekday,
-        status: 'ACTIVE',
-        [Op.or]: [{ startTime: { [Op.lt]: dto.endTime }, endTime: { [Op.gt]: dto.startTime } }],
-      } as any,
-    });
-    if (overlaps)
+    }
+    if (input.effectiveFrom && input.effectiveTo && input.effectiveTo < input.effectiveFrom) {
+      throw new BadRequestException({
+        code: 'SCHEDULE_INVALID_EFFECTIVE_RANGE',
+        message: 'La fecha de vigencia final debe ser posterior o igual a la fecha inicial.',
+        details: [`effectiveFrom=${input.effectiveFrom}`, `effectiveTo=${input.effectiveTo}`],
+      });
+    }
+  }
+
+  private async assertNoScheduleOverlap(
+    therapistUserId: string,
+    input: ScheduleRangeInput,
+    excludeScheduleId?: string,
+  ) {
+    if (input.status === 'INACTIVE') return;
+
+    const where: any = {
+      therapistUserId,
+      weekday: input.weekday,
+      status: 'ACTIVE',
+      [Op.or]: [{ startTime: { [Op.lt]: input.endTime }, endTime: { [Op.gt]: input.startTime } }],
+    };
+    if (excludeScheduleId) where.id = { [Op.ne]: excludeScheduleId };
+
+    const overlaps = await this.scheduleModel.findOne({ where: where as any });
+    if (overlaps) {
       throw new BadRequestException({
         code: 'SCHEDULE_OVERLAP',
-        message: 'El horario se solapa con otro horario activo.',
+        message: 'El horario se solapa con otro horario activo del mismo terapeuta.',
+        details: [
+          `weekday=${input.weekday}`,
+          `startTime=${input.startTime}`,
+          `endTime=${input.endTime}`,
+          `existingScheduleId=${overlaps.id}`,
+        ],
       });
+    }
+  }
+
+
+  private buildFileUrl(fileId?: string | null, file?: FileAsset | null) {
+    const metadata = (file?.metadata ?? {}) as Record<string, unknown>;
+    const explicitUrl = String(metadata.publicUrl ?? metadata.downloadUrl ?? metadata.url ?? '').trim();
+    if (explicitUrl) return explicitUrl;
+    if (!fileId) return undefined;
+    const baseUrl = (process.env.PUBLIC_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`).replace(/\/+$/, '');
+    const apiPrefix = (process.env.API_PREFIX ?? 'api/v1').replace(/^\/+|\/+$/g, '');
+    return `${baseUrl}/${apiPrefix}/files/${fileId}/download`;
+  }
+
+  async listPublicTherapists(rawQuery: Record<string, unknown> = {}) {
+    const productId = firstNonEmptyString(rawQuery, ['productId', 'therapyProductId', 'product_id', 'serviceId']);
+    const search = firstNonEmptyString(rawQuery, ['search', 'q', 'query']);
+
+    const profiles = await this.therapistProfileModel.findAll({
+      where: {
+        approvalStatus: { [Op.notIn]: ['REJECTED', 'SUSPENDED', 'INACTIVE'] },
+      } as any,
+      include: [
+        {
+          model: User,
+          required: true,
+          where: { status: 'ACTIVE' } as any,
+        },
+      ],
+      order: [
+        ['lastName', 'ASC'],
+        ['firstName', 'ASC'],
+      ],
+    });
+
+    let allowedTherapistIds: Set<string> | undefined;
+    if (productId && UUID_LIKE_PATTERN.test(productId)) {
+      const links = await this.therapistProductModel.findAll({ where: { productId, isActive: true } as any });
+      if (links.length > 0) {
+        allowedTherapistIds = new Set(links.map((link) => link.therapistUserId));
+      }
+    }
+
+    const avatarIds = profiles.map((profile) => profile.avatarFileId).filter(Boolean) as string[];
+    const avatarFiles = avatarIds.length
+      ? await this.fileModel.findAll({ where: { id: { [Op.in]: avatarIds }, status: 'ACTIVE' } as any })
+      : [];
+    const avatarById = new Map(avatarFiles.map((file) => [file.id, file]));
+
+    const items = profiles
+      .filter((profile) => !allowedTherapistIds || allowedTherapistIds.has(profile.userId))
+      .map((profile) => {
+        const name = `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim() || 'Terapeuta';
+        const avatarFile = profile.avatarFileId ? avatarById.get(profile.avatarFileId) : undefined;
+        return {
+          id: profile.userId,
+          userId: profile.userId,
+          therapistUserId: profile.userId,
+          name,
+          email: profile.user?.email,
+          title: profile.title,
+          mainSpecialty: profile.mainSpecialty,
+          specialty: profile.mainSpecialty,
+          bio: profile.bio ?? '',
+          personalPhrase: profile.personalPhrase ?? '',
+          city: profile.city ?? '',
+          country: profile.country ?? '',
+          approvalStatus: profile.approvalStatus,
+          avatarFileId: profile.avatarFileId ?? null,
+          avatarUrl: this.buildFileUrl(profile.avatarFileId, avatarFile),
+          timezone: 'America/La_Paz',
+        };
+      })
+      .filter((item) => {
+        if (!search) return true;
+        const text = `${item.name} ${item.email ?? ''} ${item.title ?? ''} ${item.specialty ?? ''}`.toLowerCase();
+        return text.includes(search.toLowerCase());
+      });
+
+    return { items, pagination: { page: 1, pageSize: items.length || 100, total: items.length, totalPages: 1 } };
+  }
+
+  async createSchedule(therapistUserId: string, dto: CreateScheduleDto, actorUserId = therapistUserId) {
+    const payload = compactScheduleDto(dto) as unknown as CreateScheduleDto;
+    const scheduleInput: ScheduleRangeInput = {
+      weekday: Number(payload.weekday),
+      startTime: normalizeTime(String(payload.startTime)),
+      endTime: normalizeTime(String(payload.endTime)),
+      effectiveFrom: String(payload.effectiveFrom),
+      effectiveTo: payload.effectiveTo ? String(payload.effectiveTo) : undefined,
+      status: 'ACTIVE',
+    };
+
+    this.assertValidScheduleRange(scheduleInput);
+    await this.assertNoScheduleOverlap(therapistUserId, scheduleInput);
+
     return this.scheduleModel.sequelize!.transaction(async (transaction) => {
       const schedule = await this.scheduleModel.create(
         {
           therapistUserId,
-          ...dto,
+          weekday: scheduleInput.weekday,
+          startTime: scheduleInput.startTime,
+          endTime: scheduleInput.endTime,
+          timezone: payload.timezone || 'America/La_Paz',
+          effectiveFrom: scheduleInput.effectiveFrom,
+          effectiveTo: scheduleInput.effectiveTo,
           status: 'ACTIVE',
           version: 1,
         } as any,
@@ -104,7 +262,7 @@ export class SchedulingService {
       );
       await this.audit.log(
         {
-          actorUserId: therapistUserId,
+          actorUserId,
           action: 'scheduling.create_schedule',
           entityType: 'TherapistSchedule',
           entityId: schedule.id,
@@ -116,7 +274,7 @@ export class SchedulingService {
     });
   }
 
-  listMySchedules(therapistUserId: string) {
+  listSchedulesForTherapist(therapistUserId: string) {
     return this.scheduleModel.findAll({
       where: { therapistUserId },
       order: [
@@ -126,13 +284,78 @@ export class SchedulingService {
     });
   }
 
+  listMySchedules(therapistUserId: string) {
+    return this.listSchedulesForTherapist(therapistUserId);
+  }
+
+  async updateScheduleForTherapist(
+    therapistUserId: string,
+    scheduleId: string,
+    dto: UpdateScheduleDto,
+    actorUserId = therapistUserId,
+  ) {
+    const schedule = await this.scheduleModel.findOne({ where: { id: scheduleId, therapistUserId } });
+    if (!schedule) {
+      throw new NotFoundException({
+        code: 'SCHEDULE_NOT_FOUND',
+        message: 'Horario no encontrado para este terapeuta.',
+        details: [`therapistUserId=${therapistUserId}`, `scheduleId=${scheduleId}`],
+      });
+    }
+
+    const before = schedule.toJSON();
+    const payload = compactScheduleDto(dto) as Partial<UpdateScheduleDto>;
+    const next: ScheduleRangeInput = {
+      weekday: Number(payload.weekday ?? schedule.weekday),
+      startTime: normalizeTime(String(payload.startTime ?? schedule.startTime)),
+      endTime: normalizeTime(String(payload.endTime ?? schedule.endTime)),
+      effectiveFrom: String(payload.effectiveFrom ?? schedule.effectiveFrom),
+      effectiveTo: (payload as any).effectiveTo === null ? null : String(payload.effectiveTo ?? schedule.effectiveTo ?? ''),
+      status: String(payload.status ?? schedule.status ?? 'ACTIVE'),
+    };
+
+    this.assertValidScheduleRange(next);
+    await this.assertNoScheduleOverlap(therapistUserId, next, scheduleId);
+
+    return this.scheduleModel.sequelize!.transaction(async (transaction) => {
+      await schedule.update(
+        {
+          ...payload,
+          weekday: next.weekday,
+          startTime: next.startTime,
+          endTime: next.endTime,
+          effectiveFrom: next.effectiveFrom,
+          effectiveTo: next.effectiveTo || null,
+          version: Number(schedule.version ?? 1) + 1,
+        } as any,
+        { transaction },
+      );
+      await this.audit.log(
+        {
+          actorUserId,
+          action: 'scheduling.update_schedule',
+          entityType: 'TherapistSchedule',
+          entityId: schedule.id,
+          before,
+          after: schedule.toJSON(),
+        },
+        { transaction },
+      );
+      return schedule;
+    });
+  }
+
+  async deactivateScheduleForTherapist(therapistUserId: string, scheduleId: string, actorUserId = therapistUserId) {
+    return this.updateScheduleForTherapist(therapistUserId, scheduleId, { status: 'INACTIVE' }, actorUserId);
+  }
+
   async createBlockedTime(therapistUserId: string, dto: CreateBlockedTimeDto) {
     const startAt = new Date(dto.startAt);
     const endAt = new Date(dto.endAt);
-    if (endAt <= startAt)
+    if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime()) || endAt <= startAt)
       throw new BadRequestException({
         code: 'BLOCK_INVALID_RANGE',
-        message: 'endAt debe ser mayor a startAt.',
+        message: 'El bloqueo debe tener una fecha/hora inicial y final válida, y la final debe ser mayor.',
       });
     return this.blockedModel.sequelize!.transaction(async (transaction) => {
       const blocked = await this.blockedModel.create(
@@ -159,7 +382,7 @@ export class SchedulingService {
     });
   }
 
-  private normalizeAvailabilityQuery(query: AvailabilityQueryDto): NormalizedAvailabilityQuery {
+  private normalizeAvailabilityQuery(query: AvailabilityQueryDto | Record<string, unknown>): NormalizedAvailabilityQuery {
     const source = query as Record<string, unknown>;
     const therapistUserId = firstNonEmptyString(source, [
       'therapistUserId',
@@ -175,16 +398,9 @@ export class SchedulingService {
       'serviceId',
       'servicioId',
     ]);
-    const from = normalizeIsoDate(
-      firstNonEmptyString(source, ['from', 'startDate', 'start', 'dateFrom', 'fechaDesde', 'fecha']),
-    );
-    const to =
-      normalizeIsoDate(
-        firstNonEmptyString(source, ['to', 'endDate', 'end', 'dateTo', 'fechaHasta']),
-      ) ?? from;
-    const timezone = normalizeTimezone(
-      firstNonEmptyString(source, ['timezone', 'timeZone', 'tz', 'zonaHoraria']),
-    );
+    const from = normalizeIsoDate(firstNonEmptyString(source, ['from', 'startDate', 'start', 'dateFrom', 'fechaDesde', 'fecha']));
+    const to = normalizeIsoDate(firstNonEmptyString(source, ['to', 'endDate', 'end', 'dateTo', 'fechaHasta'])) ?? from;
+    const timezone = normalizeTimezone(firstNonEmptyString(source, ['timezone', 'timeZone', 'tz', 'zonaHoraria']));
 
     const details: string[] = [];
     if (!therapistUserId) details.push('therapistUserId es requerido.');
@@ -209,13 +425,14 @@ export class SchedulingService {
     return { therapistUserId: therapistUserId!, productId: productId!, from: from!, to: to!, timezone };
   }
 
-  async getAvailability(rawQuery: AvailabilityQueryDto) {
+  async getAvailability(rawQuery: AvailabilityQueryDto | Record<string, unknown>) {
     const query = this.normalizeAvailabilityQuery(rawQuery);
     const product = await this.productModel.findByPk(query.productId);
     if (!product)
       throw new NotFoundException({
         code: 'THERAPY_PRODUCT_NOT_FOUND',
         message: 'Producto no encontrado.',
+        details: [`productId=${query.productId}`],
       });
     const from = DateTime.fromISO(query.from, { zone: query.timezone }).startOf('day');
     const to = DateTime.fromISO(query.to, { zone: query.timezone }).endOf('day');
@@ -240,47 +457,61 @@ export class SchedulingService {
     const schedules = await this.scheduleModel.findAll({
       where: { therapistUserId: query.therapistUserId, status: 'ACTIVE' },
     });
+
+    if (!schedules.length) {
+      return {
+        therapistUserId: query.therapistUserId,
+        productId: query.productId,
+        slots: [],
+        reason: 'THERAPIST_HAS_NO_ACTIVE_SCHEDULES',
+        message: 'El terapeuta todavía no tiene horarios activos configurados.',
+      };
+    }
+
     const startUtc = from.toUTC().toJSDate();
     const endUtc = to.toUTC().toJSDate();
-    const unavailable = await this.scheduleModel.sequelize!.query<UnavailableInterval>(
-      `SELECT start_at AS "startAt", end_at AS "endAt"
-       FROM v_therapist_unavailable_intervals
-       WHERE therapist_user_id = :therapistUserId
-         AND start_at < :endUtc
-         AND end_at > :startUtc`,
-      {
-        replacements: {
+    const [appointments, blocks] = await Promise.all([
+      this.appointmentModel.findAll({
+        where: {
           therapistUserId: query.therapistUserId,
-          startUtc,
-          endUtc,
-        },
-        type: QueryTypes.SELECT,
-      },
-    );
+          status: ACTIVE_APPOINTMENT_STATUSES,
+          scheduledStartAt: { [Op.lt]: endUtc },
+          scheduledEndAt: { [Op.gt]: startUtc },
+        } as any,
+      }),
+      this.blockedModel.findAll({
+        where: {
+          therapistUserId: query.therapistUserId,
+          status: 'ACTIVE',
+          startAt: { [Op.lt]: endUtc },
+          endAt: { [Op.gt]: startUtc },
+        } as any,
+      }),
+    ]);
+    const unavailable: UnavailableInterval[] = [...appointments, ...blocks];
 
-    const duration = product.durationMinutes;
+    const duration = Number(product.durationMinutes || 60);
     const slots: { startAt: string; endAt: string; timezone: string }[] = [];
     for (let day = from; day <= to; day = day.plus({ days: 1 })) {
       const jsWeekday = day.weekday % 7;
+      const isoDate = day.toISODate()!;
       const daySchedules = schedules.filter(
-        (s) =>
-          s.weekday === jsWeekday &&
-          day.toISODate()! >= s.effectiveFrom &&
-          (!s.effectiveTo || day.toISODate()! <= s.effectiveTo),
+        (schedule) =>
+          schedule.weekday === jsWeekday &&
+          isoDate >= schedule.effectiveFrom &&
+          (!schedule.effectiveTo || isoDate <= schedule.effectiveTo),
       );
       for (const schedule of daySchedules) {
-        let cursor = DateTime.fromISO(`${day.toISODate()}T${schedule.startTime}`, {
-          zone: schedule.timezone,
+        let cursor = DateTime.fromISO(`${isoDate}T${normalizeTime(schedule.startTime)}`, {
+          zone: schedule.timezone || query.timezone,
         });
-        const scheduleEnd = DateTime.fromISO(`${day.toISODate()}T${schedule.endTime}`, {
-          zone: schedule.timezone,
+        const scheduleEnd = DateTime.fromISO(`${isoDate}T${normalizeTime(schedule.endTime)}`, {
+          zone: schedule.timezone || query.timezone,
         });
         while (cursor.plus({ minutes: duration }) <= scheduleEnd) {
           const slotStart = cursor.toUTC();
           const slotEnd = cursor.plus({ minutes: duration }).toUTC();
-          if (
-            !this.overlapsAny(slotStart.toJSDate(), slotEnd.toJSDate(), unavailable)
-          ) {
+          if (!this.overlapsAny(slotStart.toJSDate(), slotEnd.toJSDate(), unavailable)) {
             slots.push({
               startAt: slotStart.toISO()!,
               endAt: slotEnd.toISO()!,
@@ -314,16 +545,7 @@ export class SchedulingService {
     return !appointment && !block;
   }
 
-  private overlapsAny(
-    start: Date,
-    end: Date,
-    list: Array<{
-      startAt?: Date | string;
-      endAt?: Date | string;
-      scheduledStartAt?: Date | string;
-      scheduledEndAt?: Date | string;
-    }>,
-  ) {
+  private overlapsAny(start: Date, end: Date, list: UnavailableInterval[]) {
     return list.some((item) => {
       const rawStart = item.startAt ?? item.scheduledStartAt!;
       const rawEnd = item.endAt ?? item.scheduledEndAt!;

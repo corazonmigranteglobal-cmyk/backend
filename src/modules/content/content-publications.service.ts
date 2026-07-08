@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Includeable } from 'sequelize';
+import { Includeable, Op } from 'sequelize';
 import { ContentAuthor, ContentCategory, ContentPublication, ContentTag } from '@/database/models';
 import { buildPagination, buildSafeOrder, toLimitOffset } from '@/common/pagination/pagination.dto';
 import { toSlug } from '@/common/utils/slug.util';
@@ -62,7 +62,7 @@ export class ContentPublicationsService {
     return { items: rows.map(toPublicationCard), pagination: buildPagination(query, count) };
   }
 
-  async listPublic(query: PublicContentQueryDto, publicationType?: string) {
+  async listPublic(query: PublicContentQueryDto, publicationType?: string | string[]) {
     const { rows, count } = await this.publicationModel.findAndCountAll({
       ...toLimitOffset(query),
       distinct: true,
@@ -85,6 +85,25 @@ export class ContentPublicationsService {
       });
     }
     return toPublicationDetail(publication, publication.accessType !== 'PREMIUM');
+  }
+
+  async getPremiumBySlug(slug: string, publicationType?: string | string[]) {
+    const publication = await this.publicationModel.findOne({
+      where: {
+        slug,
+        status: 'PUBLISHED',
+        accessType: 'PREMIUM',
+        ...(publicationType ? { publicationType: Array.isArray(publicationType) ? ({ [Op.in]: publicationType } as any) : publicationType } : {}),
+      },
+      include: this.baseInclude,
+    });
+    if (!publication) {
+      throw new NotFoundException({
+        code: 'CONTENT_PREMIUM_PUBLICATION_NOT_FOUND',
+        message: 'Publicación premium no encontrada.',
+      });
+    }
+    return toPublicationDetail(publication, true);
   }
 
   async getAdmin(id: string) {

@@ -6,7 +6,11 @@ import { Roles } from '@/common/decorators/roles.decorator';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
 import { PaginationQueryDto } from '@/common/pagination/pagination.dto';
 import { AppointmentsService } from './appointments.service';
-import { CreateAppointmentDto, UpdateAppointmentStatusDto } from './dto/appointment.dto';
+import {
+  CreateAppointmentDto,
+  CreateAppointmentForPatientDto,
+  UpdateAppointmentStatusDto,
+} from './dto/appointment.dto';
 
 @ApiTags('Appointments')
 @ApiBearerAuth()
@@ -16,6 +20,15 @@ export class AppointmentsController {
   @Post() @Roles('PATIENT') create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateAppointmentDto,
+  ) {
+    return this.service.create(user, dto);
+  }
+  @Post('admin')
+  @Roles('ADMIN', 'SUPER_ADMIN', 'THERAPIST')
+  @Permissions('appointments:write')
+  createForPatient(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateAppointmentForPatientDto,
   ) {
     return this.service.create(user, dto);
   }

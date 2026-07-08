@@ -42,6 +42,7 @@ export function toPublicationCard(publication: ContentPublication) {
     category: publication.category ? toCategoryDto(publication.category) : undefined,
     author: publication.author ? toAuthorDto(publication.author) : undefined,
     coverFileId: publication.coverFileId,
+    seoMetadata: publication.seoMetadata ?? {},
     tags: publication.tags?.map(toTagDto) ?? [],
   };
 }

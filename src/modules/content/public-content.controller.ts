@@ -1,9 +1,11 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@/common/decorators/public.decorator';
 import { ContentPublicationsService } from './content-publications.service';
 import { ContentTaxonomyService } from './content-taxonomy.service';
+import { ContentSubscribersService } from './content-subscribers.service';
 import { PublicContentQueryDto } from './dto/content-query.dto';
+import { UpsertContentSubscriberDto } from './dto/subscriber.dto';
 
 @ApiTags('Publicaciones públicas')
 @Public()
@@ -12,16 +14,17 @@ export class PublicContentController {
   constructor(
     private readonly publications: ContentPublicationsService,
     private readonly taxonomy: ContentTaxonomyService,
+    private readonly subscribers: ContentSubscribersService,
   ) {}
 
   @Get('news')
   listNews(@Query() query: PublicContentQueryDto) {
-    return this.publications.listPublic(query, 'NEWS');
+    return this.publications.listPublic(query, ['NEWS', 'REPORT', 'ANALYSIS', 'INTERVIEW']);
   }
 
   @Get('columns')
   listColumns(@Query() query: PublicContentQueryDto) {
-    return this.publications.listPublic(query, 'COLUMN');
+    return this.publications.listPublic(query, ['COLUMN', 'OPINION']);
   }
 
   @Get('news/:slug')
@@ -42,5 +45,47 @@ export class PublicContentController {
   @Get('tags')
   listTags() {
     return this.taxonomy.listTags();
+  }
+
+
+  @Post('subscribers')
+  subscribe(@Body() dto: UpsertContentSubscriberDto) {
+    return this.subscribers.upsert(undefined, { ...dto, source: dto.source ?? 'PUBLIC_FORM' });
+  }
+
+}
+
+
+@ApiTags('Contenido público')
+@Public()
+@Controller('public/content')
+export class PublicContentAliasController {
+  constructor(
+    private readonly publications: ContentPublicationsService,
+    private readonly taxonomy: ContentTaxonomyService,
+  ) {}
+
+  @Get('posts')
+  listPosts(@Query() query: PublicContentQueryDto) {
+    return this.publications.listPublic(query);
+  }
+
+  @Get('categories')
+  listContentCategories() {
+    return this.taxonomy.listCategories(true);
+  }
+
+  @Get('types')
+  listContentTypes() {
+    return {
+      items: [
+        { value: 'NEWS', label: 'Novedades' },
+        { value: 'COLUMN', label: 'Columnas' },
+        { value: 'OPINION', label: 'Opinión' },
+        { value: 'INTERVIEW', label: 'Entrevistas' },
+        { value: 'REPORT', label: 'Reportes' },
+        { value: 'ANALYSIS', label: 'Análisis' },
+      ],
+    };
   }
 }

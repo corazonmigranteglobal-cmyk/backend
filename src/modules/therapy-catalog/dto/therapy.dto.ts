@@ -9,6 +9,10 @@ export class CreateApproachDto {
   @IsIn(['ACTIVE', 'INACTIVE'])
   status?: string;
   @ApiPropertyOptional() @IsOptional() @IsInt() sortOrder?: number;
+  @ApiPropertyOptional({ description: 'Archivo de imagen subido con POST /api/v1/files.' })
+  @IsOptional()
+  @IsUUID()
+  imageFileId?: string;
 }
 export class UpdateApproachDto extends CreateApproachDto {}
 export class CreateProductDto {
@@ -23,5 +27,9 @@ export class CreateProductDto {
   @IsIn(['ACTIVE', 'INACTIVE'])
   status?: string;
   @ApiPropertyOptional() @IsOptional() @IsInt() sortOrder?: number;
+  @ApiPropertyOptional({ description: 'Archivo de imagen subido con POST /api/v1/files.' })
+  @IsOptional()
+  @IsUUID()
+  imageFileId?: string;
 }
 export class UpdateProductDto extends CreateProductDto {}

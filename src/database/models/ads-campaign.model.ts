@@ -13,6 +13,7 @@ import { AdsCampaignCreative } from './ads-campaign-creative.model';
 import { AdsCampaignPlacement } from './ads-campaign-placement.model';
 import { AdsCompany } from './ads-company.model';
 import { AdsPlacement } from './ads-placement.model';
+import { AdsCampaignContentTarget } from './ads-campaign-content-target.model';
 
 @Table({ tableName: 'ads_campaigns', underscored: true, timestamps: true, paranoid: true })
 export class AdsCampaign extends Model<AdsCampaign> {
@@ -66,6 +67,9 @@ export class AdsCampaign extends Model<AdsCampaign> {
 
   @HasMany(() => AdsCampaignCreative)
   creatives?: AdsCampaignCreative[];
+
+  @HasMany(() => AdsCampaignContentTarget)
+  contentTargets?: AdsCampaignContentTarget[];
 
   @BelongsToMany(() => AdsPlacement, () => AdsCampaignPlacement)
   placements?: AdsPlacement[];

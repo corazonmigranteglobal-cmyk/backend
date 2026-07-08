@@ -38,11 +38,21 @@ export class AccountingController {
   ) {
     return this.service.createAccount(u.sub, dto);
   }
+  @Get('cost-centers') @Permissions('accounting:read') listCostCenters(
+    @Query() q: PaginationQueryDto,
+  ) {
+    return this.service.listCostCenters(q);
+  }
   @Post('cost-centers') @Permissions('accounting:write') createCostCenter(
     @CurrentUser() u: AuthenticatedUser,
     @Body() dto: CreateCostCenterDto,
   ) {
     return this.service.createCostCenter(u.sub, dto);
+  }
+  @Get('transactions') @Permissions('accounting:read') listTransactions(
+    @Query() q: PaginationQueryDto,
+  ) {
+    return this.service.listTransactions(q);
   }
   @Post('transactions') @Permissions('accounting:write') createTransaction(
     @CurrentUser() u: AuthenticatedUser,

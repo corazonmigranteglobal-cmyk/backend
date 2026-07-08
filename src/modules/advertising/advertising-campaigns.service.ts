@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Includeable } from 'sequelize';
+import { Includeable, Op } from 'sequelize';
 import {
   AdsCampaign,
+  AdsCampaignContentTarget,
   AdsCampaignCreative,
   AdsCampaignPlacement,
   AdsCompany,
   AdsPlacement,
+  ContentCategory,
+  ContentPublication,
+  CmsPage,
 } from '@/database/models';
 import {
   buildPagination,
@@ -23,7 +27,6 @@ import {
 } from './dto/campaign.dto';
 import { toAdsCampaignDto } from './mappers/advertising.mapper';
 import { assertCampaignDates } from './policies/campaign-date.policy';
-
 
 const CAMPAIGN_STATUS_ALIASES: Record<string, string> = {
   ACTIVE: 'ACTIVE',
@@ -63,14 +66,22 @@ export class AdvertisingCampaignsService {
     { model: AdsCompany },
     { model: AdsCampaignCreative },
     { model: AdsPlacement, through: { attributes: [] } },
+    { model: AdsCampaignContentTarget },
   ];
 
   constructor(
     @InjectModel(AdsCampaign) private readonly campaignModel: typeof AdsCampaign,
     @InjectModel(AdsCampaignPlacement)
     private readonly campaignPlacementModel: typeof AdsCampaignPlacement,
+    @InjectModel(AdsCampaignContentTarget)
+    private readonly campaignTargetModel: typeof AdsCampaignContentTarget,
+    @InjectModel(AdsCampaignCreative)
+    private readonly creativeModel: typeof AdsCampaignCreative,
     @InjectModel(AdsCompany) private readonly companyModel: typeof AdsCompany,
     @InjectModel(AdsPlacement) private readonly placementModel: typeof AdsPlacement,
+    @InjectModel(ContentPublication) private readonly publicationModel: typeof ContentPublication,
+    @InjectModel(ContentCategory) private readonly categoryModel: typeof ContentCategory,
+    @InjectModel(CmsPage) private readonly pageModel: typeof CmsPage,
     private readonly audit: AuditService,
   ) {}
 
@@ -114,13 +125,15 @@ export class AdvertisingCampaignsService {
   }
 
   async create(actorUserId: string, dto: CreateAdsCampaignDto) {
+    const { placementIds, publicationIds, categoryIds, pageSlugs, ...campaignInput } = dto;
     assertCampaignDates(dto.startsAt, dto.endsAt);
     await this.assertCompany(dto.companyId);
-    await this.assertPlacements(dto.placementIds);
+    await this.assertPlacements(placementIds);
+    await this.assertTargets(publicationIds, categoryIds, pageSlugs);
     return this.campaignModel.sequelize!.transaction(async (transaction) => {
       const campaign = await this.campaignModel.create(
         {
-          ...dto,
+          ...campaignInput,
           startsAt: new Date(dto.startsAt),
           endsAt: new Date(dto.endsAt),
           status: 'DRAFT',
@@ -133,32 +146,75 @@ export class AdvertisingCampaignsService {
         } as any,
         { transaction },
       );
-      await this.replacePlacements(campaign.id, dto.placementIds ?? [], transaction);
+      await this.replacePlacements(campaign.id, placementIds ?? [], transaction);
+      await this.replaceTargets(campaign.id, publicationIds ?? [], categoryIds ?? [], pageSlugs ?? [], transaction);
       await this.auditCampaign(actorUserId, 'create', campaign, undefined, transaction);
       return this.get(campaign.id);
     });
   }
 
   async update(actorUserId: string, id: string, dto: UpdateAdsCampaignDto) {
+    const { placementIds, publicationIds, categoryIds, pageSlugs, ...campaignInput } = dto;
     const campaign = await this.find(id);
     const startsAt = dto.startsAt ?? campaign.startsAt;
     const endsAt = dto.endsAt ?? campaign.endsAt;
     assertCampaignDates(startsAt, endsAt);
     if (dto.companyId) await this.assertCompany(dto.companyId);
-    await this.assertPlacements(dto.placementIds);
+    await this.assertPlacements(placementIds);
+    await this.assertTargets(publicationIds, categoryIds, pageSlugs);
     const before = campaign.toJSON();
     return campaign.sequelize!.transaction(async (transaction) => {
       await campaign.update(
         {
-          ...dto,
+          ...campaignInput,
           startsAt: dto.startsAt ? new Date(dto.startsAt) : campaign.startsAt,
           endsAt: dto.endsAt ? new Date(dto.endsAt) : campaign.endsAt,
         } as any,
         { transaction },
       );
-      if (dto.placementIds)
-        await this.replacePlacements(campaign.id, dto.placementIds, transaction);
+      if (placementIds) await this.replacePlacements(campaign.id, placementIds, transaction);
+      if (publicationIds || categoryIds || pageSlugs)
+        await this.replaceTargets(campaign.id, publicationIds ?? [], categoryIds ?? [], pageSlugs ?? [], transaction);
       await this.auditCampaign(actorUserId, 'update', campaign, before, transaction);
+      return this.get(campaign.id);
+    });
+  }
+
+  async addAssociations(
+    actorUserId: string,
+    id: string,
+    associations: { placementIds?: string[]; publicationIds?: string[]; categoryIds?: string[]; pageSlugs?: string[] },
+  ) {
+    const campaign = await this.find(id);
+    const existingPlacementIds = (campaign.placements ?? [])
+      .map((placement) => placement.id)
+      .filter((value): value is string => Boolean(value));
+    const existingPublicationIds = (campaign.contentTargets ?? [])
+      .map((target) => target.publicationId)
+      .filter((value): value is string => Boolean(value));
+    const existingCategoryIds = (campaign.contentTargets ?? [])
+      .map((target) => target.categoryId)
+      .filter((value): value is string => Boolean(value));
+    const existingPageSlugs = (campaign.contentTargets ?? [])
+      .map((target) => target.pageSlug)
+      .filter((value): value is string => Boolean(value));
+
+    const placementIds = Array.from(new Set([...existingPlacementIds, ...(associations.placementIds ?? [])]));
+    const publicationIds = Array.from(new Set([...existingPublicationIds, ...(associations.publicationIds ?? [])]));
+    const categoryIds = Array.from(new Set([...existingCategoryIds, ...(associations.categoryIds ?? [])]));
+    const incomingPageSlugs = (associations.pageSlugs ?? [])
+      .map((slug) => this.normalizePageSlug(slug))
+      .filter((value): value is string => Boolean(value));
+    const pageSlugs = Array.from(new Set([...existingPageSlugs, ...incomingPageSlugs]));
+
+    await this.assertPlacements(placementIds);
+    await this.assertTargets(publicationIds, categoryIds, pageSlugs);
+    const before = campaign.toJSON();
+
+    return campaign.sequelize!.transaction(async (transaction) => {
+      await this.replacePlacements(campaign.id, placementIds, transaction);
+      await this.replaceTargets(campaign.id, publicationIds, categoryIds, pageSlugs, transaction);
+      await this.auditCampaign(actorUserId, 'associate_ad', campaign, before, transaction);
       return this.get(campaign.id);
     });
   }
@@ -170,6 +226,19 @@ export class AdvertisingCampaignsService {
       await campaign.update({ status: dto.status } as any, { transaction });
       await this.auditCampaign(actorUserId, 'status', campaign, before, transaction);
       return this.get(campaign.id);
+    });
+  }
+
+  async remove(actorUserId: string, id: string) {
+    const campaign = await this.find(id);
+    const before = campaign.toJSON();
+    return campaign.sequelize!.transaction(async (transaction) => {
+      await this.campaignPlacementModel.destroy({ where: { campaignId: id }, transaction });
+      await this.campaignTargetModel.destroy({ where: { campaignId: id }, transaction });
+      await this.creativeModel.destroy({ where: { campaignId: id }, transaction });
+      await campaign.destroy({ transaction });
+      await this.auditCampaign(actorUserId, 'delete', campaign, before, transaction);
+      return { id, deleted: true };
     });
   }
 
@@ -204,11 +273,89 @@ export class AdvertisingCampaignsService {
     }
   }
 
+  private async assertTargets(publicationIds?: string[], categoryIds?: string[], pageSlugs?: string[]) {
+    if (publicationIds?.length) {
+      const unique = [...new Set(publicationIds)];
+      const count = await this.publicationModel.count({ where: { id: { [Op.in]: unique } } });
+      if (count !== unique.length) {
+        throw new NotFoundException({
+          code: 'CONTENT_PUBLICATION_NOT_FOUND',
+          message: 'Una o más publicaciones asociadas no existen.',
+        });
+      }
+    }
+
+    if (categoryIds?.length) {
+      const unique = [...new Set(categoryIds)];
+      const count = await this.categoryModel.count({ where: { id: { [Op.in]: unique } } });
+      if (count !== unique.length) {
+        throw new NotFoundException({
+          code: 'CONTENT_CATEGORY_NOT_FOUND',
+          message: 'Una o más categorías asociadas no existen.',
+        });
+      }
+    }
+
+    if (pageSlugs?.length) {
+      const unique = [
+        ...new Set(
+          pageSlugs
+            .map((slug) => this.normalizePageSlug(slug))
+            .filter((slug): slug is string => Boolean(slug)),
+        ),
+      ];
+      const count = await this.pageModel.count({ where: { slug: { [Op.in]: unique } } });
+      if (count !== unique.length) {
+        throw new NotFoundException({
+          code: 'PUBLIC_PAGE_NOT_FOUND',
+          message: 'Una o más páginas públicas asociadas no existen.',
+        });
+      }
+    }
+  }
+
   private async replacePlacements(campaignId: string, placementIds: string[], transaction: any) {
     await this.campaignPlacementModel.destroy({ where: { campaignId }, transaction });
     if (!placementIds.length) return;
     const rows = [...new Set(placementIds)].map((placementId) => ({ campaignId, placementId }));
     await this.campaignPlacementModel.bulkCreate(rows as any[], { transaction });
+  }
+
+  private async replaceTargets(
+    campaignId: string,
+    publicationIds: string[],
+    categoryIds: string[],
+    pageSlugs: string[],
+    transaction: any,
+  ) {
+    await this.campaignTargetModel.destroy({ where: { campaignId }, transaction });
+    const rows = [
+      ...[...new Set(publicationIds)].map((publicationId) => ({
+        campaignId,
+        publicationId,
+        targetingMode: 'INCLUDE',
+        reason: 'Asociada desde administración a una publicación específica.',
+      })),
+      ...[...new Set(categoryIds)].map((categoryId) => ({
+        campaignId,
+        categoryId,
+        targetingMode: 'INCLUDE',
+        reason: 'Asociada desde administración a una categoría editorial.',
+      })),
+      ...[...new Set(pageSlugs.map((slug) => this.normalizePageSlug(slug)).filter(Boolean))].map((pageSlug) => ({
+        campaignId,
+        pageSlug,
+        targetingMode: 'INCLUDE',
+        reason: 'Asociada desde administración a una página pública.',
+      })),
+    ];
+    if (rows.length) await this.campaignTargetModel.bulkCreate(rows as any[], { transaction });
+  }
+
+
+  private normalizePageSlug(value?: string) {
+    const slug = String(value ?? '').trim().toLowerCase().replace(/^\/+|\/+$/g, '');
+    return slug || undefined;
   }
 
   private async auditCampaign(

@@ -24,3 +24,16 @@ export class PublicAdvertisingController {
     return this.placements.list(true);
   }
 }
+
+
+@ApiTags('Publicidad pública')
+@Public()
+@Controller('public/advertising')
+export class PublicAdvertisingAliasController {
+  constructor(private readonly publicAds: AdvertisingPublicService) {}
+
+  @Get()
+  getPublicAdvertising(@Query() query: PublicAdSlotsQueryDto) {
+    return this.publicAds.getSlots(query);
+  }
+}

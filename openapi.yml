@@ -2,71 +2,52 @@ openapi: 3.0.3
 info:
   title: Corazón Migrante API
   version: 1.0.0
-  description: |
-    API pública y administrativa de Corazón Migrante.
-
-    Prefijo global: `/api/v1`.
-
-    Contrato de respuesta:
-    - Respuesta simple: `{ data, meta }`.
-    - Respuesta paginada: `{ data, pagination, meta }`.
-    - Error: `{ error: { code, message, details }, meta }`.
-
-    Seguridad:
-    - Los endpoints públicos están marcados como `public` en su descripción.
-    - Los endpoints privados usan `Bearer JWT`.
-    - Algunos endpoints administrativos requieren permisos específicos además del rol.
-
-    Disponibilidad de terapeutas:
-    - `GET /booking/availability` calcula los horarios disponibles por terapeuta.
-    - Parte de los horarios recurrentes configurados en `therapist_schedules`.
-    - Resta bloqueos activos de agenda (`therapist_blocked_times`).
-    - Resta citas activas/ocupadas (`appointments` con status `REQUESTED` o `CONFIRMED`).
-    - El rango máximo soportado es 31 días.
-
-    Límites de uso (rate limiting):
-    - Límite global por IP: 120 solicitudes / 60s. Al excederlo, la API responde `429`
-      con `{ error: { code: "HTTP_429", ... } }`.
-    - `POST /auth/login`, `/auth/register/*`: 10 solicitudes / 60s por IP.
-    - `POST /auth/password-reset/request` y `/confirm`: 5 solicitudes / 60s por IP.
-    - El cuerpo de las solicitudes JSON está limitado a 2 MB (`413` si se excede).
+  description: "API pública y administrativa de Corazón Migrante.\n\nPrefijo global: `/api/v1`.\n\nContrato de respuesta:\n\
+    - Respuesta simple: `{ data, meta }`.\n- Respuesta paginada: `{ data, pagination, meta }`.\n- Error: `{ error: { code,\
+    \ message, details }, meta }`.\n\nSeguridad:\n- Los endpoints públicos están marcados como `public` en su descripción.\n\
+    - Los endpoints privados usan `Bearer JWT`.\n- Algunos endpoints administrativos requieren permisos específicos además\
+    \ del rol.\n\nDisponibilidad de terapeutas:\n- `GET /booking/availability` calcula los horarios disponibles por terapeuta.\n\
+    - Parte de los horarios recurrentes configurados en `therapist_schedules`.\n- Resta bloqueos activos de agenda (`therapist_blocked_times`).\n\
+    - Resta citas activas/ocupadas (`appointments` con status `REQUESTED` o `CONFIRMED`).\n- El rango máximo soportado es\
+    \ 31 días.\n\nLímites de uso (rate limiting):\n- Límite global por IP: 120 solicitudes / 60s. Al excederlo, la API responde\
+    \ `429`\n  con `{ error: { code: \"HTTP_429\", ... } }`.\n- `POST /auth/login`, `/auth/register/*`: 10 solicitudes / 60s\
+    \ por IP.\n- `POST /auth/password-reset/request` y `/confirm`: 5 solicitudes / 60s por IP.\n- El cuerpo de las solicitudes\
+    \ JSON está limitado a 2 MB (`413` si se excede).\n"
 servers:
-  - url: https://api.corazondemigrante.com/api/v1
-    description: Producción
-  - url: http://localhost:3000/api/v1
-    description: Local
-
+- url: https://api.corazondemigrante.com/api/v1
+  description: Producción
+- url: http://localhost:3000/api/v1
+  description: Local
 tags:
-  - name: Health
-  - name: Auth
-  - name: Users
-  - name: Therapy public catalog
-  - name: Admin therapy catalog
-  - name: Scheduling
-  - name: Booking
-  - name: Appointments
-  - name: Files
-  - name: Public CMS
-  - name: Admin CMS
-  - name: Publications public
-  - name: Content admin
-  - name: Homepage public
-  - name: Homepage admin
-  - name: Advertising public
-  - name: Advertising admin
-  - name: Accounting
-  - name: Analytics
-  - name: Messaging
-  - name: Audit
-  - name: Legacy compatibility
-
+- name: Health
+- name: Auth
+- name: Users
+- name: Therapy public catalog
+- name: Admin therapy catalog
+- name: Scheduling
+- name: Booking
+- name: Appointments
+- name: Files
+- name: Public CMS
+- name: Admin CMS
+- name: Publications public
+- name: Content admin
+- name: Homepage public
+- name: Homepage admin
+- name: Advertising public
+- name: Advertising admin
+- name: Accounting
+- name: Analytics
+- name: Messaging
+- name: Audit
+- name: Legacy compatibility
 security:
-  - bearerAuth: []
-
+- bearerAuth: []
 paths:
   /health:
     get:
-      tags: [Health]
+      tags:
+      - Health
       summary: Health check público
       description: Endpoint público para health checks de Render, balanceadores o monitoreo.
       security: []
@@ -84,10 +65,10 @@ paths:
                 meta:
                   requestId: 8f04fb1e-c6cc-4d76-a661-741765c8f360
                   timestamp: '2026-07-05T15:13:13.536Z'
-
   /auth/register/patient:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Registrar paciente
       description: Público. Crea usuario con rol de paciente y su perfil inicial.
       security: []
@@ -98,14 +79,18 @@ paths:
             schema:
               $ref: '#/components/schemas/RegisterPatientRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '409': { $ref: '#/components/responses/ConflictError' }
-        '429': { $ref: '#/components/responses/TooManyRequestsError' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
   /auth/register/therapist:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Registrar terapeuta
       description: Público. Crea usuario terapeuta y perfil profesional inicial.
       security: []
@@ -116,14 +101,18 @@ paths:
             schema:
               $ref: '#/components/schemas/RegisterTherapistRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '409': { $ref: '#/components/responses/ConflictError' }
-        '429': { $ref: '#/components/responses/TooManyRequestsError' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
   /auth/login:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Iniciar sesión
       description: Público. Devuelve tokens de acceso y refresh token.
       security: []
@@ -143,18 +132,21 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/EnvelopeObject'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/AuthSession'
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/UnauthorizedError' }
-        '429': { $ref: '#/components/responses/TooManyRequestsError' }
-
+                - $ref: '#/components/schemas/EnvelopeObject'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/AuthSession'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
   /auth/refresh:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Renovar access token
       description: Público. Usa un refresh token válido para emitir una nueva sesión.
       security: []
@@ -165,12 +157,14 @@ paths:
             schema:
               $ref: '#/components/schemas/RefreshTokenRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '401': { $ref: '#/components/responses/UnauthorizedError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
   /auth/logout:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Cerrar sesión
       description: Público. Invalida el refresh token enviado.
       security: []
@@ -181,12 +175,14 @@ paths:
             schema:
               $ref: '#/components/schemas/RefreshTokenRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
   /auth/password-reset/request:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Solicitar recuperación de contraseña
       description: Público. Encola o envía instrucciones de recuperación si el correo existe.
       security: []
@@ -197,13 +193,16 @@ paths:
             schema:
               $ref: '#/components/schemas/PasswordResetRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '429': { $ref: '#/components/responses/TooManyRequestsError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
   /auth/password-reset/confirm:
     post:
-      tags: [Auth]
+      tags:
+      - Auth
       summary: Confirmar recuperación de contraseña
       description: Público. Cambia contraseña usando token de recuperación válido.
       security: []
@@ -214,22 +213,27 @@ paths:
             schema:
               $ref: '#/components/schemas/PasswordResetConfirmRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '429': { $ref: '#/components/responses/TooManyRequestsError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
   /me:
     get:
-      tags: [Users]
+      tags:
+      - Users
       summary: Obtener perfil de sesión
       description: Requiere autenticación. Devuelve usuario, rol, permisos y perfiles asociados.
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '401': { $ref: '#/components/responses/UnauthorizedError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
   /me/patient-profile:
     patch:
-      tags: [Users]
+      tags:
+      - Users
       summary: Actualizar perfil de paciente
       description: Requiere rol `PATIENT`.
       requestBody:
@@ -239,12 +243,14 @@ paths:
             schema:
               $ref: '#/components/schemas/UpdatePatientProfileRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '403': { $ref: '#/components/responses/ForbiddenError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
   /me/therapist-profile:
     patch:
-      tags: [Users]
+      tags:
+      - Users
       summary: Actualizar perfil de terapeuta
       description: Requiere rol `THERAPIST`.
       requestBody:
@@ -254,239 +260,291 @@ paths:
             schema:
               $ref: '#/components/schemas/UpdateTherapistProfileRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '403': { $ref: '#/components/responses/ForbiddenError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
   /admin/users:
     get:
-      tags: [Users]
+      tags:
+      - Users
       summary: Listar usuarios
       description: Requiere rol `ADMIN` o `SUPER_ADMIN` y permiso `users:read`.
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PPage'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PLimit'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
-        - $ref: '#/components/parameters/Sort'
-        - $ref: '#/components/parameters/SortBy'
-        - $ref: '#/components/parameters/Order'
-        - $ref: '#/components/parameters/SortDir'
-        - $ref: '#/components/parameters/Status'
-        - $ref: '#/components/parameters/Estado'
-        - $ref: '#/components/parameters/PEstado'
-        - $ref: '#/components/parameters/Role'
-        - $ref: '#/components/parameters/Rol'
-        - $ref: '#/components/parameters/PRol'
-        - $ref: '#/components/parameters/TipoUsuario'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/SortBy'
+      - $ref: '#/components/parameters/Order'
+      - $ref: '#/components/parameters/SortDir'
+      - $ref: '#/components/parameters/Status'
+      - $ref: '#/components/parameters/Estado'
+      - $ref: '#/components/parameters/PEstado'
+      - $ref: '#/components/parameters/Role'
+      - $ref: '#/components/parameters/Rol'
+      - $ref: '#/components/parameters/PRol'
+      - $ref: '#/components/parameters/TipoUsuario'
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
   /therapy/approaches:
     get:
-      tags: [Therapy public catalog]
+      tags:
+      - Therapy public catalog
       summary: Listar enfoques terapéuticos públicos
       description: Público. Devuelve enfoques activos para catálogo público.
       security: []
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
   /therapy/products:
     get:
-      tags: [Therapy public catalog]
+      tags:
+      - Therapy public catalog
       summary: Listar productos/servicios terapéuticos públicos
       description: Público. Devuelve servicios activos, duración y precios base.
       security: []
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
   /admin/therapy/approaches:
     get:
-      tags: [Admin therapy catalog]
+      tags:
+      - Admin therapy catalog
       summary: Listar enfoques terapéuticos administrativos
       description: Requiere `therapy:read`.
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
     post:
-      tags: [Admin therapy catalog]
+      tags:
+      - Admin therapy catalog
       summary: Crear enfoque terapéutico
       description: Requiere `therapy:write`.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateApproachRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateApproachRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /admin/therapy/approaches/{id}:
     patch:
-      tags: [Admin therapy catalog]
+      tags:
+      - Admin therapy catalog
       summary: Actualizar enfoque terapéutico
       description: Requiere `therapy:write`.
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateApproachRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateApproachRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/therapy/products:
     get:
-      tags: [Admin therapy catalog]
+      tags:
+      - Admin therapy catalog
       summary: Listar productos terapéuticos administrativos
       description: Requiere `therapy:read`.
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
     post:
-      tags: [Admin therapy catalog]
+      tags:
+      - Admin therapy catalog
       summary: Crear producto terapéutico
       description: Requiere `therapy:write`.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateProductRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /admin/therapy/products/{id}:
     patch:
-      tags: [Admin therapy catalog]
+      tags:
+      - Admin therapy catalog
       summary: Actualizar producto terapéutico
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateProductRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
     delete:
-      tags: [Admin therapy catalog]
+      tags:
+      - Admin therapy catalog
       summary: Eliminar/desactivar producto terapéutico
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /therapists/me/schedules:
     get:
-      tags: [Scheduling]
+      tags:
+      - Scheduling
       summary: Listar horarios recurrentes del terapeuta autenticado
       description: Requiere rol `THERAPIST`. Devuelve los bloques base de atención configurados por día de semana.
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '403': { $ref: '#/components/responses/ForbiddenError' }
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
     post:
-      tags: [Scheduling]
+      tags:
+      - Scheduling
       summary: Crear horario recurrente del terapeuta autenticado
       description: Requiere rol `THERAPIST`. Rechaza solapamientos contra horarios activos existentes del mismo terapeuta.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateScheduleRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateScheduleRequest'
             example:
               weekday: 1
-              startTime: '09:00'
+              startTime: 09:00
               endTime: '13:00'
               timezone: America/La_Paz
               effectiveFrom: '2026-07-01'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '403': { $ref: '#/components/responses/ForbiddenError' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
   /therapists/me/blocked-times:
     post:
-      tags: [Scheduling]
+      tags:
+      - Scheduling
       summary: Crear bloqueo de agenda del terapeuta autenticado
-      description: |
-        Requiere rol `THERAPIST`.
+      description: 'Requiere rol `THERAPIST`.
+
         Estos bloqueos se descuentan del cálculo público de disponibilidad en `/booking/availability`.
+
+        '
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateBlockedTimeRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateBlockedTimeRequest'
             example:
               startAt: '2026-07-10T13:00:00.000-04:00'
               endAt: '2026-07-10T15:00:00.000-04:00'
               reason: Supervisión clínica
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
   /booking/availability:
     get:
-      tags: [Booking]
+      tags:
+      - Booking
       summary: Obtener horarios disponibles por terapeuta y producto
-      description: |
-        Público. Calcula slots disponibles para reservar una cita.
+      description: 'Público. Calcula slots disponibles para reservar una cita.
+
 
         Algoritmo funcional confirmado:
+
         1. Busca horarios recurrentes activos del terapeuta en `therapist_schedules`.
+
         2. Usa la duración del producto terapéutico (`durationMinutes`) para partir el horario en slots.
+
         3. Descarta slots que se solapan con bloqueos activos de agenda (`therapist_blocked_times`).
+
         4. Descarta slots que se solapan con citas activas (`appointments` con status `REQUESTED` o `CONFIRMED`).
+
         5. Cuando existe la vista `v_therapist_unavailable_intervals`, se usa como fuente consolidada de intervalos no disponibles.
+
         6. Devuelve solo slots libres entre `from` y `to`.
 
+
         El rango máximo permitido es de 31 días.
+
+        '
       security: []
       parameters:
-        - name: therapistUserId
-          in: query
-          required: true
-          schema: { type: string, format: uuid }
-          description: ID del usuario terapeuta.
-        - name: productId
-          in: query
-          required: true
-          schema: { type: string, format: uuid }
-          description: ID del producto terapéutico. Define duración del slot.
-        - name: from
-          in: query
-          required: true
-          schema: { type: string, format: date, example: '2026-07-01' }
-          description: Fecha inicial local incluida.
-        - name: to
-          in: query
-          required: true
-          schema: { type: string, format: date, example: '2026-07-14' }
-          description: Fecha final local incluida.
-        - name: timezone
-          in: query
-          required: true
-          schema: { type: string, example: America/La_Paz }
-          description: Zona horaria para interpretar horarios recurrentes.
+      - name: therapistUserId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID del usuario terapeuta.
+      - name: productId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID del producto terapéutico. Define duración del slot.
+      - name: from
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          example: '2026-07-01'
+        description: Fecha inicial local incluida.
+      - name: to
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          example: '2026-07-14'
+        description: Fecha final local incluida.
+      - name: timezone
+        in: query
+        required: true
+        schema:
+          type: string
+          example: America/La_Paz
+        description: Zona horaria para interpretar horarios recurrentes.
       responses:
         '200':
           description: Slots disponibles calculados.
@@ -494,99 +552,117 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/EnvelopeObject'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/AvailabilityResponse'
+                - $ref: '#/components/schemas/EnvelopeObject'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/AvailabilityResponse'
               example:
                 data:
                   therapistUserId: 7d2f75d0-5298-4a92-87e0-3aa7a4371455
                   productId: 7409c34e-8470-42df-8eb2-83f579d87432
                   slots:
-                    - startAt: '2026-07-06T13:00:00.000Z'
-                      endAt: '2026-07-06T14:00:00.000Z'
-                      timezone: America/La_Paz
+                  - startAt: '2026-07-06T13:00:00.000Z'
+                    endAt: '2026-07-06T14:00:00.000Z'
+                    timezone: America/La_Paz
                 meta:
                   requestId: 2abf44ee-2b5a-4a49-a723-f8bb1639b7bd
                   timestamp: '2026-07-05T15:13:13.536Z'
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
   /appointments:
     post:
-      tags: [Appointments]
+      tags:
+      - Appointments
       summary: Crear solicitud de cita
-      description: |
-        Requiere rol `PATIENT`.
+      description: 'Requiere rol `PATIENT`.
+
         Antes de crear la cita, valida que el slot no esté ocupado por otra cita activa ni bloqueado por agenda.
+
+        '
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateAppointmentRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateAppointmentRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '409': { $ref: '#/components/responses/ConflictError' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
   /appointments/mine:
     get:
-      tags: [Appointments]
+      tags:
+      - Appointments
       summary: Listar mis citas
-      description: |
-        Requiere autenticación.
-        Devuelve las citas del usuario autenticado según su rol.
-        Acepta paginación canónica `page`/`limit` y aliases legacy `p_page`/`p_limit`.
-      parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PPage'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PLimit'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Sort'
-        - $ref: '#/components/parameters/SortBy'
-        - $ref: '#/components/parameters/Order'
-        - $ref: '#/components/parameters/SortDir'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
-      responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-        '401': { $ref: '#/components/responses/UnauthorizedError' }
+      description: 'Requiere autenticación.
 
+        Devuelve las citas del usuario autenticado según su rol.
+
+        Acepta paginación canónica `page`/`limit` y aliases legacy `p_page`/`p_limit`.
+
+        '
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/SortBy'
+      - $ref: '#/components/parameters/Order'
+      - $ref: '#/components/parameters/SortDir'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
+      responses:
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
   /appointments/{id}/status:
     patch:
-      tags: [Appointments]
+      tags:
+      - Appointments
       summary: Cambiar estado de una cita
       description: Paciente, terapeuta o admin pueden cambiar estado según reglas del servicio.
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateAppointmentStatusRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateAppointmentStatusRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '403': { $ref: '#/components/responses/ForbiddenError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
   /appointments/admin/list:
     get:
-      tags: [Appointments]
+      tags:
+      - Appointments
       summary: Listar citas desde administración
       description: Requiere rol `ADMIN` o `SUPER_ADMIN` y permiso `appointments:read`.
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
   /files:
     post:
-      tags: [Files]
+      tags:
+      - Files
       summary: Subir archivo
       description: Requiere autenticación. Soporta almacenamiento local o proveedor configurado.
       requestBody:
@@ -595,14 +671,20 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              required: [file, module]
+              required:
+              - file
+              - module
               properties:
                 file:
                   type: string
                   format: binary
                 module:
                   type: string
-                  enum: [USER_PROFILE, THERAPY_CATALOG, CMS, APPOINTMENT]
+                  enum:
+                  - USER_PROFILE
+                  - THERAPY_CATALOG
+                  - CMS
+                  - APPOINTMENT
                 entityType:
                   type: string
                 entityId:
@@ -610,25 +692,29 @@ paths:
                   format: uuid
                 visibility:
                   type: string
-                  enum: [PRIVATE, PUBLIC]
+                  enum:
+                  - PRIVATE
+                  - PUBLIC
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /files/{id}/signed-url:
     get:
-      tags: [Files]
+      tags:
+      - Files
       summary: Obtener URL firmada o información de descarga
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /files/{id}/download:
     get:
-      tags: [Files]
+      tags:
+      - Files
       summary: Descargar archivo local
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       responses:
         '200':
           description: Archivo binario.
@@ -637,701 +723,1326 @@ paths:
               schema:
                 type: string
                 format: binary
-
+  /public/pages:
+    get:
+      tags:
+      - Public CMS
+      summary: Listar páginas públicas publicadas
+      description: Público. Lista páginas públicas dinámicas sin exponer el concepto técnico CMS en la UI.
+      security: []
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /public/pages/{slug}:
     get:
-      tags: [Public CMS]
+      tags:
+      - Public CMS
       summary: Obtener página pública CMS por slug
       description: Público. Ruta canónica para páginas públicas configurables.
       security: []
       parameters:
-        - name: slug
-          in: path
-          required: true
-          schema: { type: string, example: inicio }
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+          example: inicio
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /admin/public-pages:
+    get:
+      tags:
+      - Admin CMS
+      summary: Listar páginas públicas administrables
+      description: Alias de negocio para no depender del nombre técnico CMS en clientes nuevos.
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - DRAFT
+          - PUBLISHED
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+    post:
+      tags:
+      - Admin CMS
+      summary: Crear página pública administrable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCmsPageRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  /admin/public-pages/{pageId}:
+    get:
+      tags:
+      - Admin CMS
+      summary: Obtener página pública administrable
+      parameters:
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    patch:
+      tags:
+      - Admin CMS
+      summary: Actualizar página pública administrable
+      parameters:
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCmsPageRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      tags:
+      - Admin CMS
+      summary: Eliminar página pública administrable
+      parameters:
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
   /admin/cms/pages:
     post:
-      tags: [Admin CMS]
+      tags:
+      - Admin CMS
       summary: Crear página CMS
       description: Requiere rol admin y permiso `cms:write`.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateCmsPageRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateCmsPageRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '409': { $ref: '#/components/responses/ConflictError' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
   /admin/cms/pages/{pageId}/elements:
     post:
-      tags: [Admin CMS]
+      tags:
+      - Admin CMS
       summary: Crear elemento de página CMS
       parameters:
-        - name: pageId
-          in: path
-          required: true
-          schema: { type: string, format: uuid }
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateCmsElementRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateCmsElementRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-        '409': { $ref: '#/components/responses/ConflictError' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+  /public/content/posts:
+    get:
+      tags:
+      - Publications public
+      summary: Listar publicaciones públicas unificadas
+      description: Público. Alias estable para contenido público; soporta filtros por categoría, tag, búsqueda y página.
+      security: []
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - name: categorySlug
+        in: query
+        schema:
+          type: string
+      - name: tagSlug
+        in: query
+        schema:
+          type: string
+      - name: pageSlug
+        in: query
+        schema:
+          type: string
+      - name: q
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  /public/content/categories:
+    get:
+      tags:
+      - Publications public
+      summary: Listar categorías activas de contenido público
+      security: []
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+  /public/content/types:
+    get:
+      tags:
+      - Publications public
+      summary: Listar tipos de publicación pública
+      security: []
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /publications/news:
     get:
-      tags: [Publications public]
+      tags:
+      - Publications public
       summary: Listar noticias públicas
       description: Público. Devuelve publicaciones de tipo noticia publicadas.
       security: []
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PPage'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PLimit'
-        - $ref: '#/components/parameters/PageSize'
-        - name: categorySlug
-          in: query
-          schema: { type: string }
-        - name: tagSlug
-          in: query
-          schema: { type: string }
-        - name: q
-          in: query
-          schema: { type: string }
-          description: Búsqueda pública por título, resumen o cuerpo.
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - name: categorySlug
+        in: query
+        schema:
+          type: string
+      - name: tagSlug
+        in: query
+        schema:
+          type: string
+      - name: pageSlug
+        in: query
+        schema:
+          type: string
+        description: Slug de página pública donde debe aparecer la publicación.
+      - name: q
+        in: query
+        schema:
+          type: string
+        description: Búsqueda pública por título, resumen o cuerpo.
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
   /publications/columns:
     get:
-      tags: [Publications public]
+      tags:
+      - Publications public
       summary: Listar columnas públicas
       description: Público. Devuelve publicaciones de tipo columna publicadas.
       security: []
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PPage'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PLimit'
-        - $ref: '#/components/parameters/PageSize'
-        - name: categorySlug
-          in: query
-          schema: { type: string }
-        - name: tagSlug
-          in: query
-          schema: { type: string }
-        - name: q
-          in: query
-          schema: { type: string }
-          description: Búsqueda pública por título, resumen o cuerpo.
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - name: categorySlug
+        in: query
+        schema:
+          type: string
+      - name: tagSlug
+        in: query
+        schema:
+          type: string
+      - name: pageSlug
+        in: query
+        schema:
+          type: string
+        description: Slug de página pública donde debe aparecer la publicación.
+      - name: q
+        in: query
+        schema:
+          type: string
+        description: Búsqueda pública por título, resumen o cuerpo.
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
   /publications/news/{slug}:
     get:
-      tags: [Publications public]
+      tags:
+      - Publications public
       summary: Obtener noticia pública por slug
       security: []
       parameters:
-        - name: slug
-          in: path
-          required: true
-          schema: { type: string }
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
   /publications/columns/{slug}:
     get:
-      tags: [Publications public]
+      tags:
+      - Publications public
       summary: Obtener columna pública por slug
       security: []
       parameters:
-        - name: slug
-          in: path
-          required: true
-          schema: { type: string }
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
   /publications/categories:
     get:
-      tags: [Publications public]
+      tags:
+      - Publications public
       summary: Listar categorías públicas de contenido
       security: []
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
   /publications/tags:
     get:
-      tags: [Publications public]
+      tags:
+      - Publications public
       summary: Listar tags públicos de contenido
       security: []
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
   /admin/content/publications:
     get:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Listar publicaciones administrativas
       description: Requiere `content:read`. Permite filtrar por estado, tipo editorial, acceso y búsqueda.
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PPage'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PLimit'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Sort'
-        - $ref: '#/components/parameters/Order'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
-        - name: status
-          in: query
-          schema: { type: string, enum: [DRAFT, IN_REVIEW, SCHEDULED, PUBLISHED, ARCHIVED] }
-        - name: publicationType
-          in: query
-          schema: { type: string, enum: [NEWS, COLUMN, OPINION, INTERVIEW, REPORT, ANALYSIS] }
-        - name: accessType
-          in: query
-          schema: { type: string, enum: [PUBLIC, PREMIUM, INTERNAL_ONLY] }
-        - name: categorySlug
-          in: query
-          schema: { type: string }
-        - name: tagSlug
-          in: query
-          schema: { type: string }
-        - name: authorId
-          in: query
-          schema: { type: string, format: uuid }
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/Order'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - DRAFT
+          - IN_REVIEW
+          - SCHEDULED
+          - PUBLISHED
+          - ARCHIVED
+      - name: publicationType
+        in: query
+        schema:
+          type: string
+          enum:
+          - NEWS
+          - COLUMN
+          - OPINION
+          - INTERVIEW
+          - REPORT
+          - ANALYSIS
+      - name: accessType
+        in: query
+        schema:
+          type: string
+          enum:
+          - PUBLIC
+          - PREMIUM
+          - INTERNAL_ONLY
+      - name: categorySlug
+        in: query
+        schema:
+          type: string
+      - name: tagSlug
+        in: query
+        schema:
+          type: string
+      - name: pageSlug
+        in: query
+        schema:
+          type: string
+        description: Slug de página pública configurada en seoMetadata.embedPageSlugs.
+      - name: authorId
+        in: query
+        schema:
+          type: string
+          format: uuid
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
     post:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Crear publicación
       description: Requiere `content:write`. Permite crear contenido público, premium o interno.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreatePublicationRequest' }
+            schema:
+              $ref: '#/components/schemas/CreatePublicationRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-        '409': { $ref: '#/components/responses/ConflictError' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
   /admin/content/publications/{id}:
     get:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Obtener publicación administrativa
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
     patch:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Actualizar publicación
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdatePublicationRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdatePublicationRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-        '409': { $ref: '#/components/responses/ConflictError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
   /admin/content/publications/{id}/publish:
     post:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Publicar publicación
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
   /admin/content/publications/{id}/schedule:
     post:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Programar publicación
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [scheduledAt]
+              required:
+              - scheduledAt
               properties:
                 scheduledAt:
                   type: string
                   format: date-time
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
   /admin/content/publications/{id}/archive:
     post:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Archivar publicación
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
   /admin/content/categories:
     get:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Listar categorías de contenido
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
     post:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Crear categoría de contenido
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateContentCategoryRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateContentCategoryRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '409': { $ref: '#/components/responses/ConflictError' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
   /admin/content/categories/{id}:
     patch:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Actualizar categoría de contenido
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateContentCategoryRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateContentCategoryRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-        '409': { $ref: '#/components/responses/ConflictError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
   /admin/content/tags:
     get:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Listar tags de contenido
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
     post:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Crear tag de contenido
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateContentTagRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateContentTagRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '409': { $ref: '#/components/responses/ConflictError' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
   /admin/content/authors:
     get:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Listar autores de contenido
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
     post:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Crear autor de contenido
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateContentAuthorRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateContentAuthorRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '409': { $ref: '#/components/responses/ConflictError' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
   /admin/content/authors/{id}:
     patch:
-      tags: [Content admin]
+      tags:
+      - Content admin
       summary: Actualizar autor de contenido
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateContentAuthorRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateContentAuthorRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-        '409': { $ref: '#/components/responses/ConflictError' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+  /admin/content/subscribers:
+    get:
+      tags:
+      - Content admin
+      summary: Listar suscriptores premium vinculados a pacientes
+      description: Requiere `content:read`. Un suscriptor debe estar asociado a una cuenta de paciente existente.
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/Order'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - UNSUBSCRIBED
+          - SUSPENDED
+      responses:
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+    post:
+      tags:
+      - Content admin
+      summary: Crear o actualizar suscriptor premium paciente
+      description: Requiere `content:write`. `userId` debe corresponder a un usuario con perfil de paciente y el email debe
+        coincidir con ese usuario.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertContentSubscriberRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+  /admin/content/subscribers/{userId}/subscription:
+    patch:
+      tags:
+      - Content admin
+      summary: Actualizar suscripción premium por usuario paciente
+      description: Requiere `content:write`. Alias estable para actualizar o crear suscripción usando `userId` del paciente.
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContentSubscriberRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /admin/content/subscribers/{id}:
+    patch:
+      tags:
+      - Content admin
+      summary: Actualizar suscriptor premium paciente
+      description: Requiere `content:write`.
+      parameters:
+      - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContentSubscriberRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+  /me/news-subscription:
+    get:
+      tags:
+      - Contenido premium
+      summary: Obtener estado premium del paciente autenticado
+      description: Requiere rol `PATIENT`. El acceso premium solo se concede por `userId`, no por email suelto.
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /me/news-subscription/payment-config:
+    get:
+      tags:
+      - Contenido premium
+      summary: Obtener configuración temporal de pago premium
+      description: Requiere rol `PATIENT`. Actualmente la activación premium se gestiona desde administración.
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /premium/publications/news/{slug}:
+    get:
+      tags:
+      - Contenido premium
+      summary: Obtener noticia premium por slug
+      description: Requiere rol `PATIENT` y suscripción premium activa. Incluye NEWS, REPORT, ANALYSIS e INTERVIEW.
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /premium/publications/columns/{slug}:
+    get:
+      tags:
+      - Contenido premium
+      summary: Obtener columna u opinión premium por slug
+      description: Requiere rol `PATIENT` y suscripción premium activa. Incluye COLUMN y OPINION.
+      parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
   /homepage:
     get:
-      tags: [Homepage public]
+      tags:
+      - Homepage public
       summary: Obtener homepage pública compuesta
       security: []
       parameters:
-        - name: headlineLimit
-          in: query
-          schema: { type: integer, minimum: 1, maximum: 20, default: 6 }
-        - name: columnLimit
-          in: query
-          schema: { type: integer, minimum: 1, maximum: 20, default: 4 }
+      - name: headlineLimit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 6
+      - name: columnLimit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 4
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/homepage/preview:
     get:
-      tags: [Homepage admin]
+      tags:
+      - Homepage admin
       summary: Previsualizar homepage administrativa
       description: Requiere `homepage:read`.
       parameters:
-        - name: headlineLimit
-          in: query
-          schema: { type: integer, minimum: 1, maximum: 20, default: 6 }
-        - name: columnLimit
-          in: query
-          schema: { type: integer, minimum: 1, maximum: 20, default: 4 }
+      - name: headlineLimit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 6
+      - name: columnLimit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 4
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/homepage/layout:
     patch:
-      tags: [Homepage admin]
+      tags:
+      - Homepage admin
       summary: Actualizar layout de homepage
       description: Requiere `homepage:write`.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateHomepageLayoutRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateHomepageLayoutRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /advertising/slots:
     get:
-      tags: [Advertising public]
+      tags:
+      - Advertising public
       summary: Obtener slots publicitarios públicos
       security: []
       parameters:
-        - name: placementCode
-          in: query
-          schema: { type: string, example: home_hero }
-        - name: publicationId
-          in: query
-          schema: { type: string, format: uuid }
+      - name: placementCode
+        in: query
+        schema:
+          type: string
+          example: home_hero
+      - name: placement
+        in: query
+        schema:
+          type: string
+          example: article_sidebar
+        description: Alias compatible para clientes que usan placement.
+      - name: publicationId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: postId
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Alias compatible para clientes que usan postId.
+      - name: pageSlug
+        in: query
+        schema:
+          type: string
+        description: Slug de página pública donde se está solicitando publicidad.
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+  /public/advertising:
+    get:
+      tags:
+      - Advertising public
+      summary: Obtener publicidad pública por ubicación, publicación o página
+      security: []
+      parameters:
+      - name: placement
+        in: query
+        schema:
+          type: string
+          example: article_sidebar
+      - name: placementCode
+        in: query
+        schema:
+          type: string
+          example: article_sidebar
+      - name: postId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: publicationId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: pageSlug
+        in: query
+        schema:
+          type: string
+          example: biblioteca
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /advertising/placements:
     get:
-      tags: [Advertising public]
+      tags:
+      - Advertising public
       summary: Listar placements publicitarios públicos
       security: []
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/advertising/companies:
     get:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Listar empresas anunciantes
       description: Requiere `advertising:read`.
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
     post:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Crear empresa anunciante
       description: Requiere `advertising:write`.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateAdsCompanyRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateAdsCompanyRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /admin/advertising/companies/{id}:
     patch:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Actualizar empresa anunciante
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateAdsCompanyRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateAdsCompanyRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/advertising/placements:
     get:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Listar placements publicitarios admin
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
     post:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Crear placement publicitario
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateAdsPlacementRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateAdsPlacementRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /admin/advertising/placements/{id}:
     patch:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Actualizar placement publicitario
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateAdsPlacementRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateAdsPlacementRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+  /admin/advertising/ads:
+    get:
+      tags:
+      - Advertising admin
+      summary: Listar anuncios/creatividades publicitarias
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+    post:
+      tags:
+      - Advertising admin
+      summary: Crear anuncio publicitario asociado a una campaña
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAdsAdRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+  /admin/advertising/ads/{id}:
+    patch:
+      tags:
+      - Advertising admin
+      summary: Actualizar anuncio publicitario
+      parameters:
+      - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdsCreativeRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/advertising/campaigns:
     get:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Listar campañas publicitarias
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PPage'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PLimit'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Sort'
-        - $ref: '#/components/parameters/SortBy'
-        - $ref: '#/components/parameters/Order'
-        - $ref: '#/components/parameters/SortDir'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
-        - name: status
-          in: query
-          schema: { type: string, enum: [DRAFT, ACTIVE, PAUSED, ENDED, CANCELLED, REJECTED] }
-        - name: companyId
-          in: query
-          schema: { type: string, format: uuid }
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/SortBy'
+      - $ref: '#/components/parameters/Order'
+      - $ref: '#/components/parameters/SortDir'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - DRAFT
+          - ACTIVE
+          - PAUSED
+          - ENDED
+          - CANCELLED
+          - REJECTED
+      - name: companyId
+        in: query
+        schema:
+          type: string
+          format: uuid
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
     post:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Crear campaña publicitaria
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateAdsCampaignRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateAdsCampaignRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /admin/advertising/campaigns/{id}:
     get:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Obtener campaña publicitaria
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
     patch:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Actualizar campaña publicitaria
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateAdsCampaignRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateAdsCampaignRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/advertising/campaigns/{id}/status:
     post:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Cambiar estado de campaña
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/SetAdsCampaignStatusRequest' }
+            schema:
+              $ref: '#/components/schemas/SetAdsCampaignStatusRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/advertising/campaigns/{campaignId}/creatives:
     get:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Listar creatividades de campaña
       parameters:
-        - name: campaignId
-          in: path
-          required: true
-          schema: { type: string, format: uuid }
+      - name: campaignId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
     post:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Crear creatividad publicitaria
       parameters:
-        - name: campaignId
-          in: path
-          required: true
-          schema: { type: string, format: uuid }
+      - name: campaignId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateAdsCreativeRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateAdsCreativeRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /admin/advertising/creatives/{id}:
     patch:
-      tags: [Advertising admin]
+      tags:
+      - Advertising admin
       summary: Actualizar creatividad publicitaria
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateAdsCreativeRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateAdsCreativeRequest'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/accounting/account-groups:
     get:
-      tags: [Accounting]
+      tags:
+      - Accounting
       summary: Listar grupos contables
       description: Requiere `accounting:read`.
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PPage'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PLimit'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Sort'
-        - $ref: '#/components/parameters/SortBy'
-        - $ref: '#/components/parameters/Order'
-        - $ref: '#/components/parameters/SortDir'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/SortBy'
+      - $ref: '#/components/parameters/Order'
+      - $ref: '#/components/parameters/SortDir'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
     post:
-      tags: [Accounting]
+      tags:
+      - Accounting
       summary: Crear grupo contable
       description: Requiere `accounting:write`.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateAccountGroupRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateAccountGroupRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /admin/accounting/accounts:
     get:
-      tags: [Accounting]
+      tags:
+      - Accounting
       summary: Listar cuentas contables
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PPage'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PLimit'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Sort'
-        - $ref: '#/components/parameters/SortBy'
-        - $ref: '#/components/parameters/Order'
-        - $ref: '#/components/parameters/SortDir'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/SortBy'
+      - $ref: '#/components/parameters/Order'
+      - $ref: '#/components/parameters/SortDir'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
     post:
-      tags: [Accounting]
+      tags:
+      - Accounting
       summary: Crear cuenta contable
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateAccountRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateAccountRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /admin/accounting/cost-centers:
     post:
-      tags: [Accounting]
+      tags:
+      - Accounting
       summary: Crear centro de costo
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateCostCenterRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateCostCenterRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /admin/accounting/transactions:
     post:
-      tags: [Accounting]
+      tags:
+      - Accounting
       summary: Crear transacción contable
       description: 'Requiere partida doble válida: débitos iguales a créditos.'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateTransactionRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateTransactionRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-        '400': { $ref: '#/components/responses/ValidationError' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
+        '400':
+          $ref: '#/components/responses/ValidationError'
   /analytics/ui-events:
     post:
-      tags: [Analytics]
+      tags:
+      - Analytics
       summary: Registrar evento UI público
       description: Público. Captura eventos anónimos o de sesión de la interfaz.
       security: []
@@ -1339,297 +2050,535 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateUiEventRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateUiEventRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /admin/analytics/ui-events:
     get:
-      tags: [Analytics]
+      tags:
+      - Analytics
       summary: Listar eventos UI administrativos
       description: Requiere rol `ADMIN` o `SUPER_ADMIN` y permiso `analytics:read`.
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PPage'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PLimit'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Sort'
-        - $ref: '#/components/parameters/SortBy'
-        - $ref: '#/components/parameters/Order'
-        - $ref: '#/components/parameters/SortDir'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/SortBy'
+      - $ref: '#/components/parameters/Order'
+      - $ref: '#/components/parameters/SortDir'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
   /admin/messaging/outbox:
     get:
-      tags: [Messaging]
+      tags:
+      - Messaging
       summary: Listar outbox de mensajería
       description: Requiere `messaging:read`. Alias también disponible bajo `/admin/mensajeria/outbox`.
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PPage'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PLimit'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Sort'
-        - $ref: '#/components/parameters/SortBy'
-        - $ref: '#/components/parameters/Order'
-        - $ref: '#/components/parameters/SortDir'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/SortBy'
+      - $ref: '#/components/parameters/Order'
+      - $ref: '#/components/parameters/SortDir'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
   /admin/messaging/outbox/process:
     post:
-      tags: [Messaging]
+      tags:
+      - Messaging
       summary: Procesar pendientes de outbox
       description: Requiere `messaging:write`.
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/messaging/outbox/{id}/process:
     post:
-      tags: [Messaging]
+      tags:
+      - Messaging
       summary: Procesar un mensaje de outbox
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/messaging/test-email:
     post:
-      tags: [Messaging]
+      tags:
+      - Messaging
       summary: Encolar correo de prueba
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/SendTestEmailRequest' }
+            schema:
+              $ref: '#/components/schemas/SendTestEmailRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /admin/mensajeria/outbox:
     get:
-      tags: [Messaging]
+      tags:
+      - Messaging
       summary: Alias español para listar outbox
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PPage'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/PLimit'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Sort'
-        - $ref: '#/components/parameters/SortBy'
-        - $ref: '#/components/parameters/Order'
-        - $ref: '#/components/parameters/SortDir'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PPage'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/PLimit'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/SortBy'
+      - $ref: '#/components/parameters/Order'
+      - $ref: '#/components/parameters/SortDir'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
   /admin/mensajeria/outbox/process:
     post:
-      tags: [Messaging]
+      tags:
+      - Messaging
       summary: Alias español para procesar outbox pendiente
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/mensajeria/outbox/{id}/process:
     post:
-      tags: [Messaging]
+      tags:
+      - Messaging
       summary: Alias español para procesar un mensaje
       parameters:
-        - $ref: '#/components/parameters/Id'
+      - $ref: '#/components/parameters/Id'
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
   /admin/mensajeria/test-email:
     post:
-      tags: [Messaging]
+      tags:
+      - Messaging
       summary: Alias español para correo de prueba
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/SendTestEmailRequest' }
+            schema:
+              $ref: '#/components/schemas/SendTestEmailRequest'
       responses:
-        '201': { $ref: '#/components/responses/CreatedEnvelope' }
-
+        '201':
+          $ref: '#/components/responses/CreatedEnvelope'
   /admin/audit/logs:
     get:
-      tags: [Audit]
+      tags:
+      - Audit
       summary: Listar logs de auditoría
       description: Requiere rol `ADMIN` o `SUPER_ADMIN` y permiso `audit:read`.
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Q'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Search'
+      - $ref: '#/components/parameters/Q'
       responses:
-        '200': { $ref: '#/components/responses/PaginatedEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/PaginatedEnvelope'
   /legacy/status:
     get:
-      tags: [Legacy compatibility]
+      tags:
+      - Legacy compatibility
       summary: Estado de compatibilidad legacy
       description: Público. Indica si el módulo temporal de rutas legacy está activo.
       security: []
       responses:
-        '200': { $ref: '#/components/responses/OkEnvelope' }
-
+        '200':
+          $ref: '#/components/responses/OkEnvelope'
+  /api/v1/me/news-subscription/request:
+    post:
+      tags:
+      - Contenido premium
+      summary: Solicita activación o revisión de suscripción premium del paciente autenticado
+      security: &id001
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Solicitud de suscripción registrada o actualizada.
+          content: &id002
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeObject'
+  /api/v1/files/cloudinary/signature:
+    post:
+      tags:
+      - Files
+      summary: Genera firma temporal para subir imagen publica directo a Cloudinary
+      security: *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudinarySignatureRequest'
+      responses:
+        '201':
+          description: Firma temporal generada.
+          content: *id002
+  /api/v1/files/cloudinary/complete:
+    post:
+      tags:
+      - Files
+      summary: Registra en files la URL publica devuelta por Cloudinary
+      security: *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudinaryCompleteRequest'
+      responses:
+        '201':
+          description: Archivo registrado.
+          content: *id002
+  /api/v1/admin/files/cloudinary/signature:
+    post:
+      tags:
+      - Admin files
+      summary: Genera firma temporal para subir archivo directo a Cloudinary desde administración
+      security: *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudinarySignatureRequest'
+      responses:
+        '201':
+          description: Firma temporal generada.
+          content: *id002
+  /api/v1/admin/files/cloudinary/complete:
+    post:
+      tags:
+      - Admin files
+      summary: Confirma subida Cloudinary y registra el archivo en files
+      security: *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudinaryCompleteRequest'
+      responses:
+        '201':
+          description: Archivo registrado.
+          content: *id002
+  /api/v1/admin/public-pages/{pageId}/posts:
+    post:
+      tags:
+      - Páginas públicas admin
+      summary: Asocia una publicación a una página pública dinámica
+      security: *id001
+      parameters:
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - publicationId
+              properties:
+                publicationId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Publicación asociada a la página pública.
+          content: *id002
+  /api/v1/admin/public-pages/{pageId}/posts/{postId}:
+    delete:
+      tags:
+      - Páginas públicas admin
+      summary: Desasocia una publicación de una página pública dinámica
+      security: *id001
+      parameters:
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: postId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Publicación desasociada de la página pública.
+          content: *id002
+  /api/v1/admin/advertising/companies/{id}:
+    delete:
+      tags:
+      - Administración de publicidad
+      summary: Elimina la empresa anunciante indicada
+      security: *id001
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Empresa anunciante eliminada.
+          content: *id002
+  /api/v1/admin/advertising/campaigns/{id}:
+    delete:
+      tags:
+      - Administración de publicidad
+      summary: Elimina la campaña publicitaria indicada
+      security: *id001
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Campaña publicitaria eliminada.
+          content: *id002
+  /api/v1/admin/advertising/ads/{id}:
+    delete:
+      tags:
+      - Administración de publicidad
+      summary: Elimina la anuncio publicitario indicada
+      security: *id001
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Anuncio publicitario eliminada.
+          content: *id002
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   parameters:
     Id:
       name: id
       in: path
       required: true
-      schema: { type: string, format: uuid }
+      schema:
+        type: string
+        format: uuid
     Page:
       name: page
       in: query
       required: false
-      schema: { type: integer, minimum: 1, default: 1 }
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
       description: Página actual. Tiene prioridad sobre `p_page`.
     PPage:
       name: p_page
       in: query
       required: false
-      schema: { type: integer, minimum: 1 }
+      schema:
+        type: integer
+        minimum: 1
       description: Alias legacy aceptado para paginación. `page` tiene prioridad cuando ambos llegan.
     PageSize:
       name: pageSize
       in: query
       required: false
-      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
       description: Tamaño de página histórico.
     Limit:
       name: limit
       in: query
       required: false
-      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
       description: Tamaño de página recomendado para frontend/smoke. Tiene prioridad sobre `pageSize` y `p_limit`.
     PLimit:
       name: p_limit
       in: query
       required: false
-      schema: { type: integer, minimum: 1, maximum: 100 }
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
       description: Alias legacy aceptado para tamaño de página. `limit` y `pageSize` tienen prioridad cuando llegan juntos.
     Search:
       name: search
       in: query
       required: false
-      schema: { type: string }
+      schema:
+        type: string
       description: Búsqueda textual canónica.
     Q:
       name: q
       in: query
       required: false
-      schema: { type: string }
+      schema:
+        type: string
       description: Alias corto para búsqueda. `search` tiene prioridad cuando ambos llegan.
     Sort:
       name: sort
       in: query
       required: false
-      schema: { type: string, default: createdAt }
+      schema:
+        type: string
+        default: createdAt
       description: Campo de orden. El backend normaliza alias camelCase/snake_case seguros y evita ORDER BY con columnas inexistentes.
     SortBy:
       name: sortBy
       in: query
       required: false
-      schema: { type: string }
+      schema:
+        type: string
       description: Alias frontend para `sort`. `sort` tiene prioridad si ambos llegan.
     Order:
       name: order
       in: query
       required: false
-      schema: { type: string, enum: [asc, desc], default: desc }
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+        default: desc
     SortDir:
       name: sortDir
       in: query
       required: false
-      schema: { type: string, enum: [asc, desc], default: desc }
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+        default: desc
       description: Alias frontend para `order`. `order` tiene prioridad si ambos llegan.
     Status:
       name: status
       in: query
       required: false
-      schema: { type: string }
+      schema:
+        type: string
       description: Filtro canónico de estado. En usuarios acepta ACTIVE/INACTIVE/BLOCKED/PENDING y aliases activo/inactivo/bloqueado/pendiente.
     Estado:
       name: estado
       in: query
       required: false
-      schema: { type: string }
+      schema:
+        type: string
       description: Alias español para `status`.
     PEstado:
       name: p_estado
       in: query
       required: false
-      schema: { type: string }
+      schema:
+        type: string
       description: Alias legacy español para `status`.
     Role:
       name: role
       in: query
       required: false
-      schema: { type: string }
-      description: Filtro canónico de rol. En usuarios acepta THERAPIST/TERAPEUTA, PATIENT/PACIENTE, ACCOUNTANT/CONTADOR, ADMIN y SUPER_ADMIN.
+      schema:
+        type: string
+      description: Filtro canónico de rol. En usuarios acepta THERAPIST/TERAPEUTA, PATIENT/PACIENTE, ACCOUNTANT/CONTADOR,
+        ADMIN y SUPER_ADMIN.
     Rol:
       name: rol
       in: query
       required: false
-      schema: { type: string }
+      schema:
+        type: string
       description: Alias español para `role`.
     PRol:
       name: p_rol
       in: query
       required: false
-      schema: { type: string }
+      schema:
+        type: string
       description: Alias legacy español para `role`.
     TipoUsuario:
       name: tipo_usuario
       in: query
       required: false
-      schema: { type: string }
+      schema:
+        type: string
       description: Alias legacy para `role`.
-
   responses:
     OkEnvelope:
       description: Respuesta exitosa envuelta en `{ data, meta }`.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/EnvelopeObject' }
+          schema:
+            $ref: '#/components/schemas/EnvelopeObject'
     CreatedEnvelope:
       description: Recurso creado. Respuesta envuelta en `{ data, meta }`.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/EnvelopeObject' }
+          schema:
+            $ref: '#/components/schemas/EnvelopeObject'
     PaginatedEnvelope:
       description: Lista paginada envuelta en `{ data, pagination, meta }`.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/PaginatedEnvelope' }
+          schema:
+            $ref: '#/components/schemas/PaginatedEnvelope'
     ValidationError:
       description: Error de validación o contrato de entrada.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
           example:
             error:
               code: HTTP_400
               message:
-                - property debug should not exist
+              - property debug should not exist
               details:
-                - property debug should not exist
+              - property debug should not exist
             meta:
               requestId: 315c2096-df71-447a-92ad-2f9329316896
               timestamp: '2026-07-05T15:13:13.536Z'
@@ -1637,27 +2586,32 @@ components:
       description: Token ausente, vencido o inválido.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
     ForbiddenError:
       description: Usuario autenticado sin rol o permiso suficiente.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
     NotFoundError:
       description: Recurso no encontrado.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
     ConflictError:
       description: Conflicto de unicidad, solapamiento o regla de negocio.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
     TooManyRequestsError:
       description: Límite de solicitudes excedido (rate limiting).
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
           example:
             error:
               code: HTTP_429
@@ -1666,532 +2620,1439 @@ components:
             meta:
               requestId: 315c2096-df71-447a-92ad-2f9329316896
               timestamp: '2026-07-05T15:13:13.536Z'
-
   schemas:
     Meta:
       type: object
-      required: [requestId, timestamp]
+      required:
+      - requestId
+      - timestamp
       properties:
-        requestId: { type: string, format: uuid }
-        timestamp: { type: string, format: date-time }
+        requestId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
     EnvelopeObject:
       type: object
-      required: [data, meta]
+      required:
+      - data
+      - meta
       properties:
         data:
           oneOf:
-            - type: object
-              nullable: true
-            - type: array
-              items: {}
-            - type: string
-            - type: boolean
-            - type: number
-        meta: { $ref: '#/components/schemas/Meta' }
+          - type: object
+            nullable: true
+          - type: array
+            items: {}
+          - type: string
+          - type: boolean
+          - type: number
+        meta:
+          $ref: '#/components/schemas/Meta'
     Pagination:
       type: object
-      required: [page, pageSize, limit, total, totalPages]
+      required:
+      - page
+      - pageSize
+      - limit
+      - total
+      - totalPages
       properties:
-        page: { type: integer, example: 1 }
-        pageSize: { type: integer, example: 20 }
-        limit: { type: integer, example: 20 }
-        total: { type: integer, example: 138 }
-        totalPages: { type: integer, example: 7 }
+        page:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 20
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 138
+        totalPages:
+          type: integer
+          example: 7
     PaginatedEnvelope:
       type: object
-      required: [data, pagination, meta]
+      required:
+      - data
+      - pagination
+      - meta
       properties:
         data:
           type: array
           items: {}
-        pagination: { $ref: '#/components/schemas/Pagination' }
-        meta: { $ref: '#/components/schemas/Meta' }
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        meta:
+          $ref: '#/components/schemas/Meta'
     ErrorEnvelope:
       type: object
-      required: [error, meta]
+      required:
+      - error
+      - meta
       properties:
         error:
           type: object
-          required: [code, message, details]
+          required:
+          - code
+          - message
+          - details
           properties:
-            code: { type: string, example: HTTP_400 }
+            code:
+              type: string
+              example: HTTP_400
             message:
               oneOf:
-                - type: string
-                - type: array
-                  items: { type: string }
+              - type: string
+              - type: array
+                items:
+                  type: string
             details:
               type: array
               items: {}
-        meta: { $ref: '#/components/schemas/Meta' }
-
+        meta:
+          $ref: '#/components/schemas/Meta'
     LoginRequest:
       type: object
-      required: [email, password]
+      required:
+      - email
+      - password
       properties:
-        email: { type: string, format: email }
-        password: { type: string, format: password, minLength: 8 }
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
     RefreshTokenRequest:
       type: object
-      required: [refreshToken]
+      required:
+      - refreshToken
       properties:
-        refreshToken: { type: string }
+        refreshToken:
+          type: string
     PasswordResetRequest:
       type: object
-      required: [email]
+      required:
+      - email
       properties:
-        email: { type: string, format: email }
+        email:
+          type: string
+          format: email
     PasswordResetConfirmRequest:
       type: object
-      required: [email, pin, newPassword]
+      required:
+      - email
+      - pin
+      - newPassword
       properties:
-        email: { type: string, format: email }
-        pin: { type: string, minLength: 6, maxLength: 6, example: '123456' }
-        newPassword: { type: string, format: password, minLength: 8 }
+        email:
+          type: string
+          format: email
+        pin:
+          type: string
+          minLength: 6
+          maxLength: 6
+          example: '123456'
+        newPassword:
+          type: string
+          format: password
+          minLength: 8
     AuthSession:
       type: object
       properties:
-        accessToken: { type: string }
-        refreshToken: { type: string }
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
         user:
           type: object
           properties:
-            id: { type: string, format: uuid }
-            email: { type: string, format: email }
-            role: { type: string }
+            id:
+              type: string
+              format: uuid
+            email:
+              type: string
+              format: email
+            role:
+              type: string
             permissions:
               type: array
-              items: { type: string }
-
+              items:
+                type: string
     RegisterPatientRequest:
       type: object
-      required: [email, password, firstName, lastName]
+      required:
+      - email
+      - password
+      - firstName
+      - lastName
       properties:
-        email: { type: string, format: email }
-        password: { type: string, format: password, minLength: 8 }
-        firstName: { type: string }
-        lastName: { type: string }
-        phone: { type: string }
-        birthDate: { type: string, format: date }
-        country: { type: string }
-        city: { type: string }
-        occupation: { type: string }
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        country:
+          type: string
+        city:
+          type: string
+        occupation:
+          type: string
     RegisterTherapistRequest:
       type: object
-      required: [email, password, firstName, lastName, title, mainSpecialty]
+      required:
+      - email
+      - password
+      - firstName
+      - lastName
+      - title
+      - mainSpecialty
       properties:
-        email: { type: string, format: email }
-        password: { type: string, format: password, minLength: 8 }
-        firstName: { type: string }
-        lastName: { type: string }
-        phone: { type: string }
-        title: { type: string }
-        mainSpecialty: { type: string }
-        bio: { type: string }
-        personalPhrase: { type: string }
-        youtubeUrl: { type: string, format: uri }
-        licenseNumber: { type: string }
-        country: { type: string }
-        city: { type: string }
-        baseSessionPrice: { type: number, minimum: 0 }
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        title:
+          type: string
+        mainSpecialty:
+          type: string
+        bio:
+          type: string
+        personalPhrase:
+          type: string
+        youtubeUrl:
+          type: string
+          format: uri
+        licenseNumber:
+          type: string
+        country:
+          type: string
+        city:
+          type: string
+        baseSessionPrice:
+          type: number
+          minimum: 0
     UpdatePatientProfileRequest:
       type: object
       properties:
-        firstName: { type: string }
-        lastName: { type: string }
-        phone: { type: string }
-        birthDate: { type: string, format: date }
-        country: { type: string }
-        city: { type: string }
-        occupation: { type: string }
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        country:
+          type: string
+        city:
+          type: string
+        occupation:
+          type: string
     UpdateTherapistProfileRequest:
       type: object
       properties:
-        firstName: { type: string }
-        lastName: { type: string }
-        phone: { type: string }
-        title: { type: string }
-        mainSpecialty: { type: string }
-        bio: { type: string }
-        personalPhrase: { type: string }
-
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        title:
+          type: string
+        mainSpecialty:
+          type: string
+        bio:
+          type: string
+        personalPhrase:
+          type: string
     CreateApproachRequest:
       type: object
-      required: [name]
+      required:
+      - name
       properties:
-        name: { type: string }
-        description: { type: string }
-        status: { type: string, enum: [ACTIVE, INACTIVE] }
-        sortOrder: { type: integer }
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+        sortOrder:
+          type: integer
     CreateProductRequest:
       type: object
-      required: [approachId, name, durationMinutes, price]
+      required:
+      - approachId
+      - name
+      - durationMinutes
+      - price
       properties:
-        approachId: { type: string, format: uuid }
-        name: { type: string }
-        description: { type: string }
-        durationMinutes: { type: integer, minimum: 15, maximum: 240, example: 60 }
-        price: { type: number, minimum: 0, example: 180 }
-        currency: { type: string, example: BOB }
-        status: { type: string, enum: [ACTIVE, INACTIVE] }
-        sortOrder: { type: integer }
-
+        approachId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        durationMinutes:
+          type: integer
+          minimum: 15
+          maximum: 240
+          example: 60
+        price:
+          type: number
+          minimum: 0
+          example: 180
+        currency:
+          type: string
+          example: BOB
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+        sortOrder:
+          type: integer
     CreateScheduleRequest:
       type: object
-      required: [weekday, startTime, endTime, timezone, effectiveFrom]
+      required:
+      - weekday
+      - startTime
+      - endTime
+      - timezone
+      - effectiveFrom
       properties:
         weekday:
           type: integer
           minimum: 0
           maximum: 6
           description: Día de semana. 0 domingo, 1 lunes, ..., 6 sábado.
-        startTime: { type: string, pattern: '^\d{2}:\d{2}$', example: '09:00' }
-        endTime: { type: string, pattern: '^\d{2}:\d{2}$', example: '13:00' }
-        timezone: { type: string, example: America/La_Paz }
-        effectiveFrom: { type: string, format: date, example: '2026-07-01' }
-        effectiveTo: { type: string, format: date, nullable: true }
+        startTime:
+          type: string
+          pattern: ^\d{2}:\d{2}$
+          example: 09:00
+        endTime:
+          type: string
+          pattern: ^\d{2}:\d{2}$
+          example: '13:00'
+        timezone:
+          type: string
+          example: America/La_Paz
+        effectiveFrom:
+          type: string
+          format: date
+          example: '2026-07-01'
+        effectiveTo:
+          type: string
+          format: date
+          nullable: true
     CreateBlockedTimeRequest:
       type: object
-      required: [startAt, endAt]
+      required:
+      - startAt
+      - endAt
       properties:
-        startAt: { type: string, format: date-time }
-        endAt: { type: string, format: date-time }
-        reason: { type: string }
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
     AvailabilityResponse:
       type: object
-      required: [therapistUserId, productId, slots]
+      required:
+      - therapistUserId
+      - productId
+      - slots
       properties:
-        therapistUserId: { type: string, format: uuid }
-        productId: { type: string, format: uuid }
+        therapistUserId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
         slots:
           type: array
           items:
             type: object
-            required: [startAt, endAt, timezone]
+            required:
+            - startAt
+            - endAt
+            - timezone
             properties:
-              startAt: { type: string, format: date-time }
-              endAt: { type: string, format: date-time }
-              timezone: { type: string, example: America/La_Paz }
-
+              startAt:
+                type: string
+                format: date-time
+              endAt:
+                type: string
+                format: date-time
+              timezone:
+                type: string
+                example: America/La_Paz
     CreateAppointmentRequest:
       type: object
-      required: [therapistUserId, productId, scheduledStartAt, timezone]
+      required:
+      - therapistUserId
+      - productId
+      - scheduledStartAt
+      - timezone
       properties:
-        therapistUserId: { type: string, format: uuid }
-        productId: { type: string, format: uuid }
-        scheduledStartAt: { type: string, format: date-time }
-        timezone: { type: string, example: America/La_Paz }
-        notesForTherapist: { type: string }
+        therapistUserId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        scheduledStartAt:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+          example: America/La_Paz
+        notesForTherapist:
+          type: string
     UpdateAppointmentStatusRequest:
       type: object
-      required: [status]
+      required:
+      - status
       properties:
         status:
           type: string
-          enum: [CONFIRMED, COMPLETED, CANCELLED_BY_PATIENT, CANCELLED_BY_ADMIN, CANCELLED_BY_THERAPIST, NO_SHOW]
-        reason: { type: string }
-
+          enum:
+          - CONFIRMED
+          - COMPLETED
+          - CANCELLED_BY_PATIENT
+          - CANCELLED_BY_ADMIN
+          - CANCELLED_BY_THERAPIST
+          - NO_SHOW
+        reason:
+          type: string
     CreateCmsPageRequest:
       type: object
-      required: [slug, title]
+      required:
+      - slug
+      - title
       properties:
-        slug: { type: string, example: inicio }
-        title: { type: string }
-        status: { type: string, enum: [DRAFT, PUBLISHED] }
-        seoMetadata: { type: object, additionalProperties: true }
+        slug:
+          type: string
+          example: inicio
+        title:
+          type: string
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - PUBLISHED
+        seoMetadata:
+          type: object
+          additionalProperties: true
     CreateCmsElementRequest:
       type: object
-      required: [code, type, content]
+      required:
+      - code
+      - type
+      - content
       properties:
-        code: { type: string, example: hero }
-        type: { type: string, example: JSON }
-        content: { type: object, additionalProperties: true }
-        sortOrder: { type: integer }
-
+        code:
+          type: string
+          example: hero
+        type:
+          type: string
+          example: JSON
+        content:
+          type: object
+          additionalProperties: true
+        sortOrder:
+          type: integer
     CreatePublicationRequest:
       type: object
-      required: [authorId, categoryId, title, summary, body]
+      required:
+      - authorId
+      - categoryId
+      - title
+      - summary
+      - body
       properties:
-        authorId: { type: string, format: uuid }
-        categoryId: { type: string, format: uuid }
-        coverFileId: { type: string, format: uuid }
-        title: { type: string, minLength: 4, maxLength: 220 }
+        authorId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+        coverFileId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 4
+          maxLength: 220
         slug:
           type: string
           minLength: 4
           maxLength: 240
           description: Si se omite, el backend lo genera desde el título.
-        summary: { type: string, minLength: 10, maxLength: 1000 }
-        body: { type: string, minLength: 20, maxLength: 50000 }
-        audioTranscript: { type: string }
-        publicationType: { type: string, enum: [NEWS, COLUMN, OPINION, INTERVIEW, REPORT, ANALYSIS], default: NEWS }
-        accessType: { type: string, enum: [PUBLIC, PREMIUM, INTERNAL_ONLY], default: PUBLIC }
-        scheduledAt: { type: string, format: date-time }
-        commentsEnabled: { type: boolean, default: true }
-        reactionsEnabled: { type: boolean, default: true }
+        summary:
+          type: string
+          minLength: 10
+          maxLength: 1000
+        body:
+          type: string
+          minLength: 20
+          maxLength: 50000
+        audioTranscript:
+          type: string
+        publicationType:
+          type: string
+          enum:
+          - NEWS
+          - COLUMN
+          - OPINION
+          - INTERVIEW
+          - REPORT
+          - ANALYSIS
+          default: NEWS
+        accessType:
+          type: string
+          enum:
+          - PUBLIC
+          - PREMIUM
+          - INTERNAL_ONLY
+          default: PUBLIC
+        scheduledAt:
+          type: string
+          format: date-time
+        commentsEnabled:
+          type: boolean
+          default: true
+        reactionsEnabled:
+          type: boolean
+          default: true
         tagIds:
           type: array
           maxItems: 20
-          items: { type: string, format: uuid }
-        seoMetadata: { type: object, additionalProperties: true }
+          items:
+            type: string
+            format: uuid
+        seoMetadata:
+          type: object
+          additionalProperties: true
     UpdatePublicationRequest:
       type: object
       properties:
-        authorId: { type: string, format: uuid }
-        categoryId: { type: string, format: uuid }
-        coverFileId: { type: string, format: uuid }
-        title: { type: string, minLength: 4, maxLength: 220 }
+        authorId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+        coverFileId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 4
+          maxLength: 220
         slug:
           type: string
           minLength: 4
           maxLength: 240
-        summary: { type: string, minLength: 10, maxLength: 1000 }
-        body: { type: string, minLength: 20, maxLength: 50000 }
-        audioTranscript: { type: string }
-        publicationType: { type: string, enum: [NEWS, COLUMN, OPINION, INTERVIEW, REPORT, ANALYSIS] }
-        accessType: { type: string, enum: [PUBLIC, PREMIUM, INTERNAL_ONLY] }
-        scheduledAt: { type: string, format: date-time }
-        commentsEnabled: { type: boolean }
-        reactionsEnabled: { type: boolean }
+        summary:
+          type: string
+          minLength: 10
+          maxLength: 1000
+        body:
+          type: string
+          minLength: 20
+          maxLength: 50000
+        audioTranscript:
+          type: string
+        publicationType:
+          type: string
+          enum:
+          - NEWS
+          - COLUMN
+          - OPINION
+          - INTERVIEW
+          - REPORT
+          - ANALYSIS
+        accessType:
+          type: string
+          enum:
+          - PUBLIC
+          - PREMIUM
+          - INTERNAL_ONLY
+        scheduledAt:
+          type: string
+          format: date-time
+        commentsEnabled:
+          type: boolean
+        reactionsEnabled:
+          type: boolean
         tagIds:
           type: array
           maxItems: 20
-          items: { type: string, format: uuid }
-        seoMetadata: { type: object, additionalProperties: true }
+          items:
+            type: string
+            format: uuid
+        seoMetadata:
+          type: object
+          additionalProperties: true
     CreateContentCategoryRequest:
       type: object
-      required: [name]
+      required:
+      - name
       properties:
-        name: { type: string }
-        slug: { type: string }
-        description: { type: string }
-        isActive: { type: boolean, default: true }
-        sortOrder: { type: integer, minimum: 0, maximum: 10000 }
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        sortOrder:
+          type: integer
+          minimum: 0
+          maximum: 10000
     UpdateContentCategoryRequest:
       type: object
       properties:
-        name: { type: string, minLength: 2, maxLength: 120 }
-        slug: { type: string, minLength: 2, maxLength: 140 }
-        description: { type: string }
-        isActive: { type: boolean }
-        sortOrder: { type: integer, minimum: 0, maximum: 10000 }
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        slug:
+          type: string
+          minLength: 2
+          maxLength: 140
+        description:
+          type: string
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+          minimum: 0
+          maximum: 10000
     CreateContentTagRequest:
       type: object
-      required: [name]
+      required:
+      - name
       properties:
-        name: { type: string, minLength: 2, maxLength: 80 }
-        slug: { type: string, minLength: 2, maxLength: 100 }
+        name:
+          type: string
+          minLength: 2
+          maxLength: 80
+        slug:
+          type: string
+          minLength: 2
+          maxLength: 100
     CreateContentAuthorRequest:
       type: object
-      required: [displayName]
+      required:
+      - displayName
       properties:
-        displayName: { type: string, minLength: 2, maxLength: 180 }
-        userId: { type: string, format: uuid }
-        headline: { type: string, minLength: 2, maxLength: 220 }
-        bio: { type: string }
-        avatarFileId: { type: string, format: uuid }
-        status: { type: string, enum: [ACTIVE, INACTIVE] }
-        metadata: { type: object, additionalProperties: true }
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 180
+        userId:
+          type: string
+          format: uuid
+        headline:
+          type: string
+          minLength: 2
+          maxLength: 220
+        bio:
+          type: string
+        avatarFileId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+        metadata:
+          type: object
+          additionalProperties: true
     UpdateContentAuthorRequest:
       type: object
       properties:
-        displayName: { type: string, minLength: 2, maxLength: 180 }
-        userId: { type: string, format: uuid }
-        headline: { type: string, minLength: 2, maxLength: 220 }
-        bio: { type: string }
-        avatarFileId: { type: string, format: uuid }
-        status: { type: string, enum: [ACTIVE, INACTIVE] }
-        metadata: { type: object, additionalProperties: true }
-
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 180
+        userId:
+          type: string
+          format: uuid
+        headline:
+          type: string
+          minLength: 2
+          maxLength: 220
+        bio:
+          type: string
+        avatarFileId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+        metadata:
+          type: object
+          additionalProperties: true
+    ContentSubscriber:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - UNSUBSCRIBED
+          - SUSPENDED
+        subscriptionTier:
+          type: string
+          enum:
+          - FREE
+          - PREMIUM
+        premiumUntil:
+          type: string
+          format: date-time
+          nullable: true
+        source:
+          type: string
+          example: admin
+        isPremiumActive:
+          type: boolean
+        consentMetadata:
+          type: object
+          additionalProperties: true
+        metadata:
+          type: object
+          additionalProperties: true
+    UpsertContentSubscriberRequest:
+      type: object
+      required:
+      - userId
+      - email
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: Usuario que debe tener perfil de paciente.
+        email:
+          type: string
+          format: email
+          description: Debe coincidir con el correo del usuario paciente seleccionado.
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 180
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - UNSUBSCRIBED
+          - SUSPENDED
+          default: ACTIVE
+        subscriptionTier:
+          type: string
+          enum:
+          - FREE
+          - PREMIUM
+          default: FREE
+        premiumUntil:
+          type: string
+          format: date-time
+          nullable: true
+        source:
+          type: string
+          example: admin
+        consentMetadata:
+          type: object
+          additionalProperties: true
+        metadata:
+          type: object
+          additionalProperties: true
+    UpdateContentSubscriberRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: Usuario que debe tener perfil de paciente.
+        email:
+          type: string
+          format: email
+          description: Debe coincidir con el correo del usuario paciente seleccionado.
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 180
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - UNSUBSCRIBED
+          - SUSPENDED
+        subscriptionTier:
+          type: string
+          enum:
+          - FREE
+          - PREMIUM
+        premiumUntil:
+          type: string
+          format: date-time
+          nullable: true
+        source:
+          type: string
+        consentMetadata:
+          type: object
+          additionalProperties: true
+        metadata:
+          type: object
+          additionalProperties: true
     UpdateHomepageLayoutRequest:
       type: object
-      required: [sections]
+      required:
+      - sections
       properties:
         sections:
           type: array
           maxItems: 20
           items:
             type: object
-            required: [code, title, type]
+            required:
+            - code
+            - title
+            - type
             properties:
-              code: { type: string }
-              title: { type: string }
-              type: { type: string, enum: [HEADLINES, COLUMNS, ADS, CUSTOM] }
-              sortOrder: { type: integer, minimum: 0 }
-              isActive: { type: boolean }
-              metadata: { type: object, additionalProperties: true }
+              code:
+                type: string
+              title:
+                type: string
+              type:
+                type: string
+                enum:
+                - HEADLINES
+                - COLUMNS
+                - ADS
+                - CUSTOM
+              sortOrder:
+                type: integer
+                minimum: 0
+              isActive:
+                type: boolean
+              metadata:
+                type: object
+                additionalProperties: true
               items:
                 type: array
                 maxItems: 30
                 items:
                   type: object
-                  required: [itemType, itemId]
+                  required:
+                  - itemType
+                  - itemId
                   properties:
-                    itemType: { type: string, enum: [CONTENT_PUBLICATION, ADS_CAMPAIGN, ADS_CREATIVE] }
-                    itemId: { type: string, format: uuid }
-                    sortOrder: { type: integer, minimum: 0 }
-                    metadata: { type: object, additionalProperties: true }
-
+                    itemType:
+                      type: string
+                      enum:
+                      - CONTENT_PUBLICATION
+                      - ADS_CAMPAIGN
+                      - ADS_CREATIVE
+                    itemId:
+                      type: string
+                      format: uuid
+                    sortOrder:
+                      type: integer
+                      minimum: 0
+                    metadata:
+                      type: object
+                      additionalProperties: true
     CreateAdsCompanyRequest:
       type: object
-      required: [businessName, commercialName]
+      required:
+      - businessName
+      - commercialName
       properties:
-        businessName: { type: string }
-        commercialName: { type: string }
-        taxId: { type: string }
-        contactName: { type: string }
-        contactEmail: { type: string, format: email }
-        contactPhone: { type: string }
-        status: { type: string, enum: [ACTIVE, INACTIVE, BLOCKED] }
-        metadata: { type: object, additionalProperties: true }
+        businessName:
+          type: string
+        commercialName:
+          type: string
+        taxId:
+          type: string
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+          format: email
+        contactPhone:
+          type: string
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - BLOCKED
+        metadata:
+          type: object
+          additionalProperties: true
     UpdateAdsCompanyRequest:
       type: object
       properties:
-        businessName: { type: string, minLength: 2, maxLength: 180 }
-        commercialName: { type: string, minLength: 2, maxLength: 180 }
-        taxId: { type: string }
-        contactName: { type: string }
-        contactEmail: { type: string, format: email }
-        contactPhone: { type: string }
-        status: { type: string, enum: [ACTIVE, INACTIVE, BLOCKED] }
-        metadata: { type: object, additionalProperties: true }
+        businessName:
+          type: string
+          minLength: 2
+          maxLength: 180
+        commercialName:
+          type: string
+          minLength: 2
+          maxLength: 180
+        taxId:
+          type: string
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+          format: email
+        contactPhone:
+          type: string
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - BLOCKED
+        metadata:
+          type: object
+          additionalProperties: true
     CreateAdsPlacementRequest:
       type: object
-      required: [code, name]
+      required:
+      - code
+      - name
       properties:
-        code: { type: string, example: home_hero }
-        name: { type: string }
-        description: { type: string }
-        context: { type: string, enum: [HOME, ARTICLE, CATEGORY] }
-        isActive: { type: boolean }
-        dimensions: { type: object, additionalProperties: true }
+        code:
+          type: string
+          example: home_hero
+        name:
+          type: string
+        description:
+          type: string
+        context:
+          type: string
+          enum:
+          - HOME
+          - ARTICLE
+          - CATEGORY
+        isActive:
+          type: boolean
+        dimensions:
+          type: object
+          additionalProperties: true
     UpdateAdsPlacementRequest:
       type: object
       properties:
-        code: { type: string, example: home_hero, minLength: 2, maxLength: 80 }
-        name: { type: string, minLength: 2, maxLength: 140 }
-        description: { type: string }
-        context: { type: string, enum: [HOME, ARTICLE, CATEGORY] }
-        isActive: { type: boolean }
-        dimensions: { type: object, additionalProperties: true }
+        code:
+          type: string
+          example: home_hero
+          minLength: 2
+          maxLength: 80
+        name:
+          type: string
+          minLength: 2
+          maxLength: 140
+        description:
+          type: string
+        context:
+          type: string
+          enum:
+          - HOME
+          - ARTICLE
+          - CATEGORY
+        isActive:
+          type: boolean
+        dimensions:
+          type: object
+          additionalProperties: true
     CreateAdsCampaignRequest:
       type: object
-      required: [companyId, name, startsAt, endsAt]
+      required:
+      - companyId
+      - name
+      - startsAt
+      - endsAt
       properties:
-        companyId: { type: string, format: uuid }
-        name: { type: string }
-        objective: { type: string, enum: [AWARENESS, TRAFFIC, PUBLIC_SERVICE, SPONSORSHIP] }
-        startsAt: { type: string, format: date-time }
-        endsAt: { type: string, format: date-time }
-        budgetAmount: { type: number, minimum: 0 }
-        currency: { type: string, example: BOB, minLength: 3, maxLength: 3 }
-        priority: { type: integer, minimum: 1, maximum: 1000 }
+        companyId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        objective:
+          type: string
+          enum:
+          - AWARENESS
+          - TRAFFIC
+          - PUBLIC_SERVICE
+          - SPONSORSHIP
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        budgetAmount:
+          type: number
+          minimum: 0
+        currency:
+          type: string
+          example: BOB
+          minLength: 3
+          maxLength: 3
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 1000
         placementIds:
           type: array
           maxItems: 20
-          items: { type: string, format: uuid }
-        notes: { type: string }
+          items:
+            type: string
+            format: uuid
+        notes:
+          type: string
+        publicationIds:
+          type: array
+          maxItems: 50
+          description: Publicaciones específicas donde se mostrará la campaña.
+          items:
+            type: string
+            format: uuid
+        categoryIds:
+          type: array
+          maxItems: 50
+          description: Categorías editoriales donde se mostrará la campaña.
+          items:
+            type: string
+            format: uuid
+        pageSlugs:
+          type: array
+          maxItems: 50
+          description: Slugs de páginas públicas donde se mostrará la campaña.
+          items:
+            type: string
     UpdateAdsCampaignRequest:
       type: object
       properties:
-        companyId: { type: string, format: uuid }
-        name: { type: string, minLength: 2, maxLength: 180 }
-        objective: { type: string, enum: [AWARENESS, TRAFFIC, PUBLIC_SERVICE, SPONSORSHIP] }
-        startsAt: { type: string, format: date-time }
-        endsAt: { type: string, format: date-time }
-        budgetAmount: { type: number, minimum: 0 }
-        priority: { type: integer, minimum: 1, maximum: 1000 }
+        companyId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 2
+          maxLength: 180
+        objective:
+          type: string
+          enum:
+          - AWARENESS
+          - TRAFFIC
+          - PUBLIC_SERVICE
+          - SPONSORSHIP
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        budgetAmount:
+          type: number
+          minimum: 0
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 1000
         placementIds:
           type: array
           maxItems: 20
-          items: { type: string, format: uuid }
-        notes: { type: string }
+          items:
+            type: string
+            format: uuid
+        notes:
+          type: string
+        publicationIds:
+          type: array
+          maxItems: 50
+          description: Publicaciones específicas donde se mostrará la campaña.
+          items:
+            type: string
+            format: uuid
+        categoryIds:
+          type: array
+          maxItems: 50
+          description: Categorías editoriales donde se mostrará la campaña.
+          items:
+            type: string
+            format: uuid
+        pageSlugs:
+          type: array
+          maxItems: 50
+          description: Slugs de páginas públicas donde se mostrará la campaña.
+          items:
+            type: string
     SetAdsCampaignStatusRequest:
       type: object
-      required: [status]
+      required:
+      - status
       properties:
-        status: { type: string, enum: [DRAFT, ACTIVE, PAUSED, ENDED, CANCELLED, REJECTED] }
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - ACTIVE
+          - PAUSED
+          - ENDED
+          - CANCELLED
+          - REJECTED
     CreateAdsCreativeRequest:
       type: object
-      required: [title, assetUrl, destinationUrl, altText]
+      required:
+      - title
+      - assetUrl
+      - destinationUrl
+      - altText
       properties:
-        title: { type: string }
-        mediaType: { type: string, enum: [IMAGE, VIDEO, HTML, NATIVE_CARD] }
-        fileId: { type: string, format: uuid }
-        assetUrl: { type: string, format: uri }
-        destinationUrl: { type: string, format: uri }
-        altText: { type: string }
-        mimeType: { type: string }
-        width: { type: integer, minimum: 1 }
-        height: { type: integer, minimum: 1 }
-        sizeBytes: { type: integer, minimum: 0 }
-        isPrimary: { type: boolean }
+        title:
+          type: string
+        mediaType:
+          type: string
+          enum:
+          - IMAGE
+          - VIDEO
+          - HTML
+          - NATIVE_CARD
+        fileId:
+          type: string
+          format: uuid
+        assetUrl:
+          type: string
+          format: uri
+        destinationUrl:
+          type: string
+          format: uri
+        altText:
+          type: string
+        mimeType:
+          type: string
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+        sizeBytes:
+          type: integer
+          minimum: 0
+        isPrimary:
+          type: boolean
+    CreateAdsAdRequest:
+      allOf:
+      - $ref: '#/components/schemas/CreateAdsCreativeRequest'
+      - type: object
+        required:
+        - campaignId
+        properties:
+          campaignId:
+            type: string
+            format: uuid
+          publicationId:
+            type: string
+            format: uuid
+            description: Publicación específica donde se mostrará este anuncio.
+          publicationIds:
+            type: array
+            maxItems: 50
+            description: Publicaciones específicas donde se mostrará este anuncio.
+            items:
+              type: string
+              format: uuid
+          categoryId:
+            type: string
+            format: uuid
+            description: Categoría editorial donde se mostrará este anuncio.
+          categoryIds:
+            type: array
+            maxItems: 50
+            description: Categorías editoriales donde se mostrará este anuncio.
+            items:
+              type: string
+              format: uuid
+          placementId:
+            type: string
+            format: uuid
+            description: Ubicación publicitaria donde se mostrará este anuncio.
+          placementIds:
+            type: array
+            maxItems: 20
+            description: Ubicaciones publicitarias donde se mostrará este anuncio.
+            items:
+              type: string
+              format: uuid
+          pageSlug:
+            type: string
+            description: Página pública donde se mostrará este anuncio.
+          pageSlugs:
+            type: array
+            maxItems: 50
+            description: Páginas públicas donde se mostrará este anuncio.
+            items:
+              type: string
     UpdateAdsCreativeRequest:
       type: object
       properties:
-        title: { type: string, minLength: 2, maxLength: 180 }
-        mediaType: { type: string, enum: [IMAGE, VIDEO, HTML, NATIVE_CARD] }
-        fileId: { type: string, format: uuid }
-        assetUrl: { type: string, format: uri }
-        destinationUrl: { type: string, format: uri }
-        altText: { type: string, minLength: 2, maxLength: 220 }
-        mimeType: { type: string }
-        width: { type: integer, minimum: 1 }
-        height: { type: integer, minimum: 1 }
-        sizeBytes: { type: integer, minimum: 0 }
-        isPrimary: { type: boolean }
-
+        title:
+          type: string
+          minLength: 2
+          maxLength: 180
+        mediaType:
+          type: string
+          enum:
+          - IMAGE
+          - VIDEO
+          - HTML
+          - NATIVE_CARD
+        fileId:
+          type: string
+          format: uuid
+        assetUrl:
+          type: string
+          format: uri
+        destinationUrl:
+          type: string
+          format: uri
+        altText:
+          type: string
+          minLength: 2
+          maxLength: 220
+        mimeType:
+          type: string
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+        sizeBytes:
+          type: integer
+          minimum: 0
+        isPrimary:
+          type: boolean
     CreateAccountGroupRequest:
       type: object
-      required: [code, name, type]
+      required:
+      - code
+      - name
+      - type
       properties:
-        code: { type: string }
-        name: { type: string }
-        type: { type: string, enum: [ASSET, LIABILITY, EQUITY, INCOME, EXPENSE] }
+        code:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - ASSET
+          - LIABILITY
+          - EQUITY
+          - INCOME
+          - EXPENSE
     CreateAccountRequest:
       type: object
-      required: [groupId, code, name, normalBalance]
+      required:
+      - groupId
+      - code
+      - name
+      - normalBalance
       properties:
-        groupId: { type: string, format: uuid }
-        code: { type: string }
-        name: { type: string }
-        normalBalance: { type: string, enum: [DEBIT, CREDIT] }
+        groupId:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        normalBalance:
+          type: string
+          enum:
+          - DEBIT
+          - CREDIT
     CreateCostCenterRequest:
       type: object
-      required: [code, name]
+      required:
+      - code
+      - name
       properties:
-        code: { type: string }
-        name: { type: string }
+        code:
+          type: string
+        name:
+          type: string
     CreateTransactionRequest:
       type: object
-      required: [date, description, entries]
+      required:
+      - date
+      - description
+      - entries
       properties:
-        date: { type: string, format: date }
-        description: { type: string }
-        reference: { type: string }
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+        reference:
+          type: string
         entries:
           type: array
           minItems: 2
           items:
             type: object
-            required: [accountId, debit, credit]
+            required:
+            - accountId
+            - debit
+            - credit
             properties:
-              accountId: { type: string, format: uuid }
-              costCenterId: { type: string, format: uuid }
-              debit: { type: number, minimum: 0 }
-              credit: { type: number, minimum: 0 }
-
+              accountId:
+                type: string
+                format: uuid
+              costCenterId:
+                type: string
+                format: uuid
+              debit:
+                type: number
+                minimum: 0
+              credit:
+                type: number
+                minimum: 0
     CreateUiEventRequest:
       type: object
-      required: [eventName]
+      required:
+      - eventName
       properties:
-        sessionId: { type: string }
-        eventName: { type: string }
-        payload: { type: object, additionalProperties: true }
+        sessionId:
+          type: string
+        eventName:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
     SendTestEmailRequest:
       type: object
-      required: [recipient]
+      required:
+      - recipient
       properties:
-        recipient: { type: string, format: email }
-        subject: { type: string, maxLength: 120 }
-        text: { type: string, maxLength: 1000 }
+        recipient:
+          type: string
+          format: email
+        subject:
+          type: string
+          maxLength: 120
+        text:
+          type: string
+          maxLength: 1000
+    CloudinarySignatureRequest:
+      type: object
+      properties:
+        module:
+          type: string
+          example: CMS
+        entityType:
+          type: string
+          example: AdsCreative
+        entityId:
+          type: string
+          format: uuid
+        visibility:
+          type: string
+          example: PUBLIC
+        contentType:
+          type: string
+          example: image/webp
+        fileName:
+          type: string
+          example: banner.webp
+        sizeBytes:
+          type: integer
+          example: 120000
+    CloudinaryCompleteRequest:
+      type: object
+      required:
+      - publicId
+      - secureUrl
+      - module
+      - entityType
+      properties:
+        publicId:
+          type: string
+        secureUrl:
+          type: string
+          format: uri
+        module:
+          type: string
+          example: CMS
+        entityType:
+          type: string
+          example: AdsCreative
+        entityId:
+          type: string
+          format: uuid
+        visibility:
+          type: string
+          example: PUBLIC
+        mimeType:
+          type: string
+        sizeBytes:
+          type: integer

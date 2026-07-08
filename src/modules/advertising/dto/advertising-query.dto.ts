@@ -53,8 +53,23 @@ export class PublicAdSlotsQueryDto {
   @IsString()
   placementCode?: string;
 
+  @ApiPropertyOptional({ example: 'article_sidebar', description: 'Alias público compatible con placement.' })
+  @IsOptional()
+  @IsString()
+  placement?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()
   publicationId?: string;
+
+  @ApiPropertyOptional({ description: 'Alias público compatible con postId.' })
+  @IsOptional()
+  @IsUUID()
+  postId?: string;
+
+  @ApiPropertyOptional({ description: 'Slug de página pública donde se está solicitando publicidad.' })
+  @IsOptional()
+  @IsString()
+  pageSlug?: string;
 }

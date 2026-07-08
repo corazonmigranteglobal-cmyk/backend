@@ -1,6 +1,9 @@
 import { PartialType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
   IsIn,
   IsInt,
@@ -71,3 +74,62 @@ export class CreateAdsCreativeDto {
 }
 
 export class UpdateAdsCreativeDto extends PartialType(CreateAdsCreativeDto) {}
+
+
+export class CreateAdsAdDto extends CreateAdsCreativeDto {
+  @ApiProperty()
+  @IsUUID()
+  campaignId: string;
+
+  @ApiPropertyOptional({ description: 'Publicación específica donde se mostrará este anuncio.' })
+  @IsOptional()
+  @IsUUID()
+  publicationId?: string;
+
+  @ApiPropertyOptional({ type: [String], description: 'Publicaciones específicas donde se mostrará este anuncio.' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsUUID('4', { each: true })
+  @Type(() => String)
+  publicationIds?: string[];
+
+  @ApiPropertyOptional({ description: 'Categoría editorial donde se mostrará este anuncio.' })
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
+
+  @ApiPropertyOptional({ type: [String], description: 'Categorías editoriales donde se mostrará este anuncio.' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsUUID('4', { each: true })
+  @Type(() => String)
+  categoryIds?: string[];
+
+  @ApiPropertyOptional({ description: 'Ubicación publicitaria donde se mostrará este anuncio.' })
+  @IsOptional()
+  @IsUUID()
+  placementId?: string;
+
+  @ApiPropertyOptional({ type: [String], description: 'Ubicaciones publicitarias donde se mostrará este anuncio.' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsUUID('4', { each: true })
+  @Type(() => String)
+  placementIds?: string[];
+
+  @ApiPropertyOptional({ description: 'Página pública donde se mostrará este anuncio.' })
+  @IsOptional()
+  @IsString()
+  pageSlug?: string;
+
+  @ApiPropertyOptional({ type: [String], description: 'Páginas públicas donde se mostrará este anuncio.' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsString({ each: true })
+  @Type(() => String)
+  pageSlugs?: string[];
+}

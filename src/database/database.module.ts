@@ -22,6 +22,12 @@ import { databaseModels } from './models';
         dialectOptions: config.get<boolean>('database.ssl')
           ? { ssl: { require: true, rejectUnauthorized: false } }
           : undefined,
+        pool: {
+          max: 5,
+          min: 1,
+          idle: 60_000,
+          acquire: 60_000,
+        },
       }),
     }),
   ],

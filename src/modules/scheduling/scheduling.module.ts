@@ -2,12 +2,16 @@ import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import {
   Appointment,
+  FileAsset,
   TherapistBlockedTime,
+  TherapistProduct,
+  TherapistProfile,
   TherapistSchedule,
   TherapyProduct,
+  User,
 } from '@/database/models';
 import { AuditModule } from '../audit/audit.module';
-import { SchedulingController, BookingController } from './scheduling.controller';
+import { AdminSchedulingController, BookingController, SchedulingController } from './scheduling.controller';
 import { SchedulingService } from './scheduling.service';
 
 @Module({
@@ -17,10 +21,14 @@ import { SchedulingService } from './scheduling.service';
       TherapistBlockedTime,
       Appointment,
       TherapyProduct,
+      TherapistProfile,
+      TherapistProduct,
+      User,
+      FileAsset,
     ]),
     AuditModule,
   ],
-  controllers: [SchedulingController, BookingController],
+  controllers: [SchedulingController, AdminSchedulingController, BookingController],
   providers: [SchedulingService],
   exports: [SchedulingService],
 })

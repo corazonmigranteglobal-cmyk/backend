@@ -41,6 +41,21 @@ function normalizeStatus(value?: string) {
   return ADMIN_PUBLICATION_STATUS_ALIASES[token] ?? token;
 }
 
+function normalizeSlug(value?: string) {
+  return value?.trim().toLowerCase() || undefined;
+}
+
+function publicationTypeWhere(publicationType?: string | string[]) {
+  if (!publicationType) return undefined;
+  return Array.isArray(publicationType) ? ({ [Op.in]: publicationType } as any) : publicationType;
+}
+
+function applyPageSlugFilter(where: WhereOptions<ContentPublication>, pageSlug?: string) {
+  const slug = normalizeSlug(pageSlug);
+  if (!slug) return;
+  (where as any).seoMetadata = { [Op.contains]: { embedPageSlugs: [slug] } };
+}
+
 export function buildAdminPublicationWhere(
   query: ContentPublicationQueryDto,
 ): WhereOptions<ContentPublication> {
@@ -53,19 +68,21 @@ export function buildAdminPublicationWhere(
   if (query.accessType) where.accessType = query.accessType;
   if (query.authorId) where.authorId = query.authorId;
   if (search) where.title = { [Op.iLike]: `%${search}%` } as any;
+  applyPageSlugFilter(where, query.pageSlug);
   return where;
 }
 
 export function buildPublicPublicationWhere(
   query: PublicContentQueryDto,
-  publicationType?: string,
+  publicationType?: string | string[],
 ) {
   const where: WhereOptions<ContentPublication> = {
     status: 'PUBLISHED',
     accessType: { [Op.in]: ['PUBLIC', 'PREMIUM'] } as any,
   };
   const search = getEffectiveSearch(query);
-  if (publicationType) where.publicationType = publicationType;
+  if (publicationType) where.publicationType = publicationTypeWhere(publicationType);
   if (search) where.title = { [Op.iLike]: `%${search}%` } as any;
+  applyPageSlugFilter(where, query.pageSlug);
   return where;
 }

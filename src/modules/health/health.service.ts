@@ -11,13 +11,31 @@ export class HealthService {
   ) {}
 
   async check() {
-    await this.sequelize.query('SELECT 1');
-    const redisResult = await this.redis.ping();
+    const database = await this.checkDatabase();
+    const redis = await this.checkRedis();
     return {
-      status: 'ok',
-      database: 'ok',
-      redis: redisResult === 'PONG' ? 'ok' : 'degraded',
+      status: database === 'ok' && redis === 'ok' ? 'ok' : 'degraded',
+      database,
+      redis,
       timestamp: new Date().toISOString(),
     };
+  }
+
+  private async checkDatabase(): Promise<'ok' | 'down'> {
+    try {
+      await this.sequelize.query('SELECT 1');
+      return 'ok';
+    } catch {
+      return 'down';
+    }
+  }
+
+  private async checkRedis(): Promise<'ok' | 'degraded' | 'down'> {
+    try {
+      const result = await this.redis.ping();
+      return result === 'PONG' ? 'ok' : 'degraded';
+    } catch {
+      return 'down';
+    }
   }
 }

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -6,11 +7,15 @@ import { mkdirSync } from 'fs';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { PinoLoggerService } from './common/logging/pino-logger.service';
 
 async function bootstrap() {
   mkdirSync('storage/tmp', { recursive: true });
   mkdirSync(process.env.UPLOAD_DIR ?? 'storage/uploads', { recursive: true });
-  const app = await NestFactory.create(AppModule);
+  mkdirSync('storage/logs', { recursive: true });
+
+  const logger = new PinoLoggerService();
+  const app = await NestFactory.create(AppModule, { logger });
   const apiPrefix = process.env.API_PREFIX ?? 'api/v1';
   const corsOrigins = (process.env.CORS_ORIGINS ?? '')
     .split(',')

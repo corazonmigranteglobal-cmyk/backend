@@ -14,6 +14,7 @@ import {
   UniqueConstraintError,
   ValidationError as SequelizeValidationError,
 } from 'sequelize';
+import { sanitizeForLog } from '../logging/log-sanitizer';
 
 interface NormalizedError {
   status: number;
@@ -34,13 +35,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     const normalized = this.normalize(exception);
 
-    if (normalized.status >= 500) {
-      this.logger.error(
-        `${request.method} ${request.url} -> ${normalized.status}: ${
-          exception instanceof Error ? exception.stack : String(exception)
-        }`,
-      );
-    }
+    const logPayload = JSON.stringify({
+      event: 'HTTP_EXCEPTION_FILTER_CAUGHT',
+      requestId,
+      method: request.method,
+      url: request.originalUrl ?? request.url,
+      statusCode: normalized.status,
+      normalized,
+      error: sanitizeForLog(exception),
+    });
+
+    if (normalized.status >= 500) this.logger.error(logPayload);
+    else this.logger.warn(logPayload);
 
     response.status(normalized.status).json({
       error: { code: normalized.code, message: normalized.message, details: normalized.details },
