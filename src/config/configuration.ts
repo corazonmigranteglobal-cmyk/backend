@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
 function parseRedisUrl() {
-  const redisUrl = process.env.REDIS_URL;
+  const redisUrl = process.env.REDIS_URL?.trim();
   if (!redisUrl) return {};
   try {
     const parsed = new URL(redisUrl);
@@ -210,9 +210,9 @@ export default () => {
       seedPublicCmsOnStartup: process.env.DATABASE_SEED_PUBLIC_CMS_ON_STARTUP !== 'false',
     },
     redis: {
-      host: process.env.REDIS_HOST ?? redisFromUrl.host ?? 'localhost',
-      port: Number(process.env.REDIS_PORT ?? redisFromUrl.port ?? 6379),
-      password: process.env.REDIS_PASSWORD || redisFromUrl.password || undefined,
+      host: cleanEnvValue(process.env.REDIS_HOST) ?? redisFromUrl.host ?? 'localhost',
+      port: Number(cleanEnvValue(process.env.REDIS_PORT) ?? redisFromUrl.port ?? 6379),
+      password: cleanEnvValue(process.env.REDIS_PASSWORD) || redisFromUrl.password || undefined,
     },
     jwt: {
       accessSecret: process.env.JWT_ACCESS_SECRET,

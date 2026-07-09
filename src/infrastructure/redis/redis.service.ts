@@ -8,17 +8,21 @@ export class RedisService implements OnModuleDestroy {
   private readonly client: Redis;
 
   constructor(private readonly config: ConfigService) {
+    const host = this.config.get<string>('redis.host') ?? 'localhost';
+    const port = this.config.get<number>('redis.port') ?? 6379;
+
     this.client = new Redis({
-      host: this.config.get<string>('redis.host') ?? 'localhost',
-      port: this.config.get<number>('redis.port') ?? 6379,
+      host,
+      port,
       password: this.config.get<string>('redis.password') || undefined,
       lazyConnect: true,
       maxRetriesPerRequest: 1,
       enableOfflineQueue: false,
     });
 
-    this.client.on('error', (error) => {
-      this.logger.warn(`Redis no disponible: ${error.message}`);
+    this.client.on('error', (error: NodeJS.ErrnoException) => {
+      const reason = error.code ?? error.message ?? String(error);
+      this.logger.warn(`Redis no disponible (${host}:${port}): ${reason}`);
     });
   }
 
