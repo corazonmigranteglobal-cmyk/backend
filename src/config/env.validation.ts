@@ -24,10 +24,15 @@ export const envValidationSchema = Joi.object({
   DATABASE_BOOTSTRAP_FAIL_FAST: Joi.boolean().default(true),
   DATABASE_SEED_PUBLIC_CMS_ON_STARTUP: Joi.boolean().default(true),
 
+  REDIS_ENABLED: Joi.boolean().default(true),
   REDIS_URL: Joi.string().allow('').optional(),
-  REDIS_HOST: Joi.string().default('localhost'),
+  // No usar default localhost aqui: en Coolify/Docker puede pisar REDIS_URL y provocar ECONNREFUSED.
+  REDIS_HOST: Joi.string().allow('').optional(),
   REDIS_PORT: Joi.number().default(6379),
+  REDIS_USERNAME: Joi.string().allow('').optional(),
   REDIS_PASSWORD: Joi.string().allow('').optional(),
+  REDIS_DB: Joi.number().default(0),
+  REDIS_TLS: Joi.boolean().default(false),
   OUTBOX_BATCH_SIZE: Joi.number().optional(),
   OUTBOX_INTERVAL_MS: Joi.number().optional(),
 

@@ -1,13 +1,28 @@
 import { existsSync, readFileSync } from 'fs';
-function parseRedisUrl() {
-  const redisUrl = process.env.REDIS_URL?.trim();
+type ParsedRedisUrl = {
+  url?: string;
+  host?: string;
+  port?: number;
+  username?: string;
+  password?: string;
+  db?: number;
+  tls?: boolean;
+};
+
+function parseRedisUrl(): ParsedRedisUrl {
+  const redisUrl = cleanEnvValue(process.env.REDIS_URL);
   if (!redisUrl) return {};
   try {
     const parsed = new URL(redisUrl);
+    const dbPath = parsed.pathname.replace(/^\//, '').trim();
     return {
+      url: redisUrl,
       host: parsed.hostname,
       port: parsed.port ? Number(parsed.port) : 6379,
+      username: parsed.username ? decodeURIComponent(parsed.username) : undefined,
       password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+      db: dbPath ? Number(dbPath) : 0,
+      tls: parsed.protocol === 'rediss:',
     };
   } catch {
     return {};
@@ -210,9 +225,17 @@ export default () => {
       seedPublicCmsOnStartup: process.env.DATABASE_SEED_PUBLIC_CMS_ON_STARTUP !== 'false',
     },
     redis: {
-      host: cleanEnvValue(process.env.REDIS_HOST) ?? redisFromUrl.host ?? 'localhost',
-      port: Number(cleanEnvValue(process.env.REDIS_PORT) ?? redisFromUrl.port ?? 6379),
-      password: cleanEnvValue(process.env.REDIS_PASSWORD) || redisFromUrl.password || undefined,
+      // REDIS_URL tiene prioridad intencional en despliegues Docker/Coolify.
+      // Si REDIS_HOST quedo como localhost por default o por una variable vieja,
+      // no debe pisar el host real incluido en redis://usuario:password@host:6379/0.
+      enabled: String(process.env.REDIS_ENABLED ?? 'true').toLowerCase() !== 'false',
+      url: redisFromUrl.url,
+      host: redisFromUrl.host ?? cleanEnvValue(process.env.REDIS_HOST) ?? 'localhost',
+      port: Number(redisFromUrl.port ?? cleanEnvValue(process.env.REDIS_PORT) ?? 6379),
+      username: redisFromUrl.username ?? cleanEnvValue(process.env.REDIS_USERNAME),
+      password: redisFromUrl.password ?? cleanEnvValue(process.env.REDIS_PASSWORD) ?? undefined,
+      db: Number(redisFromUrl.db ?? cleanEnvValue(process.env.REDIS_DB) ?? 0),
+      tls: redisFromUrl.tls ?? String(process.env.REDIS_TLS ?? 'false').toLowerCase() === 'true',
     },
     jwt: {
       accessSecret: process.env.JWT_ACCESS_SECRET,
