@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
-import { BadRequestException, RequestMethod, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { mkdirSync } from 'fs';
@@ -8,6 +8,7 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { PinoLoggerService } from './common/logging/pino-logger.service';
+import { HealthService } from './modules/health/health.service';
 
 async function bootstrap() {
   mkdirSync('storage/tmp', { recursive: true });
@@ -24,7 +25,15 @@ async function bootstrap() {
 
   app.use(helmet());
   app.enableCors({ origin: corsOrigins.length ? corsOrigins : true, credentials: true });
-  app.setGlobalPrefix(apiPrefix, { exclude: [{ path: 'health', method: RequestMethod.GET }] });
+  app.setGlobalPrefix(apiPrefix);
+
+  // Muchas plataformas de hosting (Coolify, Docker, balanceadores) asumen /health en la raíz
+  // para sus healthchecks, sin el prefijo de la API. Se expone aparte del prefijo global para
+  // no depender de que cada plataforma configure la ruta con /api/v1 delante.
+  app.getHttpAdapter().get('/health', async (_req, res) => {
+    const result = await app.get(HealthService).check();
+    res.json(result);
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       // Modo compatible con frontend: conserva validación de tipos/campos obligatorios,

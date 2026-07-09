@@ -41,3 +41,32 @@ export class UpdateAppointmentStatusDto {
   status: string;
   @ApiPropertyOptional() @IsOptional() @IsString() reason?: string;
 }
+export class UpdateAppointmentAdminDto {
+  @ApiPropertyOptional() @IsOptional() @IsUUID() therapistUserId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsUUID() productId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsISO8601() scheduledStartAt?: string;
+  @ApiPropertyOptional() @IsOptional() @IsISO8601() scheduledEndAt?: string;
+  @ApiPropertyOptional({
+    enum: [
+      'REQUESTED',
+      'CONFIRMED',
+      'COMPLETED',
+      'CANCELLED_BY_PATIENT',
+      'CANCELLED_BY_ADMIN',
+      'CANCELLED_BY_THERAPIST',
+      'NO_SHOW',
+    ],
+  })
+  @IsOptional()
+  @IsIn([
+    'REQUESTED',
+    'CONFIRMED',
+    'COMPLETED',
+    'CANCELLED_BY_PATIENT',
+    'CANCELLED_BY_ADMIN',
+    'CANCELLED_BY_THERAPIST',
+    'NO_SHOW',
+  ])
+  status?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() adminNotes?: string;
+}

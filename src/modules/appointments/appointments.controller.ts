@@ -9,6 +9,7 @@ import { AppointmentsService } from './appointments.service';
 import {
   CreateAppointmentDto,
   CreateAppointmentForPatientDto,
+  UpdateAppointmentAdminDto,
   UpdateAppointmentStatusDto,
 } from './dto/appointment.dto';
 
@@ -49,5 +50,15 @@ export class AppointmentsController {
     @Query() query: PaginationQueryDto,
   ) {
     return this.service.adminList(query);
+  }
+  @Patch('/admin/:id')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Permissions('appointments:write')
+  adminUpdate(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateAppointmentAdminDto,
+  ) {
+    return this.service.adminUpdate(user, id, dto);
   }
 }

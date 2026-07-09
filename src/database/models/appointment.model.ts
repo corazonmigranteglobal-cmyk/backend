@@ -1,4 +1,4 @@
-import { Column, DataType, ForeignKey, Model, Table, HasMany } from 'sequelize-typescript';
+import { BelongsTo, Column, DataType, ForeignKey, Model, Table, HasMany } from 'sequelize-typescript';
 import { User } from './user.model';
 import { TherapyProduct } from './therapy-product.model';
 import { AppointmentStatusHistory } from './appointment-status-history.model';
@@ -9,12 +9,18 @@ export class Appointment extends Model<Appointment> {
   @ForeignKey(() => User)
   @Column({ type: DataType.UUID, allowNull: false, field: 'patient_user_id' })
   patientUserId: string;
+  @BelongsTo(() => User, { foreignKey: 'patientUserId', as: 'patient' })
+  patient?: User;
   @ForeignKey(() => User)
   @Column({ type: DataType.UUID, allowNull: false, field: 'therapist_user_id' })
   therapistUserId: string;
+  @BelongsTo(() => User, { foreignKey: 'therapistUserId', as: 'therapist' })
+  therapist?: User;
   @ForeignKey(() => TherapyProduct)
   @Column({ type: DataType.UUID, allowNull: false, field: 'product_id' })
   productId: string;
+  @BelongsTo(() => TherapyProduct, { foreignKey: 'productId', as: 'product' })
+  product?: TherapyProduct;
   @Column({ type: DataType.DATE, allowNull: false, field: 'scheduled_start_at' })
   scheduledStartAt: Date;
   @Column({ type: DataType.DATE, allowNull: false, field: 'scheduled_end_at' })

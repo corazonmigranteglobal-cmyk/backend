@@ -6,7 +6,15 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { DateTime } from 'luxon';
-import { Appointment, AppointmentStatusHistory, TherapyProduct } from '@/database/models';
+import {
+  Appointment,
+  AppointmentStatusHistory,
+  PatientProfile,
+  TherapistProfile,
+  TherapyApproach,
+  TherapyProduct,
+  User,
+} from '@/database/models';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
 import {
   PaginationQueryDto,
@@ -16,8 +24,16 @@ import {
 import { AuditService } from '../audit/audit.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { SchedulingService } from '../scheduling/scheduling.service';
-import { CreateAppointmentDto, UpdateAppointmentStatusDto } from './dto/appointment.dto';
+import { CreateAppointmentDto, UpdateAppointmentAdminDto, UpdateAppointmentStatusDto } from './dto/appointment.dto';
 import { canTransitionAppointment } from './policies/status-transition.policy';
+
+const SAFE_USER_ATTRIBUTES = { exclude: ['passwordHash'] };
+
+const ADMIN_LIST_INCLUDE = [
+  { model: User, as: 'patient', attributes: SAFE_USER_ATTRIBUTES, include: [{ model: PatientProfile }] },
+  { model: User, as: 'therapist', attributes: SAFE_USER_ATTRIBUTES, include: [{ model: TherapistProfile }] },
+  { model: TherapyProduct, as: 'product', include: [{ model: TherapyApproach }] },
+];
 
 @Injectable()
 export class AppointmentsService {
@@ -120,9 +136,63 @@ export class AppointmentsService {
   async adminList(query: PaginationQueryDto) {
     const { rows, count } = await this.appointmentModel.findAndCountAll({
       ...toLimitOffset(query),
+      include: ADMIN_LIST_INCLUDE,
       order: [['scheduledStartAt', 'DESC']],
     });
     return { items: rows, pagination: buildPagination(query, count) };
+  }
+
+  async adminUpdate(user: AuthenticatedUser, id: string, dto: UpdateAppointmentAdminDto) {
+    const appointment = await this.appointmentModel.findByPk(id);
+    if (!appointment)
+      throw new NotFoundException({
+        code: 'APPOINTMENT_NOT_FOUND',
+        message: 'Cita no encontrada.',
+      });
+
+    if (dto.status && !canTransitionAppointment(appointment.status, dto.status)) {
+      throw new BadRequestException({
+        code: 'APPOINTMENT_INVALID_TRANSITION',
+        message: `No se puede pasar de ${appointment.status} a ${dto.status}.`,
+      });
+    }
+
+    const before = appointment.toJSON();
+    const payload: Record<string, unknown> = {};
+    if (dto.therapistUserId !== undefined) payload.therapistUserId = dto.therapistUserId;
+    if (dto.productId !== undefined) payload.productId = dto.productId;
+    if (dto.scheduledStartAt !== undefined) payload.scheduledStartAt = new Date(dto.scheduledStartAt);
+    if (dto.scheduledEndAt !== undefined) payload.scheduledEndAt = new Date(dto.scheduledEndAt);
+    if (dto.status !== undefined) payload.status = dto.status;
+    if (dto.adminNotes !== undefined) payload.adminNotes = dto.adminNotes;
+
+    return this.appointmentModel.sequelize!.transaction(async (transaction) => {
+      await appointment.update(payload as any, { transaction });
+      if (dto.status && dto.status !== before.status) {
+        await this.historyModel.create(
+          {
+            appointmentId: appointment.id,
+            fromStatus: before.status,
+            toStatus: dto.status,
+            changedByUserId: user.sub,
+            reason: 'Editado por administrador',
+          } as any,
+          { transaction },
+        );
+      }
+      await this.audit.log(
+        {
+          actorUserId: user.sub,
+          action: 'appointments.admin_update',
+          entityType: 'Appointment',
+          entityId: id,
+          before,
+          after: payload,
+        },
+        { transaction },
+      );
+      return this.appointmentModel.findByPk(id, { include: ADMIN_LIST_INCLUDE, transaction });
+    });
   }
 
   async updateStatus(user: AuthenticatedUser, id: string, dto: UpdateAppointmentStatusDto) {
