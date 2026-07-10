@@ -32,5 +32,9 @@ export class Appointment extends Model<Appointment> {
   @Column({ type: DataType.STRING(3), allowNull: false, defaultValue: 'BOB' }) currency: string;
   @Column({ type: DataType.TEXT, field: 'notes_for_therapist' }) notesForTherapist?: string;
   @Column({ type: DataType.TEXT, field: 'admin_notes' }) adminNotes?: string;
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: false, field: 'is_paid' })
+  isPaid: boolean;
+  @Column({ type: DataType.DATE, field: 'paid_at' }) paidAt?: Date;
+  @Column({ type: DataType.UUID, field: 'sale_transaction_id' }) saleTransactionId?: string;
   @HasMany(() => AppointmentStatusHistory) statusHistory?: AppointmentStatusHistory[];
 }

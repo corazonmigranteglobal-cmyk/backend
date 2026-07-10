@@ -178,4 +178,19 @@ export class AdminContentController {
     return this.subscribers.update(user.sub, id, dto);
   }
 
+  @Post('subscribers/:userId/approve')
+  @Permissions('content:write')
+  approveSubscriberRequest(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('userId') userId: string,
+    @Body() dto: { premiumUntil?: string },
+  ) {
+    return this.subscribers.approveRequest(user.sub, userId, dto?.premiumUntil);
+  }
+
+  @Post('subscribers/:userId/reject')
+  @Permissions('content:write')
+  rejectSubscriberRequest(@CurrentUser() user: AuthenticatedUser, @Param('userId') userId: string) {
+    return this.subscribers.rejectRequest(user.sub, userId);
+  }
 }

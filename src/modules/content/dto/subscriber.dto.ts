@@ -29,10 +29,10 @@ export class UpsertContentSubscriberDto {
   @Length(2, 180)
   displayName?: string;
 
-  @ApiPropertyOptional({ enum: ['ACTIVE', 'UNSUBSCRIBED', 'SUSPENDED'] })
+  @ApiPropertyOptional({ enum: ['ACTIVE', 'PENDING', 'UNSUBSCRIBED', 'SUSPENDED'] })
   @IsOptional()
   @Transform(({ value }) => normalizeUpper(value, 'ACTIVE'))
-  @IsIn(['ACTIVE', 'UNSUBSCRIBED', 'SUSPENDED'])
+  @IsIn(['ACTIVE', 'PENDING', 'UNSUBSCRIBED', 'SUSPENDED'])
   status?: string;
 
   @ApiPropertyOptional({ enum: ['FREE', 'PREMIUM'] })

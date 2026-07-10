@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import {
   Account,
   AccountGroup,
   AccountingEntry,
   AccountingTransaction,
+  Appointment,
   CostCenter,
 } from '@/database/models';
 import {
@@ -17,6 +18,7 @@ import {
   CreateAccountDto,
   CreateAccountGroupDto,
   CreateCostCenterDto,
+  CreateSaleFromAppointmentDto,
   CreateTransactionDto,
 } from './dto/accounting.dto';
 
@@ -28,6 +30,7 @@ export class AccountingService {
     @InjectModel(CostCenter) private readonly costCenterModel: typeof CostCenter,
     @InjectModel(AccountingTransaction) private readonly txModel: typeof AccountingTransaction,
     @InjectModel(AccountingEntry) private readonly entryModel: typeof AccountingEntry,
+    @InjectModel(Appointment) private readonly appointmentModel: typeof Appointment,
     private readonly audit: AuditService,
   ) {}
   listGroups(query: PaginationQueryDto) {
@@ -149,6 +152,77 @@ export class AccountingService {
           entityType: 'AccountingTransaction',
           entityId: created.id,
           after: { debit, credit },
+        },
+        { transaction },
+      );
+      return created;
+    });
+  }
+
+  async createSaleFromAppointment(
+    actorUserId: string,
+    appointmentId: string,
+    dto: CreateSaleFromAppointmentDto,
+  ) {
+    const appointment = await this.appointmentModel.findByPk(appointmentId);
+    if (!appointment)
+      throw new NotFoundException({
+        code: 'APPOINTMENT_NOT_FOUND',
+        message: 'Cita no encontrada.',
+      });
+    if (!appointment.isPaid)
+      throw new BadRequestException({
+        code: 'APPOINTMENT_NOT_PAID',
+        message: 'Solo se pueden registrar como venta las citas que ya fueron marcadas como pagadas.',
+      });
+    if (appointment.saleTransactionId)
+      throw new BadRequestException({
+        code: 'APPOINTMENT_SALE_ALREADY_REGISTERED',
+        message: 'Esta cita ya tiene una venta registrada en contabilidad.',
+      });
+
+    const amount = Number(appointment.price);
+    const date = dto.date ?? new Date().toISOString().slice(0, 10);
+    const description = dto.description ?? `Venta por cita del ${date} (cita ${appointment.id})`;
+
+    return this.txModel.sequelize!.transaction(async (transaction) => {
+      const created = await this.txModel.create(
+        {
+          date,
+          description,
+          reference: appointment.id,
+          status: 'POSTED',
+          createdByUserId: actorUserId,
+        } as any,
+        { transaction },
+      );
+      await this.entryModel.bulkCreate(
+        [
+          {
+            transactionId: created.id,
+            accountId: dto.debitAccountId,
+            costCenterId: dto.costCenterId,
+            debit: amount,
+            credit: 0,
+          },
+          {
+            transactionId: created.id,
+            accountId: dto.creditAccountId,
+            costCenterId: dto.costCenterId,
+            debit: 0,
+            credit: amount,
+          },
+        ] as any,
+        { transaction },
+      );
+      await appointment.update({ saleTransactionId: created.id } as any, { transaction });
+      await this.audit.log(
+        {
+          actorUserId,
+          action: 'accounting.create_sale_from_appointment',
+          entityType: 'AccountingTransaction',
+          entityId: created.id,
+          after: { appointmentId: appointment.id, amount },
         },
         { transaction },
       );

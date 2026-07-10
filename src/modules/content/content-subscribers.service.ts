@@ -177,12 +177,38 @@ export class ContentSubscribersService {
 
   async requestMine(actorUserId: string) {
     const current = await this.getMine(actorUserId);
+    if (current.subscriptionTier === 'PREMIUM' && current.isPremiumActive) {
+      return current;
+    }
     const now = new Date().toISOString();
     return this.updateByUserId(actorUserId, actorUserId, {
-      status: 'ACTIVE',
-      subscriptionTier: current.subscriptionTier === 'PREMIUM' ? 'PREMIUM' : 'FREE',
+      status: 'PENDING',
+      subscriptionTier: 'FREE',
       source: 'patient_request',
       metadata: { ...(current.metadata ?? {}), requestedPremiumAt: now },
+    });
+  }
+
+  async approveRequest(actorUserId: string, userId: string, premiumUntil?: string) {
+    const subscriber = await this.subscriberModel.findOne({ where: { userId } });
+    const current = subscriber?.metadata ?? {};
+    return this.updateByUserId(actorUserId, userId, {
+      status: 'ACTIVE',
+      subscriptionTier: 'PREMIUM',
+      ...(premiumUntil !== undefined ? { premiumUntil } : {}),
+      source: 'admin_approval',
+      metadata: { ...current, approvedPremiumAt: new Date().toISOString() },
+    });
+  }
+
+  async rejectRequest(actorUserId: string, userId: string) {
+    const subscriber = await this.subscriberModel.findOne({ where: { userId } });
+    const current = subscriber?.metadata ?? {};
+    return this.updateByUserId(actorUserId, userId, {
+      status: 'ACTIVE',
+      subscriptionTier: 'FREE',
+      source: 'admin_rejection',
+      metadata: { ...current, rejectedPremiumAt: new Date().toISOString() },
     });
   }
 

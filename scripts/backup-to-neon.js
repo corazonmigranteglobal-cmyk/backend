@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 /*
- * Backup job: PostgreSQL principal -> base remota de Neon.
+ * Backup job: PostgreSQL principal -> uno o varios destinos de respaldo.
  *
  * Este script NO contiene credenciales. Lee todo desde variables de entorno.
  * Requiere tener disponibles los binarios: pg_dump y pg_restore.
  * En Render/Nixpacks se agregan con nixpacks.toml -> postgresql_16.
+ *
+ * Destinos soportados (se pueden usar ambos a la vez):
+ *   - Neon:      NEON_BACKUP_DATABASE_URL / BACKUP_TARGET_DATABASE_URL
+ *   - VPS local: VPS_BACKUP_DATABASE_URL
  */
 
 const { spawnSync } = require('node:child_process');
@@ -125,36 +129,64 @@ const cleanupOldBackups = (backupDir, retentionDays) => {
   }
 };
 
-const buildTargetDatabaseUrl = () => {
-  if (process.env.NEON_BACKUP_DATABASE_URL) return process.env.NEON_BACKUP_DATABASE_URL;
-  if (process.env.BACKUP_TARGET_DATABASE_URL) return process.env.BACKUP_TARGET_DATABASE_URL;
+// Cada destino habilitado exige su propia URL + su propia confirmación explícita,
+// para evitar restaurar por accidente en la base equivocada.
+const collectTargets = () => {
+  const allowNonNeonTarget = bool(process.env.ALLOW_NON_NEON_BACKUP_TARGET, false);
+  const targets = [];
 
-  throw new Error('Falta NEON_BACKUP_DATABASE_URL o BACKUP_TARGET_DATABASE_URL. Debe apuntar a la base remota de Neon destino.');
+  const vpsUrl = process.env.VPS_BACKUP_DATABASE_URL;
+  if (vpsUrl && bool(process.env.BACKUP_RESTORE_TO_VPS, true)) {
+    if (!bool(process.env.BACKUP_CONFIRM_REMOTE_VPS, false)) {
+      throw new Error('Para restaurar en el Postgres del VPS debes definir BACKUP_CONFIRM_REMOTE_VPS=true.');
+    }
+    targets.push({ label: 'VPS', name: 'VPS_BACKUP_DATABASE_URL', rawUrl: vpsUrl, requireNeonHost: false });
+  }
+
+  const neonUrl = process.env.NEON_BACKUP_DATABASE_URL || process.env.BACKUP_TARGET_DATABASE_URL;
+  if (neonUrl && bool(process.env.BACKUP_RESTORE_TO_NEON, true)) {
+    if (!bool(process.env.BACKUP_CONFIRM_REMOTE_NEON, false)) {
+      throw new Error('Para restaurar en Neon debes definir BACKUP_CONFIRM_REMOTE_NEON=true.');
+    }
+    targets.push({
+      label: 'Neon',
+      name: 'NEON_BACKUP_DATABASE_URL',
+      rawUrl: neonUrl,
+      requireNeonHost: !allowNonNeonTarget,
+    });
+  }
+
+  return targets;
 };
 
 const main = () => {
   const sourceDatabaseUrl = buildSourceDatabaseUrl();
-  const targetDatabaseUrl = buildTargetDatabaseUrl();
-  const restoreToNeon = bool(process.env.BACKUP_RESTORE_TO_NEON, true);
-  const confirmRemoteNeon = bool(process.env.BACKUP_CONFIRM_REMOTE_NEON, false);
-  const allowNonNeonTarget = bool(process.env.ALLOW_NON_NEON_BACKUP_TARGET, false);
+  const source = parseUrl('SOURCE_DATABASE_URL/DATABASE_URL', sourceDatabaseUrl);
+
+  const targets = collectTargets().map((target) => ({
+    ...target,
+    url: parseUrl(target.name, target.rawUrl),
+  }));
+
+  if (targets.length === 0) {
+    throw new Error(
+      'No hay ningún destino de backup habilitado. Define VPS_BACKUP_DATABASE_URL y/o NEON_BACKUP_DATABASE_URL (con sus respectivos BACKUP_RESTORE_TO_* y BACKUP_CONFIRM_REMOTE_*).',
+    );
+  }
+
+  for (const target of targets) {
+    if (source.toString() === target.url.toString()) {
+      throw new Error(`La base origen y el destino "${target.label}" son iguales. Se detiene para evitar sobreescribir producción.`);
+    }
+    if (target.requireNeonHost && !target.url.hostname.includes('neon.tech')) {
+      throw new Error(
+        `${target.name} no parece apuntar a Neon. Si de verdad quieres otro destino, usa ALLOW_NON_NEON_BACKUP_TARGET=true.`,
+      );
+    }
+  }
+
   const backupDir = resolve(process.env.BACKUP_DIR || 'backups');
   const retentionDays = Number(process.env.BACKUP_LOCAL_RETENTION_DAYS || '7');
-
-  const source = parseUrl('SOURCE_DATABASE_URL/DATABASE_URL', sourceDatabaseUrl);
-  const target = parseUrl('NEON_BACKUP_DATABASE_URL', targetDatabaseUrl);
-
-  if (source.toString() === target.toString()) {
-    throw new Error('La base origen y la base destino son iguales. Se detiene para evitar sobreescribir producción.');
-  }
-
-  if (!allowNonNeonTarget && !target.hostname.includes('neon.tech')) {
-    throw new Error('NEON_BACKUP_DATABASE_URL no parece apuntar a Neon. Si de verdad quieres otro destino, usa ALLOW_NON_NEON_BACKUP_TARGET=true.');
-  }
-
-  if (restoreToNeon && !confirmRemoteNeon) {
-    throw new Error('Para restaurar en Neon debes definir BACKUP_CONFIRM_REMOTE_NEON=true. Esto evita restauraciones accidentales.');
-  }
 
   if (!existsSync(backupDir)) mkdirSync(backupDir, { recursive: true });
 
@@ -162,9 +194,11 @@ const main = () => {
   const dumpPath = join(backupDir, `corazon_migrante_${timestamp}.dump`);
   const manifestPath = join(backupDir, `corazon_migrante_${timestamp}.manifest.json`);
 
-  console.log('Iniciando backup PostgreSQL -> Neon');
+  console.log('Iniciando backup PostgreSQL');
   console.log(`Origen:  ${maskUrl(sourceDatabaseUrl)}`);
-  console.log(`Destino: ${restoreToNeon ? maskUrl(targetDatabaseUrl) : 'solo archivo local, sin restore remoto'}`);
+  for (const target of targets) {
+    console.log(`Destino (${target.label}): ${maskUrl(target.rawUrl)}`);
+  }
   console.log(`Archivo: ${dumpPath}`);
 
   run('pg_dump', [
@@ -178,7 +212,7 @@ const main = () => {
     sourceDatabaseUrl,
   ]);
 
-  if (restoreToNeon) {
+  for (const target of targets) {
     run('pg_restore', [
       '--clean',
       '--if-exists',
@@ -186,7 +220,7 @@ const main = () => {
       '--no-acl',
       '--verbose',
       '--dbname',
-      targetDatabaseUrl,
+      target.rawUrl,
       dumpPath,
     ]);
   }
@@ -198,15 +232,13 @@ const main = () => {
       database: source.pathname.replace(/^\//, ''),
       sslmode: source.searchParams.get('sslmode') || null,
     },
-    target: restoreToNeon
-      ? {
-          host: target.hostname,
-          database: target.pathname.replace(/^\//, ''),
-          sslmode: target.searchParams.get('sslmode') || null,
-        }
-      : null,
+    targets: targets.map((target) => ({
+      label: target.label,
+      host: target.url.hostname,
+      database: target.url.pathname.replace(/^\//, ''),
+      sslmode: target.url.searchParams.get('sslmode') || null,
+    })),
     localDumpFile: dumpPath,
-    restoreToNeon,
     retentionDays,
   };
 

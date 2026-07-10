@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Permissions } from '@/common/decorators/permissions.decorator';
@@ -10,6 +10,7 @@ import {
   CreateAccountDto,
   CreateAccountGroupDto,
   CreateCostCenterDto,
+  CreateSaleFromAppointmentDto,
   CreateTransactionDto,
 } from './dto/accounting.dto';
 @ApiTags('Accounting')
@@ -59,5 +60,14 @@ export class AccountingController {
     @Body() dto: CreateTransactionDto,
   ) {
     return this.service.createTransaction(u.sub, dto);
+  }
+  @Post('transactions/from-appointment/:appointmentId')
+  @Permissions('accounting:write')
+  createSaleFromAppointment(
+    @CurrentUser() u: AuthenticatedUser,
+    @Param('appointmentId') appointmentId: string,
+    @Body() dto: CreateSaleFromAppointmentDto,
+  ) {
+    return this.service.createSaleFromAppointment(u.sub, appointmentId, dto);
   }
 }

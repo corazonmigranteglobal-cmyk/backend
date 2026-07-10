@@ -5,6 +5,7 @@ import {
   AccountGroup,
   AccountingEntry,
   AccountingTransaction,
+  Appointment,
   CostCenter,
 } from '@/database/models';
 import { AuditModule } from '../audit/audit.module';
@@ -18,6 +19,7 @@ import { AccountingService } from './accounting.service';
       CostCenter,
       AccountingTransaction,
       AccountingEntry,
+      Appointment,
     ]),
     AuditModule,
   ],

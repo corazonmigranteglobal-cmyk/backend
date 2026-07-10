@@ -31,6 +31,11 @@ export class UsersController {
     return this.usersService.updateTherapistProfile(user.sub, dto, user.sub);
   }
 
+  @Patch('me/avatar')
+  updateOwnAvatar(@CurrentUser() user: AuthenticatedUser, @Body() dto: UpdateUserAvatarDto) {
+    return this.usersService.updateUserAvatar(user.sub, dto.avatarFileId, user.sub);
+  }
+
   @Get('admin/users/patients')
   @Roles('ADMIN', 'SUPER_ADMIN')
   @Permissions('users:read')

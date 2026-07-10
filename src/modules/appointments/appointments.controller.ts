@@ -10,6 +10,7 @@ import {
   CreateAppointmentDto,
   CreateAppointmentForPatientDto,
   UpdateAppointmentAdminDto,
+  UpdateAppointmentPaymentDto,
   UpdateAppointmentStatusDto,
 } from './dto/appointment.dto';
 
@@ -60,5 +61,15 @@ export class AppointmentsController {
     @Body() dto: UpdateAppointmentAdminDto,
   ) {
     return this.service.adminUpdate(user, id, dto);
+  }
+  @Patch('/admin/:id/payment')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Permissions('appointments:write')
+  updatePayment(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateAppointmentPaymentDto,
+  ) {
+    return this.service.updatePayment(user, id, dto);
   }
 }

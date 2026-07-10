@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsISO8601, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsIn, IsISO8601, IsOptional, IsString, IsUUID } from 'class-validator';
 export class CreateAppointmentDto {
   @ApiProperty() @IsUUID() therapistUserId: string;
   @ApiProperty() @IsUUID() productId: string;
@@ -69,4 +69,9 @@ export class UpdateAppointmentAdminDto {
   ])
   status?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() adminNotes?: string;
+}
+export class UpdateAppointmentPaymentDto {
+  @ApiProperty({ description: 'true si la cita ya fue pagada, false para revertirlo.' })
+  @IsBoolean()
+  isPaid: boolean;
 }

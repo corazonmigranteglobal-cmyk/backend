@@ -24,7 +24,12 @@ import {
 import { AuditService } from '../audit/audit.service';
 import { MessagingService } from '../messaging/messaging.service';
 import { SchedulingService } from '../scheduling/scheduling.service';
-import { CreateAppointmentDto, UpdateAppointmentAdminDto, UpdateAppointmentStatusDto } from './dto/appointment.dto';
+import {
+  CreateAppointmentDto,
+  UpdateAppointmentAdminDto,
+  UpdateAppointmentPaymentDto,
+  UpdateAppointmentStatusDto,
+} from './dto/appointment.dto';
 import { canTransitionAppointment } from './policies/status-transition.policy';
 
 const SAFE_USER_ATTRIBUTES = { exclude: ['passwordHash'] };
@@ -192,6 +197,40 @@ export class AppointmentsService {
         { transaction },
       );
       return this.appointmentModel.findByPk(id, { include: ADMIN_LIST_INCLUDE, transaction });
+    });
+  }
+
+  async updatePayment(user: AuthenticatedUser, id: string, dto: UpdateAppointmentPaymentDto) {
+    const appointment = await this.appointmentModel.findByPk(id);
+    if (!appointment)
+      throw new NotFoundException({
+        code: 'APPOINTMENT_NOT_FOUND',
+        message: 'Cita no encontrada.',
+      });
+    if (!dto.isPaid && appointment.saleTransactionId)
+      throw new BadRequestException({
+        code: 'APPOINTMENT_PAYMENT_LINKED_TO_SALE',
+        message: 'No se puede desmarcar el pago: esta cita ya tiene una venta registrada en contabilidad.',
+      });
+
+    const before = appointment.toJSON();
+    return this.appointmentModel.sequelize!.transaction(async (transaction) => {
+      await appointment.update(
+        { isPaid: dto.isPaid, paidAt: dto.isPaid ? new Date() : null } as any,
+        { transaction },
+      );
+      await this.audit.log(
+        {
+          actorUserId: user.sub,
+          action: 'appointments.update_payment',
+          entityType: 'Appointment',
+          entityId: id,
+          before,
+          after: { isPaid: dto.isPaid },
+        },
+        { transaction },
+      );
+      return appointment;
     });
   }
 
