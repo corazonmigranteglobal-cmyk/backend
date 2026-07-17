@@ -78,6 +78,7 @@ export const envValidationSchema = Joi.object({
   STORAGE_PROVIDER: Joi.string().valid('LOCAL', 'GCS', 'CLOUDINARY').default('CLOUDINARY'),
   UPLOAD_DIR: Joi.string().trim().default('storage/uploads'),
   MAX_UPLOAD_MB: Joi.number().min(1).max(50).default(8),
+  FILE_PROVIDER_TIMEOUT_MS: Joi.number().integer().min(1_000).max(120_000).default(30_000),
   PUBLIC_BASE_URL: Joi.string().uri().default('http://localhost:3000'),
   FILE_SIGNED_URL_EXPIRES_SECONDS: Joi.number().integer().min(60).max(86_400).default(900),
   GCS_SIGNED_URL_TTL_SECONDS: Joi.number().integer().min(60).max(86_400).optional(),

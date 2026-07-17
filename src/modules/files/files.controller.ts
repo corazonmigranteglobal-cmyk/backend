@@ -10,14 +10,12 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { diskStorage } from 'multer';
-import { mkdirSync } from 'fs';
-import { randomUUID } from 'crypto';
 import { Response } from 'express';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Public } from '@/common/decorators/public.decorator';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
 import { FilesService } from './files.service';
+import { buildMulterOptions } from './multer-options';
 import { CloudinaryUploadSignatureDto, CompleteCloudinaryUploadDto, UploadFileDto } from './dto/file.dto';
 
 @ApiTags('Files')
@@ -47,15 +45,7 @@ export class FilesController {
   @Post()
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (_req, _file, cb) => {
-          mkdirSync('storage/tmp', { recursive: true });
-          cb(null, 'storage/tmp');
-        },
-        filename: (_req, file, cb) => cb(null, `${Date.now()}-${randomUUID()}`),
-      }),
-    }),
+    FileInterceptor('file', buildMulterOptions()),
   )
   upload(
     @CurrentUser() user: AuthenticatedUser,

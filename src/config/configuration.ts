@@ -90,6 +90,7 @@ export default () => {
       storageProvider,
       uploadDir: process.env.UPLOAD_DIR ?? 'storage/uploads',
       maxUploadMb: Number(process.env.MAX_UPLOAD_MB ?? 8),
+      providerTimeoutMs: Number(process.env.FILE_PROVIDER_TIMEOUT_MS ?? 30_000),
       publicBaseUrl: process.env.PUBLIC_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`,
       signedUrlExpiresSeconds: Number(
         process.env.FILE_SIGNED_URL_EXPIRES_SECONDS ??

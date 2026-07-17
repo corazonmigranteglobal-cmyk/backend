@@ -108,34 +108,28 @@ export class CompleteCloudinaryUploadDto {
   @IsUrl({ require_tld: false })
   secureUrl: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
-  assetId?: string;
+  assetId: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
-  version?: string;
+  version: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
-  format?: string;
+  format: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
-  resourceType?: string;
+  resourceType: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
-  signature?: string;
+  signature: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsInt()
   @Min(1)
-  bytes?: number;
+  bytes: number;
 }
