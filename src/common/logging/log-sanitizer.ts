@@ -14,11 +14,16 @@ const SENSITIVE_KEYS = [
   'secret',
   'privateKey',
   'private_key',
+  'pin',
+  'otp',
+  'verificationCode',
 ];
 
 function isSensitiveKey(key: string) {
-  const normalized = key.toLowerCase();
-  return SENSITIVE_KEYS.some((sensitiveKey) => normalized.includes(sensitiveKey.toLowerCase()));
+  const normalizedKey = key.toLowerCase();
+  return SENSITIVE_KEYS.some((sensitiveKey) =>
+    normalizedKey.includes(sensitiveKey.toLowerCase()),
+  );
 }
 
 function truncateString(value: string) {
@@ -51,14 +56,15 @@ export function sanitizeForLog(value: unknown, depth = 0): unknown {
   if (depth >= MAX_DEPTH) return '[MaxDepth]';
 
   if (Array.isArray(value)) {
-    const items = value.slice(0, MAX_ARRAY_ITEMS).map((item) => sanitizeForLog(item, depth + 1));
+    const items = value
+      .slice(0, MAX_ARRAY_ITEMS)
+      .map((item) => sanitizeForLog(item, depth + 1));
     if (value.length > MAX_ARRAY_ITEMS) items.push(`[truncated:${value.length}]`);
     return items;
   }
 
   if (typeof value === 'object') {
     const objectValue = value as Record<string, unknown>;
-
     if (looksLikeUploadedFile(objectValue)) {
       return {
         fieldname: objectValue.fieldname,
