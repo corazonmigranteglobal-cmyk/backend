@@ -154,7 +154,7 @@ export class FileSecurityService {
       typeof payload.module === 'string' &&
       payload.visibility === 'PUBLIC' &&
       typeof payload.originalName === 'string' &&
-      Object.hasOwn(ALLOWED_FILE_TYPES, String(payload.mimeType)) &&
+      Object.prototype.hasOwnProperty.call(ALLOWED_FILE_TYPES, String(payload.mimeType)) &&
       typeof payload.sizeBytes === 'number' &&
       Number.isInteger(payload.sizeBytes) &&
       typeof payload.exp === 'number' &&

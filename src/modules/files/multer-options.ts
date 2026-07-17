@@ -1,10 +1,9 @@
-import { BadRequestException } from '@nestjs/common';
+import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import { randomUUID } from 'node:crypto';
-import { diskStorage, Options } from 'multer';
-import { ALLOWED_FILE_TYPES } from './files.constants';
+import { diskStorage } from 'multer';
 
 /** Shared upload limits prevent endpoint drift and bound multipart resource use. */
-export function buildMulterOptions(): Options {
+export function buildMulterOptions(): MulterOptions {
   const maxUploadMb = Number(process.env.MAX_UPLOAD_MB ?? 8);
   return {
     storage: diskStorage({
@@ -18,19 +17,6 @@ export function buildMulterOptions(): Options {
       fieldNameSize: 100,
       fieldSize: 16 * 1024,
       parts: 12,
-    },
-    fileFilter: (_request, file, callback) => {
-      if (!Object.hasOwn(ALLOWED_FILE_TYPES, file.mimetype)) {
-        callback(
-          new BadRequestException({
-            code: 'FILE_MIME_NOT_ALLOWED',
-            message: 'Tipo de archivo no permitido.',
-          }),
-          false,
-        );
-        return;
-      }
-      callback(null, true);
     },
   };
 }
