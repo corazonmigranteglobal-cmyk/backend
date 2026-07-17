@@ -1,0 +1,58 @@
+name: Hardening CI
+
+on:
+  push:
+    branches: [HARDENING]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hardening-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gates:
+    name: Quality and security gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Activate Yarn Classic
+        run: corepack enable && corepack prepare yarn@1.22.22 --activate
+
+      - name: Install locked dependencies
+        run: yarn install --frozen-lockfile --non-interactive
+
+      - name: Verify repository hygiene
+        run: yarn check:repository
+
+      - name: Scan versioned text for obvious secrets
+        run: yarn check:secrets
+
+      - name: Lint without modifying files
+        run: yarn lint
+
+      - name: Type-check
+        run: yarn typecheck
+
+      - name: Run unit tests
+        run: yarn test --runInBand
+
+      - name: Build production output
+        run: yarn build
+
+      - name: Audit production dependencies
+        run: yarn audit:dependencies

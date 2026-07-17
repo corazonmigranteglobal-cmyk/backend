@@ -1,19 +1,35 @@
-node_modules
-dist
-coverage
+node_modules/
+dist/
+coverage/
 .env
 .env.*
 !.env.example
 !.env.production.example
-secrets/*.json
+
+# Secrets and local credentials must never be versioned.
+secrets/
+*.pem
+*.key
+
+# Runtime data and database backups are external operational artifacts.
+backups/
+*.dump
+*.backup
+
+# Project archives are release artifacts, not source files.
+*.zip
+
 storage/uploads/*
 storage/tmp/*
 storage/logs/*
 !storage/uploads/.gitkeep
 !storage/logs/.gitkeep
+
 npm-debug.log*
 yarn-error.log*
 .DS_Store
+
+# Yarn Plug'n'Play runtime artifacts are generated locally. This project uses Yarn Classic with node_modules.
 .pnp.cjs
 .pnp.loader.mjs
 .yarn/install-state.gz
