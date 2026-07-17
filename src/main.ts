@@ -1,17 +1,15 @@
 import 'dotenv/config';
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { mkdirSync } from 'node:fs';
-import type { Response } from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { PinoLoggerService } from './common/logging/pino-logger.service';
-import { HealthService } from './modules/health/health.service';
 
 async function bootstrap() {
   mkdirSync('storage/tmp', { recursive: true });
@@ -41,12 +39,9 @@ async function bootstrap() {
     exposedHeaders: ['X-Request-Id'],
     maxAge: 600,
   });
-  app.setGlobalPrefix(apiPrefix);
-
-  // Infrastructure probes intentionally remain outside the global API prefix.
-  app.getHttpAdapter().get('/health', async (_request, response: Response) => {
-    const result = await app.get(HealthService).check();
-    response.json(result);
+  app.setGlobalPrefix(apiPrefix, {
+    // The health controller remains available at /health for ingress and orchestration probes.
+    exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
 
   app.useGlobalPipes(
