@@ -13,14 +13,9 @@ function durationToSeconds(value: string): number {
   if (!match) return 900;
 
   const amount = Number(match[1]);
-  const multiplier = {
-    ms: 0.001,
-    s: 1,
-    m: 60,
-    h: 3_600,
-    d: 86_400,
-  }[match[2]];
-  return Math.max(1, Math.floor(amount * multiplier));
+  const unit = match[2] as 'ms' | 's' | 'm' | 'h' | 'd';
+  const multipliers = { ms: 0.001, s: 1, m: 60, h: 3_600, d: 86_400 } as const;
+  return Math.max(1, Math.floor(amount * multipliers[unit]));
 }
 
 @Injectable()

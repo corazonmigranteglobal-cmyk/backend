@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { mkdirSync } from 'node:fs';
+import type { Response } from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -43,7 +44,7 @@ async function bootstrap() {
   app.setGlobalPrefix(apiPrefix);
 
   // Infrastructure probes intentionally remain outside the global API prefix.
-  app.getHttpAdapter().get('/health', async (_request, response) => {
+  app.getHttpAdapter().get('/health', async (_request, response: Response) => {
     const result = await app.get(HealthService).check();
     response.json(result);
   });

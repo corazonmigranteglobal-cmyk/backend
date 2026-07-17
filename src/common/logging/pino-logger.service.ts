@@ -1,7 +1,7 @@
 import { LoggerService, OnApplicationShutdown } from '@nestjs/common';
 import { dirname, resolve } from 'node:path';
 import { mkdirSync } from 'node:fs';
-import pino, { LevelWithSilent, Logger as PinoLogger } from 'pino';
+import pino, { LevelWithSilent, Logger as PinoLogger, StreamEntry } from 'pino';
 
 const DEFAULT_LOG_LEVEL: LevelWithSilent = 'info';
 
@@ -42,7 +42,7 @@ export class PinoLoggerService implements LoggerService, OnApplicationShutdown {
 
   constructor() {
     const configuredLogFilePath = process.env.LOG_FILE_PATH?.trim();
-    const streams = [{ stream: process.stdout }];
+    const streams: StreamEntry[] = [{ stream: process.stdout }];
 
     if (configuredLogFilePath) {
       const logFilePath = resolve(configuredLogFilePath);

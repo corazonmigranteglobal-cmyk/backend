@@ -1,4 +1,3 @@
-import { NotFoundException } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 
 describe('AppointmentsService', () => {
