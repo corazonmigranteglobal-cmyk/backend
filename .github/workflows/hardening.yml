@@ -17,7 +17,7 @@ jobs:
   quality-gates:
     name: Quality and security gates
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,22 +37,57 @@ jobs:
         run: yarn install --frozen-lockfile --non-interactive
 
       - name: Verify repository hygiene
+        id: repository
+        continue-on-error: true
         run: yarn check:repository
 
       - name: Scan versioned text for obvious secrets
+        id: secrets
+        continue-on-error: true
         run: yarn check:secrets
 
       - name: Lint without modifying files
-        run: yarn lint
+        id: lint
+        continue-on-error: true
+        run: yarn eslint "{src,test}/**/*.ts" --fix-dry-run
 
       - name: Type-check
+        id: typecheck
+        continue-on-error: true
         run: yarn typecheck
 
       - name: Run unit tests
+        id: tests
+        continue-on-error: true
         run: yarn test --runInBand
 
       - name: Build production output
+        id: build
+        continue-on-error: true
         run: yarn build
 
       - name: Audit production dependencies
+        id: audit
+        continue-on-error: true
         run: yarn audit:dependencies
+
+      - name: Enforce all quality gates
+        if: always()
+        env:
+          REPOSITORY: ${{ steps.repository.outcome }}
+          SECRETS: ${{ steps.secrets.outcome }}
+          LINT: ${{ steps.lint.outcome }}
+          TYPECHECK: ${{ steps.typecheck.outcome }}
+          TESTS: ${{ steps.tests.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          AUDIT: ${{ steps.audit.outcome }}
+        run: |
+          printf 'repository=%s\nsecrets=%s\nlint=%s\ntypecheck=%s\ntests=%s\nbuild=%s\naudit=%s\n' \
+            "$REPOSITORY" "$SECRETS" "$LINT" "$TYPECHECK" "$TESTS" "$BUILD" "$AUDIT"
+          test "$REPOSITORY" = success
+          test "$SECRETS" = success
+          test "$LINT" = success
+          test "$TYPECHECK" = success
+          test "$TESTS" = success
+          test "$BUILD" = success
+          test "$AUDIT" = success
