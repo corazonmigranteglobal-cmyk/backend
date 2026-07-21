@@ -10,6 +10,7 @@ import { PinoLoggerService } from './common/logging/pino-logger.service';
 import configuration from './config/configuration';
 import { envValidationSchema } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
+import { DatabaseBootstrapModule } from './database/bootstrap/database-bootstrap.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { AccountingModule } from './modules/accounting/accounting.module';
 import { AdvertisingModule } from './modules/advertising/advertising.module';
@@ -24,6 +25,8 @@ import { HealthModule } from './modules/health/health.module';
 import { HomepageModule } from './modules/homepage/homepage.module';
 import { LegacyCompatibilityModule } from './modules/legacy-compatibility/legacy-compatibility.module';
 import { MessagingModule } from './modules/messaging/messaging.module';
+import { DownloadablesModule } from './modules/downloadables/downloadables.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { RolesPermissionsModule } from './modules/roles-permissions/roles-permissions.module';
 import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { TherapyCatalogModule } from './modules/therapy-catalog/therapy-catalog.module';
@@ -39,9 +42,15 @@ import { UsersModule } from './modules/users/users.module';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: () => [{ ttl: 60_000, limit: 120 }],
+      useFactory: (config: ConfigService) => [
+        {
+          ttl: config.get<number>('throttler.ttl') ?? 60_000,
+          limit: config.get<number>('throttler.limit') ?? 120,
+        },
+      ],
     }),
     DatabaseModule,
+    DatabaseBootstrapModule,
     RedisModule,
     JwtModule.register({}),
     RolesPermissionsModule,
@@ -61,6 +70,8 @@ import { UsersModule } from './modules/users/users.module';
     HomepageModule,
     HealthModule,
     LegacyCompatibilityModule,
+    NotificationsModule,
+    DownloadablesModule,
   ],
   providers: [
     PinoLoggerService,
