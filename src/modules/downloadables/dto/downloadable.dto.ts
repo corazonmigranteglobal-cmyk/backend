@@ -131,3 +131,82 @@ export class HotmartConfigDto {
   @MaxLength(180)
   externalReference?: string;
 }
+
+export class CreateVersionDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(400)
+  changeReason?: string;
+}
+
+export class ReviewCommentDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(600)
+  comment?: string;
+}
+
+export class GrantEntitlementDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(180)
+  subjectEmail?: string;
+}
+
+export class AttachPublicationDto {
+  @ApiProperty()
+  @IsString()
+  resourceId: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  label?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isPrimary?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  sortOrder?: number;
+}
+
+export class HotmartNotificationDto {
+  @ApiProperty()
+  @IsString()
+  eventId: string;
+
+  @ApiProperty()
+  @IsString()
+  productId: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  buyerEmail?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  buyerUserId?: string;
+
+  @ApiProperty()
+  @IsString()
+  status: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  externalReference?: string;
+}

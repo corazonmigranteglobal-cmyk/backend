@@ -51,6 +51,10 @@ export { HomepageFeaturedItem } from './homepage-featured-item.model';
 export { AdminNotification } from './admin-notification.model';
 export { DownloadableResource } from './downloadable-resource.model';
 export { DownloadableDownloadEvent } from './downloadable-download-event.model';
+export { DownloadableResourceVersion } from './downloadable-resource-version.model';
+export { DownloadableEntitlement } from './downloadable-entitlement.model';
+export { DownloadablePublicationLink } from './downloadable-publication-link.model';
+export { DownloadableExternalEvent } from './downloadable-external-event.model';
 
 import { User } from './user.model';
 import { Role } from './role.model';
@@ -105,6 +109,10 @@ import { HomepageFeaturedItem } from './homepage-featured-item.model';
 import { AdminNotification } from './admin-notification.model';
 import { DownloadableResource } from './downloadable-resource.model';
 import { DownloadableDownloadEvent } from './downloadable-download-event.model';
+import { DownloadableResourceVersion } from './downloadable-resource-version.model';
+import { DownloadableEntitlement } from './downloadable-entitlement.model';
+import { DownloadablePublicationLink } from './downloadable-publication-link.model';
+import { DownloadableExternalEvent } from './downloadable-external-event.model';
 
 export const databaseModels = [
   User,
@@ -160,4 +168,8 @@ export const databaseModels = [
   AdminNotification,
   DownloadableResource,
   DownloadableDownloadEvent,
+  DownloadableResourceVersion,
+  DownloadableEntitlement,
+  DownloadablePublicationLink,
+  DownloadableExternalEvent,
 ];

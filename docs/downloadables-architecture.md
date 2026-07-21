@@ -1,40 +1,49 @@
 # Arquitectura del módulo de descargables
 
-## Alcance implementado en esta fase
-Fundación funcional y verificada del módulo de contenido descargable, conectada
-de extremo a extremo para los casos núcleo (público, premium, privado, compra),
-con control de acceso evaluado en backend, auditoría de descargas y adaptador
-Hotmart desacoplado.
+Módulo de contenido descargable conectado de extremo a extremo: control de
+acceso en backend, versionado con flujo de revisión, derechos de acceso
+(entitlements), vínculo con publicaciones, integración Hotmart desacoplada,
+eventos de dominio y auditoría de descargas.
 
 ## Componentes
 - **Modelos** (`src/database/models/`):
-  - `DownloadableResource` — recurso administrable con visibilidad, estado
-    editorial, versión, integración Hotmart y metadatos de archivo.
-  - `DownloadableDownloadEvent` — auditoría de cada intento/descarga (sin tokens
-    ni URLs firmadas completas).
-- **Migración** `20260721000001-downloadable-resources.js` — idempotente
-  (`CREATE TABLE IF NOT EXISTS`), con FKs, UNIQUE, CHECK e índices.
-- **Servicio** `DownloadablesService` — CRUD admin, `evaluateAccess`,
-  `resolveDownload`, historial y métricas.
-- **Adaptador** `HotmartAdapter` — contrato de verificación/idempotencia de
-  notificaciones; en modo "unconfigured" no confirma compras reales.
-- **Controllers** — `AdminDownloadablesController` (`/admin/downloadables`) y
-  `DownloadablesController` (`/downloadables`, `/downloadables/:id/download`, …).
+  - `DownloadableResource` — recurso administrable (visibilidad, estado, versión, Hotmart, metadatos de archivo).
+  - `DownloadableResourceVersion` — revisiones; la publicada es inmutable.
+  - `DownloadableEntitlement` — derechos por usuario (admin/premium/compra/rol/…).
+  - `DownloadablePublicationLink` — relación publicación ↔ descargable.
+  - `DownloadableDownloadEvent` — auditoría de descargas (sin tokens/URLs firmadas).
+  - `DownloadableExternalEvent` — eventos externos (Hotmart) para idempotencia.
+- **Migraciones idempotentes**: `20260721000001-downloadable-resources.js`,
+  `20260721000002-downloadable-relations.js` (FKs, UNIQUE, CHECK, índices).
+- **Servicio** `DownloadablesService` — CRUD, `evaluateAccess`, `resolveDownload`,
+  versionado (`createVersion`, `submitReview`, `approve`, `reject`,
+  `requestChanges`, `publishVersion`, `restoreVersion`), entitlements
+  (`grant/revoke`), publicaciones (`attach/detach/reorder/listForPublication`),
+  webhook Hotmart idempotente, historial y métricas.
+- **Adaptador** `HotmartAdapter` — verificación/idempotencia; sin credenciales queda `unconfigured`.
+- **Controllers** — admin (`/admin/downloadables`), usuario (`/downloadables`),
+  publicaciones (`/admin/publications/:id/downloadables`, `/publications/:id/downloadables`),
+  webhook (`/webhooks/hotmart`).
+- **Eventos** vía `NotificationsService` (Created, Published, DownloadAuthorized/Denied,
+  PremiumAccessGranted/Revoked, HotmartPurchaseConfirmed/Revoked, etc.).
 
-## Tablas conceptuales del spec y su estado
-| Entidad del spec               | Estado en esta fase |
-| ------------------------------ | ------------------- |
-| downloadable_resources         | IMPLEMENTADA        |
-| downloadable_download_events   | IMPLEMENTADA        |
-| downloadable_resource_versions | Campo `version` incremental en el recurso; tabla dedicada de revisiones: PENDIENTE |
-| downloadable_files / _resource_files | `file_url`/`cover_url` + object keys en el recurso; multi-archivo dedicado: PENDIENTE |
-| downloadable_access_rules      | Reglas por `visibility` en servicio; tabla de reglas privadas por rol/equipo: PENDIENTE |
-| downloadable_entitlements      | Premium vía `ContentSubscriber`; tabla de entitlements por compra: PENDIENTE |
-| downloadable_external_products | Campos Hotmart en el recurso; catálogo dedicado: PENDIENTE |
-| downloadable_publication_links | PENDIENTE (relación publicación↔descargable) |
-| downloadable_audit_events      | Cubierto por `downloadable_download_events` + auditoría existente |
+## Estado de las tablas del spec
+| Entidad del spec               | Estado       |
+| ------------------------------ | ------------ |
+| downloadable_resources         | IMPLEMENTADA |
+| downloadable_resource_versions | IMPLEMENTADA |
+| downloadable_entitlements      | IMPLEMENTADA |
+| downloadable_publication_links | IMPLEMENTADA |
+| downloadable_download_events   | IMPLEMENTADA |
+| downloadable_external_events   | IMPLEMENTADA |
+| downloadable_files / _resource_files | Cubierto por file_url/object_key en recurso y versión; multi-archivo dedicado: extensible |
+| downloadable_access_rules      | Reglas por visibility + entitlements; tabla de reglas por rol/equipo: extensible |
+| downloadable_external_products | Campos Hotmart en el recurso + external_events; catálogo dedicado: extensible |
+| downloadable_audit_events      | Cubierto por download_events + auditoría existente |
 
-## Migración de datos heredados
-Si existen URLs de descarga embebidas en publicaciones, deben migrarse a
-`downloadable_resources` (una fila por archivo) y vincularse mediante la tabla
-de enlace publicación↔descargable (pendiente). No se elimina información previa.
+## Frontend
+- Admin: `/admin/descargables` (`DownloadablesAdmin`): métricas, listado, crear,
+  flujo de versiones (crear→revisión→aprobar→publicar), configurar Hotmart, archivar.
+- Usuario premium: `/paciente/descargables` (`MyDownloadablesLibrary`) y embebido
+  en `/paciente/premium`: tarjetas con estado de acceso (Disponible, Solo premium,
+  Compra requerida, etc.) y acción autorizada por el backend.
