@@ -33,7 +33,6 @@ export { MessageSendLog } from './message-send-log.model';
 export { AuditLog } from './audit-log.model';
 export { PublicVisit } from './public-visit.model';
 export { UiEvent } from './ui-event.model';
-
 export { ContentAuthor } from './content-author.model';
 export { ContentCategory } from './content-category.model';
 export { ContentTag } from './content-tag.model';
@@ -49,6 +48,13 @@ export { AdsCampaignContentTarget } from './ads-campaign-content-target.model';
 export { AdsImpression } from './ads-impression.model';
 export { HomepageSection } from './homepage-section.model';
 export { HomepageFeaturedItem } from './homepage-featured-item.model';
+export { AdminNotification } from './admin-notification.model';
+export { DownloadableResource } from './downloadable-resource.model';
+export { DownloadableDownloadEvent } from './downloadable-download-event.model';
+export { DownloadableResourceVersion } from './downloadable-resource-version.model';
+export { DownloadableEntitlement } from './downloadable-entitlement.model';
+export { DownloadablePublicationLink } from './downloadable-publication-link.model';
+export { DownloadableExternalEvent } from './downloadable-external-event.model';
 
 import { User } from './user.model';
 import { Role } from './role.model';
@@ -85,7 +91,6 @@ import { MessageSendLog } from './message-send-log.model';
 import { AuditLog } from './audit-log.model';
 import { PublicVisit } from './public-visit.model';
 import { UiEvent } from './ui-event.model';
-
 import { ContentAuthor } from './content-author.model';
 import { ContentCategory } from './content-category.model';
 import { ContentTag } from './content-tag.model';
@@ -101,6 +106,13 @@ import { AdsCampaignContentTarget } from './ads-campaign-content-target.model';
 import { AdsImpression } from './ads-impression.model';
 import { HomepageSection } from './homepage-section.model';
 import { HomepageFeaturedItem } from './homepage-featured-item.model';
+import { AdminNotification } from './admin-notification.model';
+import { DownloadableResource } from './downloadable-resource.model';
+import { DownloadableDownloadEvent } from './downloadable-download-event.model';
+import { DownloadableResourceVersion } from './downloadable-resource-version.model';
+import { DownloadableEntitlement } from './downloadable-entitlement.model';
+import { DownloadablePublicationLink } from './downloadable-publication-link.model';
+import { DownloadableExternalEvent } from './downloadable-external-event.model';
 
 export const databaseModels = [
   User,
@@ -153,4 +165,11 @@ export const databaseModels = [
   AdsImpression,
   HomepageSection,
   HomepageFeaturedItem,
+  AdminNotification,
+  DownloadableResource,
+  DownloadableDownloadEvent,
+  DownloadableResourceVersion,
+  DownloadableEntitlement,
+  DownloadablePublicationLink,
+  DownloadableExternalEvent,
 ];

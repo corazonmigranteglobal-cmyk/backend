@@ -1,0 +1,363 @@
+\documentclass[12pt,a4paper]{article}
+
+% Paquetes
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{mdframed}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{parskip}
+
+% Geometría
+\geometry{
+  a4paper,
+  top=2.5cm, bottom=2.5cm,
+  left=2.8cm, right=2.8cm
+}
+
+% Colores
+\definecolor{primaryColor}{RGB}{99,102,241}   % índigo
+\definecolor{successColor}{RGB}{16,185,129}   % verde
+\definecolor{warningColor}{RGB}{245,158,11}   % ámbar
+\definecolor{dangerColor}{RGB}{239,68,68}     % rojo
+\definecolor{grayLight}{RGB}{243,244,246}
+\definecolor{grayText}{RGB}{107,114,128}
+
+% Encabezados de sección
+\titleformat{\section}
+  {\large\bfseries\color{primaryColor}}
+  {\thesection.}{0.5em}{}[\titlerule]
+
+\titleformat{\subsection}
+  {\normalsize\bfseries}
+  {\thesubsection.}{0.5em}{}
+
+% Cabecera y pie de página
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{grayText}{Manual del Panel Administrativo — Corazón Migrante}}
+\fancyhead[R]{\small\textcolor{grayText}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Recuadros de consejo
+\newenvironment{consejo}{%
+  \begin{mdframed}[backgroundcolor=grayLight,linecolor=primaryColor,linewidth=1.5pt,innerleftmargin=10pt]
+  \textcolor{primaryColor}{\textbf{Consejo:}} 
+}{%
+  \end{mdframed}
+}
+
+\newenvironment{importante}{%
+  \begin{mdframed}[backgroundcolor=grayLight,linecolor=dangerColor,linewidth=1.5pt,innerleftmargin=10pt]
+  \textcolor{dangerColor}{\textbf{Importante:}} 
+}{%
+  \end{mdframed}
+}
+
+% ================================================================
+\begin{document}
+
+% Portada
+\begin{titlepage}
+  \centering
+  \vspace*{3cm}
+  {\huge\bfseries\color{primaryColor} Manual del Panel Administrativo\\[0.5em]}
+  {\large Corazón Migrante\\[2em]}
+  {\normalsize Para psicólogos y coordinadores de la plataforma\\[0.3em]}
+  {\small Sin conocimientos técnicos necesarios\\[4cm]}
+  \hrule
+  \vspace{0.5em}
+  {\small Versión 1.0 \textperiodcentered{} Julio 2026}
+  \vspace{0.5em}
+  \hrule
+  \vfill
+  {\footnotesize\textcolor{grayText}{Este documento es de uso interno. No distribuir sin autorización.}}
+\end{titlepage}
+
+% Índice
+\tableofcontents
+\newpage
+
+% ================================================================
+\section{Introducción}
+
+Este manual explica cómo usar el panel administrativo de Corazón Migrante.
+Está escrito para psicólogos y coordinadores que administran la plataforma sin
+necesidad de conocimientos técnicos.
+
+El panel te permite:
+\begin{itemize}
+  \item Ver y gestionar las solicitudes de citas de los pacientes.
+  \item Administrar los usuarios (pacientes y terapeutas).
+  \item Publicar noticias, artículos y contenido para el sitio web.
+  \item Gestionar la publicidad y las campañas.
+  \item Revisar la contabilidad básica.
+  \item Recibir notificaciones en tiempo real de lo que pasa en la plataforma.
+\end{itemize}
+
+% ================================================================
+\section{Cómo ingresar al panel}
+
+\begin{enumerate}
+  \item Abre tu navegador (Chrome, Firefox o Edge).
+  \item Ve a la dirección del panel (tu administrador te la dará, por ejemplo:\\
+        \texttt{https://tudominio.com/admin/login}).
+  \item Escribe tu correo electrónico y tu contraseña.
+  \item Haz clic en \textbf{Iniciar sesión}.
+\end{enumerate}
+
+\begin{importante}
+  Si olvidaste tu contraseña, haz clic en \textbf{¿Olvidaste tu contraseña?} en
+  la pantalla de login. Recibirás un correo con instrucciones para crear una nueva.
+  El enlace del correo expira en 15 minutos.
+\end{importante}
+
+% ================================================================
+\section{El panel principal}
+
+Al ingresar, verás el \textbf{Panel Principal} con:
+\begin{itemize}
+  \item Un resumen de actividad reciente.
+  \item Accesos directos a las secciones más usadas: Solicitudes, Usuarios,
+        Publicidad y Contabilidad.
+  \item El menú lateral izquierdo para navegar a cualquier sección.
+\end{itemize}
+
+La \textbf{campana} en la esquina superior derecha del menú muestra las
+notificaciones en tiempo real. Un número rojo indica cuántas notificaciones
+no has leído todavía.
+
+% ================================================================
+\section{Notificaciones}
+
+Las notificaciones te avisan cuando ocurre algo importante sin que tengas que
+revisar el sistema manualmente.
+
+\subsection{Tipos de notificaciones}
+
+\begin{tabular}{@{}ll@{}}
+  \toprule
+  \textbf{Notificación} & \textbf{Qué significa} \\
+  \midrule
+  Nueva solicitud de cita & Un paciente pidió una cita \\
+  Cita confirmada & Una cita pasó a estado Confirmada \\
+  Cita cancelada & Un paciente o terapeuta canceló \\
+  Cita completada & La sesión se marcó como realizada \\
+  Paciente no se presentó & El paciente no llegó a la sesión \\
+  \bottomrule
+\end{tabular}
+
+\subsection{Cómo ver todas las notificaciones}
+
+Haz clic en la campana y luego en \textbf{Ver todas las notificaciones}, o
+ve a \textbf{Notificaciones} en el menú lateral.
+
+Desde esa pantalla puedes:
+\begin{itemize}
+  \item Filtrar solo las no leídas.
+  \item Marcar una notificación específica como leída.
+  \item Marcar todas como leídas de una vez.
+\end{itemize}
+
+% ================================================================
+\section{Gestión de citas}
+
+Ve a \textbf{Citas de los pacientes} en el menú lateral.
+
+\subsection{Estados de una cita}
+
+\begin{tabular}{@{}lp{9cm}@{}}
+  \toprule
+  \textbf{Estado} & \textbf{Significado} \\
+  \midrule
+  REQUESTED   & El paciente solicitó la cita. Falta confirmarla. \\
+  CONFIRMED   & La cita fue aceptada y está programada. \\
+  COMPLETED   & La sesión se realizó con éxito. \\
+  CANCELLED   & La cita fue cancelada (paciente, terapeuta o admin). \\
+  NO\_SHOW    & El paciente no se presentó. \\
+  \bottomrule
+\end{tabular}
+
+\subsection{Cambiar el estado de una cita}
+
+\begin{enumerate}
+  \item Busca la cita en la lista (puedes usar el buscador).
+  \item Haz clic en \textbf{Editar}.
+  \item Selecciona el nuevo estado en el menú desplegable.
+  \item Escribe una nota en \textbf{Notas del administrador} si quieres dejar un comentario.
+  \item Haz clic en \textbf{Guardar}.
+\end{enumerate}
+
+\begin{importante}
+  No puedes leer las \textbf{notas privadas} que el paciente escribió para su terapeuta.
+  Esas notas son confidenciales y el sistema las protege automáticamente.
+  Las \textbf{Notas del administrador} sí son visibles y editables para ti.
+\end{importante}
+
+\subsection{Agendar una cita para un paciente}
+
+Si un paciente te llama por teléfono y quiere reservar:
+\begin{enumerate}
+  \item Ve a \textbf{Agendar una cita} en el menú.
+  \item Selecciona el paciente de la lista.
+  \item Elige el terapeuta, el servicio y el horario disponible.
+  \item Haz clic en \textbf{Confirmar reserva}.
+\end{enumerate}
+
+% ================================================================
+\section{Usuarios}
+
+Ve a \textbf{Personas registradas} en el menú lateral.
+
+Aquí puedes ver todos los pacientes y terapeutas registrados. Las acciones
+disponibles son:
+
+\begin{itemize}
+  \item \textbf{Buscar} por nombre o correo usando el campo de búsqueda.
+  \item \textbf{Filtrar} por estado: Activo, Inactivo, Suspendido.
+  \item \textbf{Cambiar el estado} de un usuario (por ejemplo, suspender una cuenta).
+  \item \textbf{Actualizar el avatar} (foto de perfil) de un terapeuta.
+\end{itemize}
+
+\begin{consejo}
+  Usa el filtro de estado para encontrar rápidamente cuentas pendientes
+  de activación o usuarios suspendidos.
+\end{consejo}
+
+% ================================================================
+\section{Contenido del sitio web}
+
+Esta sección te permite gestionar todo lo que aparece en el sitio público.
+
+\subsection{Páginas del sitio web}
+
+Ve a \textbf{Páginas del sitio web} para editar páginas como ``Sobre nosotros'',
+``Política de privacidad'', etc. Cada página tiene elementos (secciones de texto,
+imágenes, botones) que puedes editar individualmente.
+
+\subsection{Noticias y publicaciones}
+
+\begin{enumerate}
+  \item Ve a \textbf{Noticias y columnas} para ver el listado de publicaciones.
+  \item Haz clic en \textbf{Nueva publicación} para crear un artículo.
+  \item Escribe el título, el contenido y selecciona el autor y las categorías.
+  \item Elige el estado: \textbf{Borrador} (no visible) o \textbf{Publicado} (visible).
+  \item Haz clic en \textbf{Guardar}.
+\end{enumerate}
+
+\subsection{Suscriptores premium}
+
+En \textbf{Suscriptores premium} puedes ver quién tiene acceso al contenido
+exclusivo y gestionar sus suscripciones.
+
+% ================================================================
+\section{Publicidad}
+
+El módulo de publicidad te permite gestionar los anuncios que aparecen en el sitio.
+
+\begin{itemize}
+  \item \textbf{Empresas}: Las organizaciones que pagan por publicidad.
+  \item \textbf{Dónde se muestra}: Las ubicaciones disponibles en el sitio (banner superior, lateral, etc.).
+  \item \textbf{Campañas}: Cada campaña pertenece a una empresa y define fechas y presupuesto.
+  \item \textbf{Imágenes}: Los creativos (banners, ilustraciones) de cada campaña.
+\end{itemize}
+
+% ================================================================
+\section{Productos terapéuticos}
+
+\subsection{Enfoques terapéuticos}
+Son los tipos de terapia que ofrece la plataforma (ej: Terapia cognitivo-conductual).
+
+\subsection{Servicios}
+Son los paquetes o sesiones concretas que puede reservar un paciente, con precio
+y duración definidos. Para desactivar un servicio sin eliminarlo, cambia su estado
+a \textbf{Inactivo} — dejará de aparecer en el catálogo público.
+
+% ================================================================
+\section{Imágenes y documentos}
+
+Ve a \textbf{Imágenes y documentos} para gestionar los archivos subidos a la plataforma
+(fotos de terapeutas, documentos, imágenes del sitio web).
+
+Puedes:
+\begin{itemize}
+  \item Ver todos los archivos subidos.
+  \item Filtrar por tipo (imagen, documento) o por módulo.
+  \item Ver a qué entidad está asociado cada archivo.
+\end{itemize}
+
+% ================================================================
+\section{Contabilidad}
+
+El módulo de contabilidad es para el contador de la plataforma, pero los
+administradores pueden consultarlo para revisar transacciones.
+
+\begin{itemize}
+  \item \textbf{Cuentas}: El catálogo de cuentas contables.
+  \item \textbf{Transacciones}: Movimientos de ingresos y gastos.
+  \item \textbf{Pago de citas}: Desde la cita puedes marcarla como pagada,
+        lo que genera automáticamente un registro contable.
+\end{itemize}
+
+% ================================================================
+\section{Preguntas frecuentes}
+
+\subsection{¿Por qué no puedo ver las notas que un paciente le escribió a su terapeuta?}
+Las notas entre paciente y terapeuta son confidenciales. El sistema las protege
+automáticamente y no las muestra en ninguna pantalla de administración.
+Solo el terapeuta puede verlas.
+
+\subsection{¿Qué pasa si dos personas intentan reservar el mismo horario al mismo tiempo?}
+El sistema maneja esto automáticamente. Solo una de las dos reservas se completará.
+La otra recibirá un mensaje indicando que el horario ya no está disponible.
+
+\subsection{¿Puedo recuperar una cita cancelada?}
+No es posible revertir una cancelación directamente. Deberás crear una nueva cita.
+
+\subsection{¿Qué significa el número rojo en la campana?}
+Indica cuántas notificaciones nuevas tienes sin leer. Al hacer clic verás un
+resumen; para ver el historial completo, ve a la página de Notificaciones.
+
+\subsection{¿Cada cuánto se actualizan las notificaciones?}
+En tiempo real, sin necesidad de recargar la página. Cuando ocurre algo nuevo
+(por ejemplo, un paciente solicita una cita), la campana se actualiza automáticamente.
+
+% ================================================================
+\section{Cierre de sesión}
+
+Para salir del panel de forma segura, haz clic en \textbf{Cerrar sesión} en la
+parte inferior del menú lateral. Esto invalida tu sesión activa.
+
+\begin{importante}
+  No cierres la ventana del navegador sin cerrar sesión si estás usando un
+  computador compartido o público.
+\end{importante}
+
+% ================================================================
+\section{Soporte técnico}
+
+Si encuentras un error o necesitas ayuda, comunícate con el equipo técnico
+indicando:
+\begin{itemize}
+  \item Qué estabas haciendo cuando ocurrió el problema.
+  \item El mensaje de error que apareció (si lo hay).
+  \item La fecha y hora aproximadas.
+\end{itemize}
+
+\vfill
+\begin{center}
+  \textcolor{grayText}{\small
+    Corazón Migrante \textperiodcentered{} Manual del Panel Administrativo \textperiodcentered{} Versión 1.0 \textperiodcentered{} Julio 2026
+  }
+\end{center}
+
+\end{document}

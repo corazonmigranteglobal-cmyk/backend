@@ -70,7 +70,10 @@ export class CreateAdsCampaignDto {
   @IsString()
   notes?: string;
 
-  @ApiPropertyOptional({ type: [String], description: 'Publicaciones específicas donde se mostrará la campaña.' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Publicaciones específicas donde se mostrará la campaña.',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(50)
@@ -78,7 +81,10 @@ export class CreateAdsCampaignDto {
   @Type(() => String)
   publicationIds?: string[];
 
-  @ApiPropertyOptional({ type: [String], description: 'Categorías editoriales donde se mostrará la campaña.' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Categorías editoriales donde se mostrará la campaña.',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(50)
@@ -86,7 +92,10 @@ export class CreateAdsCampaignDto {
   @Type(() => String)
   categoryIds?: string[];
 
-  @ApiPropertyOptional({ type: [String], description: 'Slugs de páginas públicas donde se mostrará la campaña.' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Slugs de páginas públicas donde se mostrará la campaña.',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(50)
@@ -148,7 +157,10 @@ export class UpdateAdsCampaignDto {
   @IsString()
   notes?: string;
 
-  @ApiPropertyOptional({ type: [String], description: 'Publicaciones específicas donde se mostrará la campaña.' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Publicaciones específicas donde se mostrará la campaña.',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(50)
@@ -156,7 +168,10 @@ export class UpdateAdsCampaignDto {
   @Type(() => String)
   publicationIds?: string[];
 
-  @ApiPropertyOptional({ type: [String], description: 'Categorías editoriales donde se mostrará la campaña.' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Categorías editoriales donde se mostrará la campaña.',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(50)
@@ -164,7 +179,10 @@ export class UpdateAdsCampaignDto {
   @Type(() => String)
   categoryIds?: string[];
 
-  @ApiPropertyOptional({ type: [String], description: 'Slugs de páginas públicas donde se mostrará la campaña.' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Slugs de páginas públicas donde se mostrará la campaña.',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(50)

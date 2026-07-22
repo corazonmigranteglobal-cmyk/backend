@@ -1,13 +1,22 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { AuthenticatedUser } from '../types/authenticated-user';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+
+function readStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === 'string')
+    : [];
+}
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly jwtService: JwtService,
+    private readonly config: ConfigService,
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
@@ -17,20 +26,41 @@ export class JwtAuthGuard implements CanActivate {
     ]);
     if (isPublic) return true;
 
-    const request = context.switchToHttp().getRequest();
-    const header = request.headers.authorization as string | undefined;
-    if (!header?.startsWith('Bearer ')) {
-      throw new UnauthorizedException({ code: 'AUTH_MISSING_TOKEN', message: 'Token requerido.' });
+    const request = context.switchToHttp().getRequest<{
+      headers: { authorization?: string };
+      user?: AuthenticatedUser;
+    }>();
+    const authorization = request.headers.authorization;
+    if (!authorization?.startsWith('Bearer ')) {
+      throw new UnauthorizedException({
+        code: 'AUTH_MISSING_TOKEN',
+        message: 'Token requerido.',
+      });
     }
 
-    const token = header.slice('Bearer '.length);
     try {
-      const payload = this.jwtService.verify(token, { secret: process.env.JWT_ACCESS_SECRET });
+      const payload = this.jwtService.verify<Record<string, unknown>>(
+        authorization.slice('Bearer '.length),
+        {
+          secret: this.config.get<string>('jwt.accessSecret'),
+          issuer: this.config.get<string>('jwt.issuer'),
+          audience: this.config.get<string>('jwt.audience'),
+        },
+      );
+      if (
+        payload.tokenType !== 'access' ||
+        typeof payload.sub !== 'string' ||
+        typeof payload.email !== 'string' ||
+        payload.status !== 'ACTIVE'
+      ) {
+        throw new Error('Invalid access-token claims.');
+      }
+
       request.user = {
         sub: payload.sub,
         email: payload.email,
-        roles: payload.roles ?? [],
-        permissions: payload.permissions ?? [],
+        roles: readStringArray(payload.roles),
+        permissions: readStringArray(payload.permissions),
         status: payload.status,
       };
       return true;

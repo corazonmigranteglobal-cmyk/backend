@@ -22,7 +22,9 @@ function toIso(value?: Date | string | null) {
 }
 
 function normalizeEmail(value: string) {
-  return String(value ?? '').trim().toLowerCase();
+  return String(value ?? '')
+    .trim()
+    .toLowerCase();
 }
 
 function isPremiumActive(subscriber?: ContentSubscriber | null) {
@@ -143,7 +145,8 @@ export class ContentSubscribersService {
       const normalizedStatus = status.trim().toUpperCase();
       items = items.filter((item) => {
         if (normalizedStatus === 'PREMIUM') return item.subscriptionTier === 'PREMIUM';
-        if (normalizedStatus === 'FREE') return item.subscriptionTier !== 'PREMIUM' || !item.isPremiumActive;
+        if (normalizedStatus === 'FREE')
+          return item.subscriptionTier !== 'PREMIUM' || !item.isPremiumActive;
         if (normalizedStatus === 'ACTIVE') return item.status === 'ACTIVE';
         return item.status === normalizedStatus || item.subscriptionStatus === normalizedStatus;
       });
@@ -151,7 +154,10 @@ export class ContentSubscribersService {
       const page = getEffectivePage(query);
       const pageSize = getEffectivePageSize(query);
       const offset = (page - 1) * pageSize;
-      return { items: items.slice(offset, offset + pageSize), pagination: buildPagination(query, filteredTotal) };
+      return {
+        items: items.slice(offset, offset + pageSize),
+        pagination: buildPagination(query, filteredTotal),
+      };
     }
 
     return { items, pagination: buildPagination(query, count) };
@@ -215,7 +221,11 @@ export class ContentSubscribersService {
   async update(actorUserId: string, id: string, dto: UpdateContentSubscriberDto) {
     const subscriber = await this.find(id);
     const payload = await this.buildWritePayload(dto, subscriber);
-    const duplicated = await this.findDuplicatedSubscriber(subscriber.id, payload.userId, payload.email);
+    const duplicated = await this.findDuplicatedSubscriber(
+      subscriber.id,
+      payload.userId,
+      payload.email,
+    );
     this.assertExistingBelongsToPatient(duplicated, payload.userId);
     const before = subscriber.toJSON();
     return subscriber.sequelize!.transaction(async (transaction) => {
@@ -226,12 +236,19 @@ export class ContentSubscribersService {
   }
 
   async updateByUserId(actorUserId: string, userId: string, dto: UpdateContentSubscriberDto) {
-    const payload = await this.buildWritePayload({ ...dto, userId } as Partial<UpsertContentSubscriberDto>);
+    const payload = await this.buildWritePayload({
+      ...dto,
+      userId,
+    } as Partial<UpsertContentSubscriberDto>);
     const existing = await this.subscriberModel.findOne({ where: { userId } });
 
     return this.subscriberModel.sequelize!.transaction(async (transaction) => {
       if (existing) {
-        const duplicated = await this.findDuplicatedSubscriber(existing.id, payload.userId, payload.email);
+        const duplicated = await this.findDuplicatedSubscriber(
+          existing.id,
+          payload.userId,
+          payload.email,
+        );
         this.assertExistingBelongsToPatient(duplicated, payload.userId);
         const before = existing.toJSON();
         await existing.update(payload as any, { transaction });
@@ -284,7 +301,8 @@ export class ContentSubscribersService {
     if (!targetUserId) {
       throw new BadRequestException({
         code: 'SUBSCRIBER_PATIENT_USER_REQUIRED',
-        message: 'Los suscriptores premium deben estar vinculados a una cuenta de paciente existente.',
+        message:
+          'Los suscriptores premium deben estar vinculados a una cuenta de paciente existente.',
       });
     }
 
@@ -294,7 +312,8 @@ export class ContentSubscribersService {
     if (requestedEmail && requestedEmail !== userEmail) {
       throw new BadRequestException({
         code: 'SUBSCRIBER_EMAIL_MUST_MATCH_PATIENT',
-        message: 'El correo del suscriptor debe coincidir con el correo del usuario paciente seleccionado.',
+        message:
+          'El correo del suscriptor debe coincidir con el correo del usuario paciente seleccionado.',
       });
     }
 
@@ -321,7 +340,10 @@ export class ContentSubscribersService {
   private async assertPatient(userId: string) {
     const user = await this.userModel.findByPk(userId, { include: [PatientProfile] });
     if (!user) {
-      throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Usuario paciente no encontrado.' });
+      throw new NotFoundException({
+        code: 'USER_NOT_FOUND',
+        message: 'Usuario paciente no encontrado.',
+      });
     }
     if (!user.patientProfile) {
       throw new BadRequestException({
@@ -335,7 +357,10 @@ export class ContentSubscribersService {
   private async find(id: string) {
     const subscriber = await this.subscriberModel.findByPk(id);
     if (!subscriber) {
-      throw new NotFoundException({ code: 'CONTENT_SUBSCRIBER_NOT_FOUND', message: 'Suscriptor no encontrado.' });
+      throw new NotFoundException({
+        code: 'CONTENT_SUBSCRIBER_NOT_FOUND',
+        message: 'Suscriptor no encontrado.',
+      });
     }
     return subscriber;
   }

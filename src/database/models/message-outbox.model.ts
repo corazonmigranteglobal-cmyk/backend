@@ -56,13 +56,13 @@ export class MessageOutbox extends Model<MessageOutbox> {
   scheduledAt: Date;
 
   @Column({ type: DataType.DATE, field: 'locked_at' })
-  lockedAt?: Date;
+  lockedAt?: Date | null;
 
   @Column({ type: DataType.TEXT, field: 'locked_by' })
-  lockedBy?: string;
+  lockedBy?: string | null;
 
   @Column({ type: DataType.TEXT, field: 'last_error' })
-  lastError?: string;
+  lastError?: string | null;
 
   @Column({
     type: DataType.DATE,
@@ -73,5 +73,5 @@ export class MessageOutbox extends Model<MessageOutbox> {
   createdAt: Date;
 
   @Column({ type: DataType.DATE, field: 'sent_at' })
-  sentAt?: Date;
+  sentAt?: Date | null;
 }

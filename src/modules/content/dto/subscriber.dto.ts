@@ -1,7 +1,16 @@
 import { PartialType } from '@nestjs/swagger';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsDateString, IsEmail, IsIn, IsObject, IsOptional, IsString, IsUUID, Length } from 'class-validator';
+import {
+  IsDateString,
+  IsEmail,
+  IsIn,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Length,
+} from 'class-validator';
 
 function normalizeUpper(value: unknown, fallback?: string) {
   if (value === undefined || value === null || value === '') return fallback;
@@ -9,7 +18,9 @@ function normalizeUpper(value: unknown, fallback?: string) {
 }
 
 function cleanEmail(value: unknown) {
-  return String(value ?? '').trim().toLowerCase();
+  return String(value ?? '')
+    .trim()
+    .toLowerCase();
 }
 
 export class UpsertContentSubscriberDto {

@@ -1,9 +1,8 @@
-import { LoggerService } from '@nestjs/common';
-import { mkdirSync } from 'fs';
-import { dirname, resolve } from 'path';
-import pino, { LevelWithSilent, Logger as PinoLogger } from 'pino';
+import { LoggerService, OnApplicationShutdown } from '@nestjs/common';
+import { dirname, resolve } from 'node:path';
+import { mkdirSync } from 'node:fs';
+import pino, { LevelWithSilent, Logger as PinoLogger, StreamEntry } from 'pino';
 
-const DEFAULT_LOG_FILE_PATH = 'storage/logs/app.log';
 const DEFAULT_LOG_LEVEL: LevelWithSilent = 'info';
 
 function resolveLogLevel(value?: string): LevelWithSilent {
@@ -27,12 +26,24 @@ function extractContext(optionalParams: unknown[]) {
   return typeof maybeContext === 'string' ? maybeContext : undefined;
 }
 
-export class PinoLoggerService implements LoggerService {
+export class PinoLoggerService implements LoggerService, OnApplicationShutdown {
   private readonly logger: PinoLogger;
+  private readonly fileDestination?: ReturnType<typeof pino.destination>;
 
   constructor() {
-    const logFilePath = resolve(process.env.LOG_FILE_PATH ?? DEFAULT_LOG_FILE_PATH);
-    mkdirSync(dirname(logFilePath), { recursive: true });
+    const configuredLogFilePath = process.env.LOG_FILE_PATH?.trim();
+    const streams: StreamEntry[] = [{ stream: process.stdout }];
+
+    if (configuredLogFilePath) {
+      const logFilePath = resolve(configuredLogFilePath);
+      mkdirSync(dirname(logFilePath), { recursive: true });
+      this.fileDestination = pino.destination({
+        dest: logFilePath,
+        sync: false,
+        mkdir: true,
+      });
+      streams.push({ stream: this.fileDestination });
+    }
 
     this.logger = pino(
       {
@@ -54,14 +65,15 @@ export class PinoLoggerService implements LoggerService {
             '*.refreshToken',
             'apiKey',
             '*.apiKey',
+            'privateKey',
+            '*.privateKey',
+            'private_key',
+            '*.private_key',
           ],
           censor: '[REDACTED]',
         },
       },
-      pino.multistream([
-        { stream: process.stdout },
-        { stream: pino.destination({ dest: logFilePath, sync: false, mkdir: true }) },
-      ]),
+      pino.multistream(streams),
     );
   }
 
@@ -71,7 +83,9 @@ export class PinoLoggerService implements LoggerService {
 
   error(message: unknown, ...optionalParams: unknown[]) {
     const context = extractContext(optionalParams);
-    const stack = optionalParams.find((param) => typeof param === 'string' && param !== context);
+    const stack = optionalParams.find(
+      (parameter) => typeof parameter === 'string' && parameter !== context,
+    );
 
     this.logger.error(
       {
@@ -93,5 +107,10 @@ export class PinoLoggerService implements LoggerService {
 
   verbose(message: unknown, ...optionalParams: unknown[]) {
     this.logger.trace({ context: extractContext(optionalParams) }, normalizeMessage(message));
+  }
+
+  onApplicationShutdown() {
+    this.fileDestination?.flushSync();
+    this.fileDestination?.end();
   }
 }

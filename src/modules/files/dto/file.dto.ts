@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsInt, IsObject, IsOptional, IsString, IsUrl, IsUUID, Max, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class UploadFileDto {
   @ApiProperty({ enum: ['USER_PROFILE', 'THERAPY_CATALOG', 'CMS', 'APPOINTMENT'] })
@@ -59,7 +69,6 @@ export class UpdateFileDto {
   metadata?: Record<string, unknown>;
 }
 
-
 export class CloudinaryUploadSignatureDto {
   @ApiProperty({ enum: ['USER_PROFILE', 'THERAPY_CATALOG', 'CMS', 'APPOINTMENT'] })
   @IsIn(['USER_PROFILE', 'THERAPY_CATALOG', 'CMS', 'APPOINTMENT'])
@@ -108,34 +117,28 @@ export class CompleteCloudinaryUploadDto {
   @IsUrl({ require_tld: false })
   secureUrl: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
-  assetId?: string;
+  assetId: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
-  version?: string;
+  version: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
-  format?: string;
+  format: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
-  resourceType?: string;
+  resourceType: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsString()
-  signature?: string;
+  signature: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
+  @ApiProperty()
   @IsInt()
   @Min(1)
-  bytes?: number;
+  bytes: number;
 }

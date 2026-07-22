@@ -14,6 +14,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import dotenv from 'dotenv';
 
 const args = process.argv.slice(2);
 const flags = new Set(args);
@@ -41,7 +42,9 @@ for (const arg of args) {
 }
 
 const rawEnv = existsSync('.env') ? readFileSync('.env', 'utf8') : '';
-const envFile = parseDotEnv(rawEnv);
+// dotenv es robusto ante BOM, CRLF/CR, comillas y codificaciones que un
+// parser casero no maneja (mismo motor que usa el backend en runtime).
+const envFile = dotenv.parse(rawEnv);
 
 for (const [key, value] of Object.entries(envFile)) {
   if (process.env[key] === undefined) process.env[key] = value;
@@ -641,26 +644,6 @@ async function api(method, path, options = {}) {
 
   if (verbose && text) console.log(formatBody(result));
   return result;
-}
-
-function parseDotEnv(text) {
-  const out = {};
-  for (const rawLine of text.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('#')) continue;
-    const index = line.indexOf('=');
-    if (index === -1) continue;
-    const key = line.slice(0, index).trim();
-    let value = line.slice(index + 1).trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-    out[key] = value;
-  }
-  return out;
 }
 
 function normalizeBaseUrl(value) {

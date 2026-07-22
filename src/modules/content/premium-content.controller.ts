@@ -26,7 +26,8 @@ export class PremiumContentController {
   getPaymentConfig() {
     return {
       enabled: false,
-      message: 'La activación premium se gestiona desde administración hasta integrar pasarela de pago.',
+      message:
+        'La activación premium se gestiona desde administración hasta integrar pasarela de pago.',
     };
   }
 
@@ -35,7 +36,6 @@ export class PremiumContentController {
   requestSubscription(@CurrentUser() user: AuthenticatedUser) {
     return this.subscribers.requestMine(user.sub);
   }
-
 
   @Get('premium/publications/news/:slug')
   @Roles('PATIENT')

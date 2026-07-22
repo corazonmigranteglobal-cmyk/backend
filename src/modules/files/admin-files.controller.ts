@@ -12,15 +12,18 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { diskStorage } from 'multer';
-import { mkdirSync } from 'fs';
-import { randomUUID } from 'crypto';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
 import { PaginationQueryDto } from '@/common/pagination/pagination.dto';
 import { FilesService } from './files.service';
-import { CloudinaryUploadSignatureDto, CompleteCloudinaryUploadDto, UpdateFileDto, UploadFileDto } from './dto/file.dto';
+import { buildMulterOptions } from './multer-options';
+import {
+  CloudinaryUploadSignatureDto,
+  CompleteCloudinaryUploadDto,
+  UpdateFileDto,
+  UploadFileDto,
+} from './dto/file.dto';
 
 @ApiTags('Admin files')
 @ApiBearerAuth()
@@ -57,17 +60,7 @@ export class AdminFilesController {
 
   @Post()
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (_req, _file, cb) => {
-          mkdirSync('storage/tmp', { recursive: true });
-          cb(null, 'storage/tmp');
-        },
-        filename: (_req, _file, cb) => cb(null, `${Date.now()}-${randomUUID()}`),
-      }),
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file', buildMulterOptions()))
   upload(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UploadFileDto,

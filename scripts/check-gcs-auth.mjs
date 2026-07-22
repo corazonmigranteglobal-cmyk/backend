@@ -1,3 +1,4 @@
+import './load-dotenv.mjs';
 import { Storage } from '@google-cloud/storage';
 
 const base64 = process.env.GOOGLE_CREDENTIALS_BASE64;

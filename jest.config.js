@@ -5,6 +5,14 @@ module.exports = {
   transform: { '^.+\\.(t|j)s$': 'ts-jest' },
   collectCoverageFrom: ['src/**/*.(t|j)s'],
   coverageDirectory: './coverage',
+  coverageThreshold: {
+    global: {
+      lines: 30,
+      functions: 30,
+      branches: 20,
+      statements: 30,
+    },
+  },
   testEnvironment: 'node',
-  moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1' }
+  moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1' },
 };

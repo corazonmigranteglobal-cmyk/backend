@@ -110,35 +110,52 @@ async function runMigrations(sequelize) {
   }
 }
 
-async function runSeeders(sequelize) {
-  const runSeeders = hasArg('--seeders') || boolEnv('DATABASE_DEPLOY_RUN_SEEDERS', false);
-  const rerunSeeders = hasArg('--rerun-seeders') || boolEnv('DATABASE_DEPLOY_RERUN_IDEMPOTENT_SEEDERS', false);
-  if (!runSeeders && !rerunSeeders) {
-    console.log('[db:deploy] Seeders omitidos. Activa DATABASE_DEPLOY_RUN_SEEDERS=true si quieres ejecutarlos en despliegue.');
+async function runSeedFolder(sequelize, { subdir, metaTable, rerun }) {
+  const seedersDir = path.join(rootDir, 'src', 'database', 'seeders', subdir);
+  const files = jsFiles(seedersDir);
+  if (!files.length) {
+    console.log(`[db:deploy] Sin seeders en ${subdir}/.`);
     return;
   }
 
-  const seedersDir = path.join(rootDir, 'src', 'database', 'seeders');
-  const files = jsFiles(seedersDir);
-  if (!files.length) return;
-
-  await ensureMetaTable(sequelize, 'SequelizeData');
-  const executed = await executedNames(sequelize, 'SequelizeData');
+  await ensureMetaTable(sequelize, metaTable);
+  const executed = await executedNames(sequelize, metaTable);
   const queryInterface = sequelize.getQueryInterface();
 
   for (const file of files) {
-    if (!rerunSeeders && executed.has(file)) {
-      console.log(`[db:deploy] Seeder ya aplicado: ${file}`);
+    if (!rerun && executed.has(file)) {
+      console.log(`[db:deploy] Seeder (${subdir}) ya aplicado: ${file}`);
       continue;
     }
 
-    console.log(`[db:deploy] Ejecutando seeder idempotente: ${file}`);
+    console.log(`[db:deploy] Ejecutando seeder idempotente (${subdir}): ${file}`);
     const seeder = (await import(pathToFileURL(path.join(seedersDir, file)).href)).default ?? (await import(pathToFileURL(path.join(seedersDir, file)).href));
     if (typeof seeder.up !== 'function') throw new Error(`El seeder ${file} no exporta up().`);
     await seeder.up(queryInterface, Sequelize);
-    await sequelize.query('INSERT INTO "SequelizeData" (name) VALUES (:name) ON CONFLICT (name) DO NOTHING;', {
+    await sequelize.query(`INSERT INTO "${metaTable}" (name) VALUES (:name) ON CONFLICT (name) DO NOTHING;`, {
       replacements: { name: file },
     });
+  }
+}
+
+async function runSeeders(sequelize) {
+  const rerun = hasArg('--rerun-seeders') || boolEnv('DATABASE_DEPLOY_RERUN_IDEMPOTENT_SEEDERS', false);
+  // `--seeders` / DATABASE_DEPLOY_RUN_SEEDERS ejecuta los boot seeds (seguros para producción).
+  // Los mockup seeds (datos demo) solo corren con `--seeds-mockup` explícito.
+  const wantsAny = hasArg('--seeders') || boolEnv('DATABASE_DEPLOY_RUN_SEEDERS', false) || rerun;
+  const runBoot = hasArg('--seeds-boot') || wantsAny;
+  const runMockup = hasArg('--seeds-mockup');
+
+  if (!runBoot && !runMockup) {
+    console.log('[db:deploy] Seeders omitidos. Usa --seeders (boot) o --seeds-mockup (demo, solo dev).');
+    return;
+  }
+
+  if (runBoot) {
+    await runSeedFolder(sequelize, { subdir: 'boot', metaTable: 'SequelizeDataBoot', rerun });
+  }
+  if (runMockup) {
+    await runSeedFolder(sequelize, { subdir: 'mockup', metaTable: 'SequelizeDataMockup', rerun });
   }
 }
 

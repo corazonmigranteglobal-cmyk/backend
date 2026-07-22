@@ -1,3 +1,4 @@
+import './load-dotenv.mjs';
 import pg from 'pg';
 
 const { Client } = pg;

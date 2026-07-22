@@ -43,11 +43,13 @@ function normalizeStatusFilter(value?: string) {
 
 function compactDto<T extends Record<string, unknown>>(dto: T): Partial<T> {
   return Object.fromEntries(
-    Object.entries(dto).filter(([, value]) => {
-      if (value === undefined || value === null) return false;
-      if (typeof value === 'string' && value.trim() === '') return false;
-      return true;
-    }).map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value]),
+    Object.entries(dto)
+      .filter(([, value]) => {
+        if (value === undefined || value === null) return false;
+        if (typeof value === 'string' && value.trim() === '') return false;
+        return true;
+      })
+      .map(([key, value]) => [key, typeof value === 'string' ? value.trim() : value]),
   ) as Partial<T>;
 }
 
@@ -65,14 +67,19 @@ export class UsersService {
 
   private buildAvatarUrl(avatarFileId?: string | null) {
     if (!avatarFileId) return undefined;
-    const baseUrl = (process.env.PUBLIC_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`).replace(/\/+$/, '');
+    const baseUrl = (
+      process.env.PUBLIC_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`
+    ).replace(/\/+$/, '');
     const apiPrefix = (process.env.API_PREFIX ?? 'api/v1').replace(/^\/+|\/+$/g, '');
     return `${baseUrl}/${apiPrefix}/files/${avatarFileId}/download`;
   }
 
   private serializeProfileWithAvatar(profile: any) {
     if (!profile) return profile;
-    const plain = typeof profile.toJSON === 'function' ? profile.toJSON() : { ...(profile as Record<string, unknown>) };
+    const plain =
+      typeof profile.toJSON === 'function'
+        ? profile.toJSON()
+        : { ...(profile as Record<string, unknown>) };
     const avatarFileId = String(plain.avatarFileId ?? plain.avatar_file_id ?? '');
     return {
       ...plain,
@@ -124,7 +131,11 @@ export class UsersService {
     });
   }
 
-  async updateTherapistProfile(userId: string, dto: UpdateTherapistProfileDto, actorUserId = userId) {
+  async updateTherapistProfile(
+    userId: string,
+    dto: UpdateTherapistProfileDto,
+    actorUserId = userId,
+  ) {
     const profile = await this.therapistProfileModel.findByPk(userId);
     if (!profile)
       throw new NotFoundException({
@@ -139,7 +150,10 @@ export class UsersService {
       await this.audit.log(
         {
           actorUserId,
-          action: actorUserId === userId ? 'users.update_therapist_profile' : 'users.admin_update_therapist_profile',
+          action:
+            actorUserId === userId
+              ? 'users.update_therapist_profile'
+              : 'users.admin_update_therapist_profile',
           entityType: 'TherapistProfile',
           entityId: userId,
           before,
@@ -150,7 +164,6 @@ export class UsersService {
       return profile;
     });
   }
-
 
   async updateUserAvatar(userId: string, avatarFileId: string, actorUserId: string) {
     const file = await this.fileModel.findByPk(avatarFileId);
@@ -205,7 +218,9 @@ export class UsersService {
   }
 
   async updateUserStatus(userId: string, status: string, actorUserId: string) {
-    const normalizedStatus = String(status ?? '').trim().toUpperCase();
+    const normalizedStatus = String(status ?? '')
+      .trim()
+      .toUpperCase();
     if (!USER_STATUSES.includes(normalizedStatus)) {
       throw new BadRequestException({
         code: 'USER_STATUS_INVALID',

@@ -75,7 +75,6 @@ export class CreateAdsCreativeDto {
 
 export class UpdateAdsCreativeDto extends PartialType(CreateAdsCreativeDto) {}
 
-
 export class CreateAdsAdDto extends CreateAdsCreativeDto {
   @ApiProperty()
   @IsUUID()
@@ -86,7 +85,10 @@ export class CreateAdsAdDto extends CreateAdsCreativeDto {
   @IsUUID()
   publicationId?: string;
 
-  @ApiPropertyOptional({ type: [String], description: 'Publicaciones específicas donde se mostrará este anuncio.' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Publicaciones específicas donde se mostrará este anuncio.',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(50)
@@ -99,7 +101,10 @@ export class CreateAdsAdDto extends CreateAdsCreativeDto {
   @IsUUID()
   categoryId?: string;
 
-  @ApiPropertyOptional({ type: [String], description: 'Categorías editoriales donde se mostrará este anuncio.' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Categorías editoriales donde se mostrará este anuncio.',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(50)
@@ -112,7 +117,10 @@ export class CreateAdsAdDto extends CreateAdsCreativeDto {
   @IsUUID()
   placementId?: string;
 
-  @ApiPropertyOptional({ type: [String], description: 'Ubicaciones publicitarias donde se mostrará este anuncio.' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Ubicaciones publicitarias donde se mostrará este anuncio.',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(20)
@@ -125,7 +133,10 @@ export class CreateAdsAdDto extends CreateAdsCreativeDto {
   @IsString()
   pageSlug?: string;
 
-  @ApiPropertyOptional({ type: [String], description: 'Páginas públicas donde se mostrará este anuncio.' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Páginas públicas donde se mostrará este anuncio.',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(50)

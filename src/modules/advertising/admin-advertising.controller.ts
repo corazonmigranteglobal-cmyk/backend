@@ -72,7 +72,6 @@ export class AdminAdvertisingController {
     return this.placements.update(user.sub, id, dto);
   }
 
-
   @Get('ads')
   listAds() {
     return this.creatives.listAll();
@@ -92,22 +91,10 @@ export class AdminAdvertisingController {
       pageSlugs = [],
       ...creative
     } = dto;
-    const normalizedPublicationIds = [
-      ...(publicationId ? [publicationId] : []),
-      ...publicationIds,
-    ];
-    const normalizedCategoryIds = [
-      ...(categoryId ? [categoryId] : []),
-      ...categoryIds,
-    ];
-    const normalizedPlacementIds = [
-      ...(placementId ? [placementId] : []),
-      ...placementIds,
-    ];
-    const normalizedPageSlugs = [
-      ...(pageSlug ? [pageSlug] : []),
-      ...pageSlugs,
-    ];
+    const normalizedPublicationIds = [...(publicationId ? [publicationId] : []), ...publicationIds];
+    const normalizedCategoryIds = [...(categoryId ? [categoryId] : []), ...categoryIds];
+    const normalizedPlacementIds = [...(placementId ? [placementId] : []), ...placementIds];
+    const normalizedPageSlugs = [...(pageSlug ? [pageSlug] : []), ...pageSlugs];
 
     const created = await this.creatives.create(user.sub, campaignId, creative);
 

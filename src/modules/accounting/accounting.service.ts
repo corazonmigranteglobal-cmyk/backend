@@ -173,7 +173,8 @@ export class AccountingService {
     if (!appointment.isPaid)
       throw new BadRequestException({
         code: 'APPOINTMENT_NOT_PAID',
-        message: 'Solo se pueden registrar como venta las citas que ya fueron marcadas como pagadas.',
+        message:
+          'Solo se pueden registrar como venta las citas que ya fueron marcadas como pagadas.',
       });
     if (appointment.saleTransactionId)
       throw new BadRequestException({

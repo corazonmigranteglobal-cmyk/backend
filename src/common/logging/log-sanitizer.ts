@@ -14,11 +14,14 @@ const SENSITIVE_KEYS = [
   'secret',
   'privateKey',
   'private_key',
+  'pin',
+  'otp',
+  'verificationCode',
 ];
 
 function isSensitiveKey(key: string) {
-  const normalized = key.toLowerCase();
-  return SENSITIVE_KEYS.some((sensitiveKey) => normalized.includes(sensitiveKey.toLowerCase()));
+  const normalizedKey = key.toLowerCase();
+  return SENSITIVE_KEYS.some((sensitiveKey) => normalizedKey.includes(sensitiveKey.toLowerCase()));
 }
 
 function truncateString(value: string) {
@@ -58,7 +61,6 @@ export function sanitizeForLog(value: unknown, depth = 0): unknown {
 
   if (typeof value === 'object') {
     const objectValue = value as Record<string, unknown>;
-
     if (looksLikeUploadedFile(objectValue)) {
       return {
         fieldname: objectValue.fieldname,

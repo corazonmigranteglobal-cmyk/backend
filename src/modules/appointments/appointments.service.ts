@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { Transaction } from 'sequelize';
 import { DateTime } from 'luxon';
 import {
   Appointment,
@@ -23,6 +24,7 @@ import {
 } from '@/common/pagination/pagination.dto';
 import { AuditService } from '../audit/audit.service';
 import { MessagingService } from '../messaging/messaging.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SchedulingService } from '../scheduling/scheduling.service';
 import {
   CreateAppointmentDto,
@@ -34,9 +36,25 @@ import { canTransitionAppointment } from './policies/status-transition.policy';
 
 const SAFE_USER_ATTRIBUTES = { exclude: ['passwordHash'] };
 
+/**
+ * Attributes excluded from admin-facing appointment responses.
+ * notesForTherapist is private patient→therapist communication; admins must not read it.
+ */
+const ADMIN_APPOINTMENT_ATTRIBUTES = { exclude: ['notesForTherapist'] };
+
 const ADMIN_LIST_INCLUDE = [
-  { model: User, as: 'patient', attributes: SAFE_USER_ATTRIBUTES, include: [{ model: PatientProfile }] },
-  { model: User, as: 'therapist', attributes: SAFE_USER_ATTRIBUTES, include: [{ model: TherapistProfile }] },
+  {
+    model: User,
+    as: 'patient',
+    attributes: SAFE_USER_ATTRIBUTES,
+    include: [{ model: PatientProfile }],
+  },
+  {
+    model: User,
+    as: 'therapist',
+    attributes: SAFE_USER_ATTRIBUTES,
+    include: [{ model: TherapistProfile }],
+  },
   { model: TherapyProduct, as: 'product', include: [{ model: TherapyApproach }] },
 ];
 
@@ -50,12 +68,16 @@ export class AppointmentsService {
     private readonly scheduling: SchedulingService,
     private readonly audit: AuditService,
     private readonly messaging: MessagingService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /**
    * Booking propio (rol PATIENT) y booking asistido (ADMIN/SUPER_ADMIN/THERAPIST vía
    * POST /appointments/admin) comparten este método: si el dto trae `patientUserId`
    * explícito (booking asistido) se usa ese; si no, se toma del JWT del actor.
+   *
+   * La verificación de disponibilidad ocurre DENTRO de la transacción con
+   * bloqueo pesimista (SELECT … FOR UPDATE) para evitar race conditions.
    */
   async create(user: AuthenticatedUser, dto: CreateAppointmentDto) {
     const patientUserId = dto.patientUserId ?? user.sub;
@@ -70,15 +92,23 @@ export class AppointmentsService {
     const endAt = DateTime.fromJSDate(startAt)
       .plus({ minutes: product.durationMinutes })
       .toJSDate();
-    const available = await this.scheduling.isSlotAvailable(dto.therapistUserId, startAt, endAt);
-    if (!available)
-      throw new BadRequestException({
-        code: 'APPOINTMENT_SLOT_NOT_AVAILABLE',
-        message: 'El horario seleccionado ya no está disponible.',
-      });
 
-    return this.appointmentModel.sequelize!.transaction(async (transaction) => {
-      const appointment = await this.appointmentModel.create(
+    const appointment = await this.appointmentModel.sequelize!.transaction(async (transaction) => {
+      // Pessimistic lock: check availability inside the transaction so concurrent
+      // requests for the same slot block each other at the DB level.
+      const available = await this.scheduling.isSlotAvailable(
+        dto.therapistUserId,
+        startAt,
+        endAt,
+        transaction,
+      );
+      if (!available)
+        throw new BadRequestException({
+          code: 'APPOINTMENT_SLOT_NOT_AVAILABLE',
+          message: 'El horario seleccionado ya no está disponible.',
+        });
+
+      const created = await this.appointmentModel.create(
         {
           patientUserId,
           therapistUserId: dto.therapistUserId,
@@ -95,7 +125,7 @@ export class AppointmentsService {
       );
       await this.historyModel.create(
         {
-          appointmentId: appointment.id,
+          appointmentId: created.id,
           fromStatus: null,
           toStatus: 'REQUESTED',
           changedByUserId: user.sub,
@@ -108,8 +138,8 @@ export class AppointmentsService {
           actorUserId: user.sub,
           action: isAssisted ? 'appointments.create_for_patient' : 'appointments.create',
           entityType: 'Appointment',
-          entityId: appointment.id,
-          after: appointment.toJSON(),
+          entityId: created.id,
+          after: created.toJSON(),
         },
         { transaction },
       );
@@ -118,12 +148,27 @@ export class AppointmentsService {
           channel: 'EMAIL',
           recipient: user.email,
           templateCode: 'APPOINTMENT_REQUESTED',
-          payload: { appointmentId: appointment.id },
+          payload: { appointmentId: created.id },
         },
         { transaction },
       );
-      return appointment;
+      return created;
     });
+
+    // Emit domain event after transaction commits (non-blocking, best-effort)
+    void this.notifications.emit({
+      type: 'APPOINTMENT_REQUESTED',
+      entityType: 'Appointment',
+      entityId: appointment.id,
+      payload: {
+        patientUserId,
+        therapistUserId: dto.therapistUserId,
+        scheduledStartAt: startAt.toISOString(),
+        isAssisted,
+      },
+    });
+
+    return appointment;
   }
 
   async listMine(user: AuthenticatedUser, query: PaginationQueryDto) {
@@ -140,6 +185,7 @@ export class AppointmentsService {
 
   async adminList(query: PaginationQueryDto) {
     const { rows, count } = await this.appointmentModel.findAndCountAll({
+      attributes: ADMIN_APPOINTMENT_ATTRIBUTES,
       ...toLimitOffset(query),
       include: ADMIN_LIST_INCLUDE,
       order: [['scheduledStartAt', 'DESC']],
@@ -166,12 +212,14 @@ export class AppointmentsService {
     const payload: Record<string, unknown> = {};
     if (dto.therapistUserId !== undefined) payload.therapistUserId = dto.therapistUserId;
     if (dto.productId !== undefined) payload.productId = dto.productId;
-    if (dto.scheduledStartAt !== undefined) payload.scheduledStartAt = new Date(dto.scheduledStartAt);
+    if (dto.scheduledStartAt !== undefined)
+      payload.scheduledStartAt = new Date(dto.scheduledStartAt);
     if (dto.scheduledEndAt !== undefined) payload.scheduledEndAt = new Date(dto.scheduledEndAt);
     if (dto.status !== undefined) payload.status = dto.status;
     if (dto.adminNotes !== undefined) payload.adminNotes = dto.adminNotes;
+    // notesForTherapist is intentionally NOT settable via admin endpoint
 
-    return this.appointmentModel.sequelize!.transaction(async (transaction) => {
+    const updated = await this.appointmentModel.sequelize!.transaction(async (transaction) => {
       await appointment.update(payload as any, { transaction });
       if (dto.status && dto.status !== before.status) {
         await this.historyModel.create(
@@ -196,8 +244,24 @@ export class AppointmentsService {
         },
         { transaction },
       );
-      return this.appointmentModel.findByPk(id, { include: ADMIN_LIST_INCLUDE, transaction });
+      return this.appointmentModel.findByPk(id, {
+        attributes: ADMIN_APPOINTMENT_ATTRIBUTES,
+        include: ADMIN_LIST_INCLUDE,
+        transaction,
+      });
     });
+
+    // Emit domain event when status changes
+    if (dto.status && dto.status !== before.status) {
+      void this.notifications.emit({
+        type: `APPOINTMENT_${dto.status}`,
+        entityType: 'Appointment',
+        entityId: id,
+        payload: { fromStatus: before.status, toStatus: dto.status, changedByUserId: user.sub },
+      });
+    }
+
+    return updated;
   }
 
   async updatePayment(user: AuthenticatedUser, id: string, dto: UpdateAppointmentPaymentDto) {
@@ -210,7 +274,8 @@ export class AppointmentsService {
     if (!dto.isPaid && appointment.saleTransactionId)
       throw new BadRequestException({
         code: 'APPOINTMENT_PAYMENT_LINKED_TO_SALE',
-        message: 'No se puede desmarcar el pago: esta cita ya tiene una venta registrada en contabilidad.',
+        message:
+          'No se puede desmarcar el pago: esta cita ya tiene una venta registrada en contabilidad.',
       });
 
     const before = appointment.toJSON();
@@ -255,7 +320,8 @@ export class AppointmentsService {
         message: `No se puede pasar de ${appointment.status} a ${dto.status}.`,
       });
     const before = appointment.toJSON();
-    return this.appointmentModel.sequelize!.transaction(async (transaction) => {
+
+    await this.appointmentModel.sequelize!.transaction(async (transaction) => {
       await appointment.update({ status: dto.status } as any, { transaction });
       await this.historyModel.create(
         {
@@ -287,7 +353,22 @@ export class AppointmentsService {
         },
         { transaction },
       );
-      return appointment;
     });
+
+    // Emit domain event after commit
+    void this.notifications.emit({
+      type: `APPOINTMENT_${dto.status}`,
+      entityType: 'Appointment',
+      entityId: id,
+      payload: {
+        fromStatus: before.status,
+        toStatus: dto.status,
+        changedByUserId: user.sub,
+        patientUserId: appointment.patientUserId,
+        therapistUserId: appointment.therapistUserId,
+      },
+    });
+
+    return appointment;
   }
 }

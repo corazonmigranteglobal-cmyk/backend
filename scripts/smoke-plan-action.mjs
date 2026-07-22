@@ -4,6 +4,8 @@
  * Valida que las rutas críticas existan. Si se proveen credenciales demo,
  * además valida respuestas autenticadas básicas.
  */
+import './load-dotenv.mjs';
+
 const BASE_URL = normalizeBaseUrl(
   process.env.SMOKE_BASE_URL ||
     process.env.API_BASE_URL ||

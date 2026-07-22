@@ -93,7 +93,13 @@ export class ContentPublicationsService {
         slug,
         status: 'PUBLISHED',
         accessType: 'PREMIUM',
-        ...(publicationType ? { publicationType: Array.isArray(publicationType) ? ({ [Op.in]: publicationType } as any) : publicationType } : {}),
+        ...(publicationType
+          ? {
+              publicationType: Array.isArray(publicationType)
+                ? ({ [Op.in]: publicationType } as any)
+                : publicationType,
+            }
+          : {}),
       },
       include: this.baseInclude,
     });

@@ -1,51 +1,45 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/sequelize';
-import { Op, Transaction } from 'sequelize';
-import * as sgMail from '@sendgrid/mail';
-import { MessageOutbox, MessageSendLog } from '@/database/models';
-import { SendTestEmailDto } from './dto/test-email.dto';
 import {
-  PaginationQueryDto,
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { randomInt } from 'node:crypto';
+import { hostname } from 'node:os';
+import { Op, Sequelize, Transaction } from 'sequelize';
+import { sanitizeForLog } from '@/common/logging/log-sanitizer';
+import {
   buildPagination,
+  PaginationQueryDto,
   toLimitOffset,
 } from '@/common/pagination/pagination.dto';
-
-const EMAIL_CHANNEL = 'EMAIL';
-const PROVIDER_DEV_NULL = 'DEV_NULL';
-const PROVIDER_SENDGRID = 'SENDGRID';
-
-const DB_PENDING = 'PENDIENTE';
-const DB_PROCESSING = 'PROCESANDO';
-const DB_SENT = 'ENVIADO';
-const DB_FAILED = 'FALLIDO';
-const DB_CANCELLED = 'CANCELADO';
-
-const API_STATUS: Record<string, string> = {
-  [DB_PENDING]: 'PENDING',
-  [DB_PROCESSING]: 'PROCESSING',
-  [DB_SENT]: 'SENT',
-  [DB_FAILED]: 'FAILED',
-  [DB_CANCELLED]: 'CANCELLED',
-};
-
-type EmailPayload = {
-  subject?: string;
-  text?: string;
-  html?: string;
-  fromEmail?: string;
-  fromName?: string;
-};
+import { MessageOutbox, MessageSendLog } from '@/database/models';
+import { SendTestEmailDto } from './dto/test-email.dto';
+import { MessagingProviderService } from './messaging-provider.service';
+import {
+  MESSAGE_API_STATUS,
+  MESSAGE_CHANNEL_EMAIL,
+  MESSAGE_STATUS,
+  NormalizedProviderError,
+} from './messaging.types';
 
 @Injectable()
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name);
+  private readonly workerId: string;
 
   constructor(
     @InjectModel(MessageOutbox) private readonly outboxModel: typeof MessageOutbox,
     @InjectModel(MessageSendLog) private readonly logModel: typeof MessageSendLog,
+    @InjectConnection() private readonly sequelize: Sequelize,
     private readonly config: ConfigService,
-  ) {}
+    private readonly provider: MessagingProviderService,
+  ) {
+    this.workerId = process.env.OUTBOX_WORKER_ID?.trim() || `${hostname()}-${process.pid}`;
+  }
 
   async enqueue(
     input: {
@@ -64,28 +58,27 @@ export class MessagingService {
         templateCode: input.templateCode,
         payload: input.payload,
         scheduledAt: input.scheduledAt ?? new Date(),
-        status: DB_PENDING,
+        status: MESSAGE_STATUS.pending,
         priority: 5,
         attempts: 0,
         maxAttempts: 6,
-      } as any,
+      } as never,
       { transaction: options.transaction },
     );
   }
 
   async enqueueTestEmail(dto: SendTestEmailDto) {
-    const now = new Date().toISOString();
+    const timestamp = new Date().toISOString();
     return this.toApiOutbox(
       await this.enqueue({
-        channel: EMAIL_CHANNEL,
+        channel: MESSAGE_CHANNEL_EMAIL,
         recipient: dto.recipient,
         templateCode: 'SMOKE_TEST_EMAIL',
         payload: {
-          subject: dto.subject ?? `Corazon Migrante - smoke test ${now}`,
+          subject: dto.subject ?? `Corazon Migrante - smoke test ${timestamp}`,
           text:
-            dto.text ??
-            `Correo de prueba enviado por el smoke test profundo de Corazon Migrante. Fecha UTC: ${now}`,
-          html: `<p>Correo de prueba enviado por el smoke test profundo de <strong>Corazon Migrante</strong>.</p><p>Fecha UTC: ${now}</p>`,
+            dto.text ?? `Correo de prueba enviado por Corazon Migrante. Fecha UTC: ${timestamp}`,
+          html: `<p>Correo de prueba enviado por <strong>Corazon Migrante</strong>.</p><p>Fecha UTC: ${timestamp}</p>`,
         },
       }),
     );
@@ -102,100 +95,142 @@ export class MessagingService {
     };
   }
 
-  async processPending(limit = 20) {
-    const pending = await this.outboxModel.findAll({
-      where: { status: DB_PENDING, scheduledAt: { [Op.lte]: new Date() } },
-      limit,
-      order: [
-        ['priority', 'ASC'],
-        ['scheduledAt', 'ASC'],
-        ['id', 'ASC'],
-      ],
-    });
-
-    return this.processBatch(pending);
+  async processPending(requestedLimit?: number) {
+    const messages = await this.claimPendingMessages(this.normalizeLimit(requestedLimit));
+    return this.processClaimedMessages(messages);
   }
 
   async processOne(id: string | number) {
-    const message = await this.outboxModel.findByPk(id as any);
-    if (!message)
-      throw new NotFoundException({
-        code: 'OUTBOX_NOT_FOUND',
-        message: 'No existe el mensaje solicitado.',
+    const message = await this.sequelize.transaction(async (transaction) => {
+      const row = await this.outboxModel.findByPk(id as never, {
+        transaction,
+        lock: transaction.LOCK.UPDATE,
       });
-    return this.processBatch([message]);
+      if (!row) {
+        throw new NotFoundException({
+          code: 'OUTBOX_NOT_FOUND',
+          message: 'No existe el mensaje solicitado.',
+        });
+      }
+      if (row.status === MESSAGE_STATUS.processing) {
+        throw new ConflictException({
+          code: 'OUTBOX_ALREADY_PROCESSING',
+          message: 'El mensaje ya está siendo procesado.',
+        });
+      }
+      if (row.status !== MESSAGE_STATUS.pending || row.attempts >= row.maxAttempts) {
+        throw new BadRequestException({
+          code: 'OUTBOX_NOT_PROCESSABLE',
+          message: 'El mensaje no se encuentra en un estado procesable.',
+        });
+      }
+
+      await this.markClaimed(row, transaction);
+      return row;
+    });
+
+    return this.processClaimedMessages([message]);
   }
 
-  private async processBatch(messages: MessageOutbox[]) {
+  private async claimPendingMessages(limit: number): Promise<MessageOutbox[]> {
+    return this.sequelize.transaction(async (transaction) => {
+      await this.recoverStaleLocks(transaction, limit);
+      const candidates = await this.outboxModel.findAll({
+        where: {
+          status: MESSAGE_STATUS.pending,
+          scheduledAt: { [Op.lte]: new Date() },
+        },
+        limit,
+        order: [
+          ['priority', 'ASC'],
+          ['scheduledAt', 'ASC'],
+          ['id', 'ASC'],
+        ],
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+        skipLocked: true,
+      });
+
+      const claimedMessages: MessageOutbox[] = [];
+      for (const candidate of candidates) {
+        if (candidate.attempts >= candidate.maxAttempts) {
+          candidate.status = MESSAGE_STATUS.failed;
+          candidate.lastError = 'Maximum delivery attempts reached.';
+          await candidate.save({ transaction });
+          continue;
+        }
+        await this.markClaimed(candidate, transaction);
+        claimedMessages.push(candidate);
+      }
+      return claimedMessages;
+    });
+  }
+
+  private async recoverStaleLocks(transaction: Transaction, limit: number) {
+    const staleBefore = new Date(
+      Date.now() - (this.config.get<number>('outbox.staleLockMs') ?? 300_000),
+    );
+    const staleMessages = await this.outboxModel.findAll({
+      where: {
+        status: MESSAGE_STATUS.processing,
+        lockedAt: { [Op.lt]: staleBefore },
+      },
+      limit,
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+      skipLocked: true,
+    });
+
+    for (const staleMessage of staleMessages) {
+      staleMessage.status =
+        staleMessage.attempts >= staleMessage.maxAttempts
+          ? MESSAGE_STATUS.failed
+          : MESSAGE_STATUS.pending;
+      staleMessage.lockedAt = undefined;
+      staleMessage.lockedBy = undefined;
+      staleMessage.lastError = 'Recovered stale outbox worker lock.';
+      staleMessage.scheduledAt = new Date();
+      await staleMessage.save({ transaction });
+    }
+  }
+
+  private async markClaimed(message: MessageOutbox, transaction: Transaction) {
+    message.status = MESSAGE_STATUS.processing;
+    message.lockedAt = new Date();
+    message.lockedBy = this.workerId;
+    message.attempts += 1;
+    await message.save({ transaction });
+  }
+
+  private async processClaimedMessages(messages: MessageOutbox[]) {
     let sent = 0;
     let failed = 0;
     const results: Array<Record<string, unknown>> = [];
 
     for (const message of messages) {
-      if (![DB_PENDING, DB_PROCESSING].includes(message.status)) {
-        results.push({
-          id: message.id,
-          status: this.toApiStatus(message.status),
-          rawStatus: message.status,
-          skipped: true,
-          lastError: message.lastError,
-        });
-        continue;
-      }
-
-      message.status = DB_PROCESSING;
-      message.lockedAt = new Date();
-      message.lockedBy = `api-${process.pid}`;
-      message.attempts += 1;
-      await message.save();
-
       try {
-        const result = await this.send(message);
-        message.status = DB_SENT;
-        message.sentAt = new Date();
-        message.lockedAt = undefined;
-        message.lockedBy = undefined;
-        message.lastError = undefined;
-        await message.save();
-        await this.logModel.create({
-          outboxId: message.id,
-          ok: true,
-          providerMessageId: result.providerMessageId,
-          responseMetadata: { provider: result.provider, ...result.metadata },
-        } as any);
+        const providerResult = await this.provider.send(message);
+        await this.markSent(message, providerResult);
         sent += 1;
         results.push({
           id: message.id,
           status: 'SENT',
-          rawStatus: DB_SENT,
-          provider: result.provider,
-          providerMessageId: result.providerMessageId,
-          responseMetadata: result.metadata,
+          rawStatus: MESSAGE_STATUS.sent,
+          provider: providerResult.provider,
+          providerMessageId: providerResult.providerMessageId,
         });
       } catch (error) {
-        const normalized = this.normalizeProviderError(error);
-        message.status = message.attempts >= message.maxAttempts ? DB_FAILED : DB_PENDING;
-        message.lockedAt = undefined;
-        message.lockedBy = undefined;
-        message.lastError = normalized.message;
-        await message.save();
-        await this.logModel.create({
-          outboxId: message.id,
-          ok: false,
-          providerMessageId: undefined,
-          responseMetadata: normalized.metadata,
-          error: normalized.message,
-        } as any);
-        this.logger.error(`No se pudo enviar mensaje ${message.id}: ${normalized.message}`);
+        const normalizedError = this.provider.normalizeError(error);
+        const nextStatus = await this.markFailed(message, normalizedError);
+        this.logger.error(
+          `Message ${message.id} failed through ${normalizedError.metadata.provider ?? 'provider'}.`,
+        );
         failed += 1;
         results.push({
           id: message.id,
-          status: this.toApiStatus(message.status),
-          rawStatus: message.status,
-          recipient: message.recipient,
-          provider: this.currentEmailProvider,
-          lastError: normalized.message,
-          responseMetadata: normalized.metadata,
+          status: this.toApiStatus(nextStatus),
+          rawStatus: nextStatus,
+          lastError: normalizedError.message,
         });
       }
     }
@@ -203,108 +238,94 @@ export class MessagingService {
     return { processed: messages.length, sent, failed, results };
   }
 
-  private get currentEmailProvider() {
-    return (this.config.get<string>('email.provider') ?? PROVIDER_DEV_NULL).toUpperCase();
-  }
-
-  private async send(
+  private async markSent(
     message: MessageOutbox,
-  ): Promise<{ provider: string; providerMessageId?: string; metadata: Record<string, unknown> }> {
-    if (message.channel !== EMAIL_CHANNEL) {
-      return this.sendDevNull(message, { reason: 'CHANNEL_NOT_IMPLEMENTED' });
-    }
+    result: {
+      provider: string;
+      providerMessageId?: string;
+      metadata: Record<string, unknown>;
+    },
+  ) {
+    await this.sequelize.transaction(async (transaction) => {
+      const [updatedRows] = await this.outboxModel.update(
+        {
+          status: MESSAGE_STATUS.sent,
+          sentAt: new Date(),
+          lockedAt: null,
+          lockedBy: null,
+          lastError: null,
+        },
+        {
+          where: {
+            id: message.id,
+            status: MESSAGE_STATUS.processing,
+            lockedBy: this.workerId,
+          },
+          transaction,
+        },
+      );
+      if (updatedRows !== 1) throw new Error('Outbox ownership was lost before completion.');
 
-    const provider = this.currentEmailProvider;
-    if (provider === PROVIDER_SENDGRID) {
-      return this.sendEmailWithSendGrid(message);
-    }
-
-    return this.sendDevNull(message, { reason: 'EMAIL_PROVIDER_DEV_NULL' });
+      await this.logModel.create(
+        {
+          outboxId: message.id,
+          ok: true,
+          providerMessageId: result.providerMessageId,
+          responseMetadata: { provider: result.provider, ...result.metadata },
+        } as never,
+        { transaction },
+      );
+    });
   }
 
-  private sendDevNull(message: MessageOutbox, metadata: Record<string, unknown>) {
-    return {
-      provider: PROVIDER_DEV_NULL,
-      providerMessageId: `dev-${message.id}`,
-      metadata: {
-        simulated: true,
-        channel: message.channel,
-        templateCode: message.templateCode,
-        ...metadata,
-      },
-    };
-  }
+  private async markFailed(
+    message: MessageOutbox,
+    error: NormalizedProviderError,
+  ): Promise<string> {
+    const terminal = message.attempts >= message.maxAttempts;
+    const nextStatus = terminal ? MESSAGE_STATUS.failed : MESSAGE_STATUS.pending;
+    const nextRunAt = terminal
+      ? message.scheduledAt
+      : new Date(Date.now() + this.calculateRetryDelay(message.attempts));
 
-  private async sendEmailWithSendGrid(message: MessageOutbox) {
-    const apiKey = this.config.get<string>('email.sendgrid.apiKey');
-    const defaultFromEmail = this.config.get<string>('email.fromEmail');
-    const defaultFromName = this.config.get<string>('email.fromName') ?? 'Corazon Migrante';
-    const replyTo = this.config.get<string>('email.replyTo') || undefined;
-
-    if (!apiKey)
-      throw new BadRequestException({
-        code: 'SENDGRID_API_KEY_REQUIRED',
-        message: 'Debe configurar SENDGRID_API_KEY.',
-      });
-    if (!defaultFromEmail)
-      throw new BadRequestException({
-        code: 'EMAIL_FROM_EMAIL_REQUIRED',
-        message: 'Debe configurar EMAIL_FROM_EMAIL.',
-      });
-
-    const payload = message.payload as EmailPayload;
-    const subject = payload.subject ?? this.buildFallbackSubject(message.templateCode);
-    const text = payload.text ?? this.buildFallbackText(message.templateCode, payload);
-    const html = payload.html;
-
-    sgMail.setApiKey(apiKey.trim());
-    const [response] = await sgMail.send({
-      to: message.recipient,
-      from: {
-        email: payload.fromEmail ?? defaultFromEmail,
-        name: payload.fromName ?? defaultFromName,
-      },
-      subject,
-      text,
-      html,
-      replyTo,
+    await this.sequelize.transaction(async (transaction) => {
+      await this.outboxModel.update(
+        {
+          status: nextStatus,
+          scheduledAt: nextRunAt,
+          lockedAt: null,
+          lockedBy: null,
+          lastError: error.message,
+        },
+        {
+          where: { id: message.id, lockedBy: this.workerId },
+          transaction,
+        },
+      );
+      await this.logModel.create(
+        {
+          outboxId: message.id,
+          ok: false,
+          responseMetadata: error.metadata,
+          error: error.message,
+        } as never,
+        { transaction },
+      );
     });
 
-    return {
-      provider: PROVIDER_SENDGRID,
-      providerMessageId: response.headers?.['x-message-id'] as string | undefined,
-      metadata: {
-        statusCode: response.statusCode,
-        headers: response.headers,
-      },
-    };
+    return nextStatus;
   }
 
-  private buildFallbackSubject(templateCode: string) {
-    return `Corazon Migrante - ${templateCode}`;
+  private calculateRetryDelay(attempt: number) {
+    const baseDelay = this.config.get<number>('outbox.retryBaseDelayMs') ?? 30_000;
+    const maxDelay = this.config.get<number>('outbox.retryMaxDelayMs') ?? 3_600_000;
+    const exponentialDelay = Math.min(baseDelay * 2 ** Math.max(0, attempt - 1), maxDelay);
+    return Math.min(exponentialDelay + randomInt(0, Math.max(1, baseDelay / 4)), maxDelay);
   }
 
-  private buildFallbackText(templateCode: string, payload: EmailPayload) {
-    return payload.text ?? `Mensaje automatico de Corazon Migrante. Plantilla: ${templateCode}`;
-  }
-
-  private normalizeProviderError(error: unknown) {
-    const anyError = error as any;
-    const responseBody = anyError?.response?.body;
-    const responseHeaders = anyError?.response?.headers;
-    const responseCode = anyError?.code ?? anyError?.response?.statusCode;
-    const errorMessage =
-      responseBody?.errors?.[0]?.message ?? anyError?.message ?? 'Unknown messaging error';
-
-    return {
-      message: String(errorMessage),
-      metadata: {
-        code: responseCode,
-        errors: responseBody?.errors,
-        body: responseBody,
-        headers: responseHeaders,
-      },
-    };
+  private normalizeLimit(requestedLimit?: number) {
+    const configuredLimit = this.config.get<number>('outbox.batchSize') ?? 50;
+    return Math.max(1, Math.min(requestedLimit ?? configuredLimit, configuredLimit, 500));
   }
 
   private toApiOutbox(row: MessageOutbox) {
@@ -313,7 +334,7 @@ export class MessagingService {
       channel: row.channel,
       recipient: row.recipient,
       templateCode: row.templateCode,
-      payload: row.payload,
+      payload: sanitizeForLog(row.payload),
       status: this.toApiStatus(row.status),
       rawStatus: row.status,
       attempts: row.attempts,
@@ -328,6 +349,6 @@ export class MessagingService {
   }
 
   private toApiStatus(status: string) {
-    return API_STATUS[status] ?? status;
+    return MESSAGE_API_STATUS[status] ?? status;
   }
 }
