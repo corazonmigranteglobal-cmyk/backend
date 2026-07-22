@@ -1,18 +1,11 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/sequelize';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { FileAsset } from '@/database/models';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
 import { AuditService } from '../audit/audit.service';
-import {
-  CloudinaryUploadSignatureDto,
-  CompleteCloudinaryUploadDto,
-} from './dto/file.dto';
+import { CloudinaryUploadSignatureDto, CompleteCloudinaryUploadDto } from './dto/file.dto';
 import { FileSecurityService } from './file-security.service';
 import { toFileResponse } from './file-response.mapper';
 import {
@@ -162,10 +155,7 @@ export class CloudinaryDirectUploadService {
     if (dto.bytes < 1 || dto.bytes > authorizedBytes) {
       throw new BadRequestException({ code: 'CLOUDINARY_BYTES_MISMATCH' });
     }
-    const expected = this.signParams(
-      { public_id: publicId, version: dto.version },
-      apiSecret,
-    );
+    const expected = this.signParams({ public_id: publicId, version: dto.version }, apiSecret);
     const actualBuffer = Buffer.from(dto.signature);
     const expectedBuffer = Buffer.from(expected);
     if (
@@ -214,8 +204,8 @@ export class CloudinaryDirectUploadService {
 
   private buildObjectKey(moduleCode: string, userId: string, extension: string) {
     const prefix = ['CMS', 'THERAPY_CATALOG'].includes(moduleCode)
-      ? this.config.get<string>('files.cloudinary.publicAssetsPrefix') ?? 'public'
-      : this.config.get<string>('files.cloudinary.userMediaPrefix') ?? 'users';
+      ? (this.config.get<string>('files.cloudinary.publicAssetsPrefix') ?? 'public')
+      : (this.config.get<string>('files.cloudinary.userMediaPrefix') ?? 'users');
     return `${prefix}/${moduleCode.toLowerCase()}/${userId}/${randomUUID()}${extension}`;
   }
 

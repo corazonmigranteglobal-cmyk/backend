@@ -18,7 +18,12 @@ import { AuthenticatedUser } from '@/common/types/authenticated-user';
 import { PaginationQueryDto } from '@/common/pagination/pagination.dto';
 import { FilesService } from './files.service';
 import { buildMulterOptions } from './multer-options';
-import { CloudinaryUploadSignatureDto, CompleteCloudinaryUploadDto, UpdateFileDto, UploadFileDto } from './dto/file.dto';
+import {
+  CloudinaryUploadSignatureDto,
+  CompleteCloudinaryUploadDto,
+  UpdateFileDto,
+  UploadFileDto,
+} from './dto/file.dto';
 
 @ApiTags('Admin files')
 @ApiBearerAuth()
@@ -55,9 +60,7 @@ export class AdminFilesController {
 
   @Post()
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('file', buildMulterOptions()),
-  )
+  @UseInterceptors(FileInterceptor('file', buildMulterOptions()))
   upload(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UploadFileDto,

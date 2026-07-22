@@ -11,7 +11,11 @@ import {
   User,
 } from '@/database/models';
 import { AuditModule } from '../audit/audit.module';
-import { AdminSchedulingController, BookingController, SchedulingController } from './scheduling.controller';
+import {
+  AdminSchedulingController,
+  BookingController,
+  SchedulingController,
+} from './scheduling.controller';
 import { SchedulingService } from './scheduling.service';
 
 @Module({

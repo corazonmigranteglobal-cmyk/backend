@@ -37,19 +37,32 @@ export function firstEnvironmentValue(...names: string[]): NamedEnvironmentValue
  * Parses a comma-separated allow-list and removes duplicate values.
  */
 export function parseEnvironmentList(value?: string): string[] {
-  return [...new Set((value ?? '').split(',').map((entry) => entry.trim()).filter(Boolean))];
+  return [
+    ...new Set(
+      (value ?? '')
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean),
+    ),
+  ];
 }
 
 /**
  * Decodes an optional Base64 UTF-8 value and fails early when it is malformed.
  */
-export function decodeOptionalBase64(value: string | undefined, sourceName: string): string | undefined {
+export function decodeOptionalBase64(
+  value: string | undefined,
+  sourceName: string,
+): string | undefined {
   const cleanedValue = cleanEnvironmentValue(value)?.replace(/\s/g, '');
   if (!cleanedValue) return undefined;
 
   const normalizedValue = cleanedValue.replace(/-/g, '+').replace(/_/g, '/');
   const paddedValue = normalizedValue.padEnd(Math.ceil(normalizedValue.length / 4) * 4, '=');
-  const decodedValue = Buffer.from(paddedValue, 'base64').toString('utf8').replace(/^\uFEFF/, '').trim();
+  const decodedValue = Buffer.from(paddedValue, 'base64')
+    .toString('utf8')
+    .replace(/^\uFEFF/, '')
+    .trim();
 
   if (!decodedValue) {
     throw new Error(`${sourceName} decodes to an empty value.`);

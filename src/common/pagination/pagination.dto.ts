@@ -80,8 +80,7 @@ export class PaginationQueryDto {
 
   @ApiPropertyOptional({
     example: 20,
-    description:
-      'Cantidad de registros por página. Nombre recomendado por contratos actuales.',
+    description: 'Cantidad de registros por página. Nombre recomendado por contratos actuales.',
   })
   @IsOptional()
   @Transform(({ value }: { value: unknown }) => toOptionalNumber(value))
@@ -200,7 +199,11 @@ export class PaginationQueryDto {
   @IsString()
   role?: string;
 
-  @ApiPropertyOptional({ name: 'rol', example: 'TERAPEUTA', description: 'Alias español para role.' })
+  @ApiPropertyOptional({
+    name: 'rol',
+    example: 'TERAPEUTA',
+    description: 'Alias español para role.',
+  })
   @IsOptional()
   @Transform(({ value }: { value: unknown }) => toOptionalString(value))
   @IsString()
@@ -275,7 +278,10 @@ export function resolveSafeSort(
   const camelRequested = toCamelCase(requested);
 
   return (
-    allowedSorts[requested] ?? allowedSorts[camelRequested] ?? allowedSorts[fallbackSort] ?? fallbackSort
+    allowedSorts[requested] ??
+    allowedSorts[camelRequested] ??
+    allowedSorts[fallbackSort] ??
+    fallbackSort
   );
 }
 

@@ -144,7 +144,11 @@ export class FilesService {
     return this.access.getDownloadInfo(user, id);
   }
 
-  downloadLocal(user: AuthenticatedUser | undefined, id: string, response: Parameters<FilesAccessService['downloadLocal']>[2]) {
+  downloadLocal(
+    user: AuthenticatedUser | undefined,
+    id: string,
+    response: Parameters<FilesAccessService['downloadLocal']>[2],
+  ) {
     return this.access.downloadLocal(user, id, response);
   }
 
@@ -154,8 +158,8 @@ export class FilesService {
         ? 'files.cloudinary'
         : 'files.gcs';
     const prefix = ['CMS', 'THERAPY_CATALOG'].includes(moduleCode)
-      ? this.config.get<string>(`${configPrefix}.publicAssetsPrefix`) ?? 'public'
-      : this.config.get<string>(`${configPrefix}.userMediaPrefix`) ?? 'users';
+      ? (this.config.get<string>(`${configPrefix}.publicAssetsPrefix`) ?? 'public')
+      : (this.config.get<string>(`${configPrefix}.userMediaPrefix`) ?? 'users');
     return `${prefix}/${moduleCode.toLowerCase()}/${userId}/${randomUUID()}${extension}`;
   }
 }

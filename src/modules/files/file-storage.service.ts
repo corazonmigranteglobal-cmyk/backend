@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Storage } from '@google-cloud/storage';
 import { createHash } from 'node:crypto';
@@ -99,12 +95,15 @@ export class FileStorageService {
     }
     const expiresInSeconds = this.config.get<number>('files.signedUrlExpiresSeconds') ?? 900;
     try {
-      const [url] = await this.gcs.bucket(file.bucket).file(file.objectKey).getSignedUrl({
-        version: 'v4',
-        action: 'read',
-        expires: Date.now() + expiresInSeconds * 1_000,
-        responseDisposition: `${file.mimeType.startsWith('image/') ? 'inline' : 'attachment'}; filename="${encodeURIComponent(file.originalName)}"`,
-      });
+      const [url] = await this.gcs
+        .bucket(file.bucket)
+        .file(file.objectKey)
+        .getSignedUrl({
+          version: 'v4',
+          action: 'read',
+          expires: Date.now() + expiresInSeconds * 1_000,
+          responseDisposition: `${file.mimeType.startsWith('image/') ? 'inline' : 'attachment'}; filename="${encodeURIComponent(file.originalName)}"`,
+        });
       return {
         fileId: file.id,
         provider: STORAGE_PROVIDER_GCS,
@@ -223,23 +222,22 @@ export class FileStorageService {
     const signature = this.signCloudinaryParams({ public_id: publicId, timestamp }, apiSecret);
     const formData = new FormData();
     const boundedFileBuffer = await readFile(file.path);
-    formData.append('file', new Blob([new Uint8Array(boundedFileBuffer)], { type: file.mimetype }), file.originalname);
+    formData.append(
+      'file',
+      new Blob([new Uint8Array(boundedFileBuffer)], { type: file.mimetype }),
+      file.originalname,
+    );
     formData.append('api_key', apiKey);
     formData.append('timestamp', String(timestamp));
     formData.append('public_id', publicId);
     formData.append('signature', signature);
 
     try {
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
-        {
-          method: 'POST',
-          body: formData,
-          signal: AbortSignal.timeout(
-            this.config.get<number>('files.providerTimeoutMs') ?? 30_000,
-          ),
-        },
-      );
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+        method: 'POST',
+        body: formData,
+        signal: AbortSignal.timeout(this.config.get<number>('files.providerTimeoutMs') ?? 30_000),
+      });
       const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
       if (!response.ok) throw new Error(`Cloudinary HTTP ${response.status}`);
       const publicUrl = String(payload.secure_url ?? '').trim();
@@ -278,7 +276,12 @@ export class FileStorageService {
     for (const resourceType of ['image', 'raw', 'video']) {
       const timestamp = Math.floor(Date.now() / 1_000);
       const signature = this.signCloudinaryParams({ public_id: publicId, timestamp }, apiSecret);
-      const body = new URLSearchParams({ api_key: apiKey, timestamp: String(timestamp), public_id: publicId, signature });
+      const body = new URLSearchParams({
+        api_key: apiKey,
+        timestamp: String(timestamp),
+        public_id: publicId,
+        signature,
+      });
       try {
         const response = await fetch(
           `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/destroy`,

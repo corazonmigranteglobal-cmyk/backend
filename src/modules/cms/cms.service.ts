@@ -49,7 +49,9 @@ export class CmsService {
   }
 
   async listPages(status?: string) {
-    const normalizedStatus = String(status ?? '').trim().toUpperCase();
+    const normalizedStatus = String(status ?? '')
+      .trim()
+      .toUpperCase();
     const where = normalizedStatus ? { status: normalizedStatus } : undefined;
     const pages = await this.pageModel.findAll({
       where,
@@ -64,7 +66,6 @@ export class CmsService {
       total: pages.length,
     };
   }
-
 
   async getAdminPage(id: string) {
     const page = await this.pageModel.findByPk(id);
@@ -97,7 +98,8 @@ export class CmsService {
       await page.update(
         {
           ...dto,
-          publishedAt: dto.status === 'PUBLISHED' && !page.publishedAt ? new Date() : page.publishedAt,
+          publishedAt:
+            dto.status === 'PUBLISHED' && !page.publishedAt ? new Date() : page.publishedAt,
         } as any,
         { transaction },
       );
@@ -183,13 +185,20 @@ export class CmsService {
     }
     const publication = await this.publicationModel.findByPk(publicationId);
     if (!publication) {
-      throw new NotFoundException({ code: 'CONTENT_PUBLICATION_NOT_FOUND', message: 'Publicación no encontrada.' });
+      throw new NotFoundException({
+        code: 'CONTENT_PUBLICATION_NOT_FOUND',
+        message: 'Publicación no encontrada.',
+      });
     }
 
     const before = publication.toJSON();
     const metadata = { ...(publication.seoMetadata ?? {}) } as Record<string, any>;
-    const currentSlugs = Array.isArray(metadata.embedPageSlugs) ? metadata.embedPageSlugs.map((slug: unknown) => String(slug).trim()).filter(Boolean) : [];
-    const currentPages = Array.isArray(metadata.embedPages) ? metadata.embedPages.filter((item: unknown) => item && typeof item === 'object') : [];
+    const currentSlugs = Array.isArray(metadata.embedPageSlugs)
+      ? metadata.embedPageSlugs.map((slug: unknown) => String(slug).trim()).filter(Boolean)
+      : [];
+    const currentPages = Array.isArray(metadata.embedPages)
+      ? metadata.embedPages.filter((item: unknown) => item && typeof item === 'object')
+      : [];
     metadata.embedPageSlugs = Array.from(new Set([...currentSlugs, page.slug]));
     metadata.embedPages = [
       ...currentPages.filter((item: any) => String(item.slug ?? '') !== page.slug),
@@ -209,7 +218,12 @@ export class CmsService {
         },
         { transaction },
       );
-      return { pageId: page.id, pageSlug: page.slug, publicationId: publication.id, attached: true };
+      return {
+        pageId: page.id,
+        pageSlug: page.slug,
+        publicationId: publication.id,
+        attached: true,
+      };
     });
   }
 
@@ -220,16 +234,24 @@ export class CmsService {
     }
     const publication = await this.publicationModel.findByPk(publicationId);
     if (!publication) {
-      throw new NotFoundException({ code: 'CONTENT_PUBLICATION_NOT_FOUND', message: 'Publicación no encontrada.' });
+      throw new NotFoundException({
+        code: 'CONTENT_PUBLICATION_NOT_FOUND',
+        message: 'Publicación no encontrada.',
+      });
     }
 
     const before = publication.toJSON();
     const metadata = { ...(publication.seoMetadata ?? {}) } as Record<string, any>;
     metadata.embedPageSlugs = Array.isArray(metadata.embedPageSlugs)
-      ? metadata.embedPageSlugs.map((slug: unknown) => String(slug).trim()).filter((slug: string) => slug && slug !== page.slug)
+      ? metadata.embedPageSlugs
+          .map((slug: unknown) => String(slug).trim())
+          .filter((slug: string) => slug && slug !== page.slug)
       : [];
     metadata.embedPages = Array.isArray(metadata.embedPages)
-      ? metadata.embedPages.filter((item: any) => String(item?.slug ?? '') !== page.slug && String(item?.id ?? '') !== page.id)
+      ? metadata.embedPages.filter(
+          (item: any) =>
+            String(item?.slug ?? '') !== page.slug && String(item?.id ?? '') !== page.id,
+        )
       : [];
 
     return publication.sequelize!.transaction(async (transaction) => {
@@ -245,7 +267,12 @@ export class CmsService {
         },
         { transaction },
       );
-      return { pageId: page.id, pageSlug: page.slug, publicationId: publication.id, attached: false };
+      return {
+        pageId: page.id,
+        pageSlug: page.slug,
+        publicationId: publication.id,
+        attached: false,
+      };
     });
   }
 

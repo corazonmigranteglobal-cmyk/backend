@@ -35,7 +35,12 @@ import { ContentSubscribersService } from './content-subscribers.service';
     ]),
     AuditModule,
   ],
-  controllers: [PublicContentController, PublicContentAliasController, AdminContentController, PremiumContentController],
+  controllers: [
+    PublicContentController,
+    PublicContentAliasController,
+    AdminContentController,
+    PremiumContentController,
+  ],
   providers: [
     ContentAuthorsService,
     ContentPublicationAuditService,

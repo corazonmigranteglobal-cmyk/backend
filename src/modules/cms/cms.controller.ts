@@ -5,7 +5,12 @@ import { Public } from '@/common/decorators/public.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
 import { CmsService } from './cms.service';
-import { AttachPublicationToPageDto, CreateElementDto, CreatePageDto, UpdatePageDto } from './dto/cms.dto';
+import {
+  AttachPublicationToPageDto,
+  CreateElementDto,
+  CreatePageDto,
+  UpdatePageDto,
+} from './dto/cms.dto';
 
 @ApiTags('Public CMS')
 @Controller('public/pages')
@@ -56,10 +61,7 @@ export class AdminCmsController {
   }
 
   @Post()
-  create(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreatePageDto,
-  ) {
+  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreatePageDto) {
     return this.service.createPage(user.sub, dto);
   }
   @Post(':pageId/elements')
@@ -71,7 +73,6 @@ export class AdminCmsController {
     return this.service.addElement(user.sub, pageId, dto);
   }
 }
-
 
 @ApiTags('Páginas públicas admin')
 @ApiBearerAuth()

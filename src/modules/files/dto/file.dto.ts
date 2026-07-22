@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsInt, IsObject, IsOptional, IsString, IsUrl, IsUUID, Max, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class UploadFileDto {
   @ApiProperty({ enum: ['USER_PROFILE', 'THERAPY_CATALOG', 'CMS', 'APPOINTMENT'] })
@@ -58,7 +68,6 @@ export class UpdateFileDto {
   @IsObject()
   metadata?: Record<string, unknown>;
 }
-
 
 export class CloudinaryUploadSignatureDto {
   @ApiProperty({ enum: ['USER_PROFILE', 'THERAPY_CATALOG', 'CMS', 'APPOINTMENT'] })

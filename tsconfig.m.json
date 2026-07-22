@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true, "skipLibCheck": true, "incremental": false },
+  "include": [
+    "src/database/models/downloadable-resource-version.model.ts",
+    "src/database/models/downloadable-entitlement.model.ts",
+    "src/database/models/downloadable-publication-link.model.ts",
+    "src/database/models/downloadable-external-event.model.ts",
+    "src/database/models/downloadable-resource.model.ts",
+    "src/database/models/downloadable-download-event.model.ts",
+    "src/modules/downloadables/downloadables.service.ts",
+    "src/modules/downloadables/downloadables.controller.ts",
+    "src/modules/downloadables/downloadables.module.ts",
+    "src/modules/downloadables/hotmart.adapter.ts",
+    "src/modules/downloadables/dto/downloadable.dto.ts"
+  ]
+}

@@ -34,10 +34,7 @@ function parseCredentialJson(rawValue: string, sourceName: string): unknown {
   }
 }
 
-function normalizeCredentials(
-  value: unknown,
-  sourceName: string,
-): GoogleServiceAccountCredentials {
+function normalizeCredentials(value: unknown, sourceName: string): GoogleServiceAccountCredentials {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error(`${sourceName} must decode to a JSON object.`);
   }
@@ -68,9 +65,7 @@ function normalizeCredentials(
     client_email: clientEmail.trim(),
     private_key: privateKey.replace(/\\n/g, '\n'),
     private_key_id:
-      typeof rawCredentials.private_key_id === 'string'
-        ? rawCredentials.private_key_id
-        : undefined,
+      typeof rawCredentials.private_key_id === 'string' ? rawCredentials.private_key_id : undefined,
   };
 }
 
@@ -80,7 +75,9 @@ function parseBase64Credentials(value: string, sourceName: string) {
     sourceName,
   );
   if (!decodedValue?.startsWith('{')) {
-    throw new Error(`${sourceName} must contain the complete service-account JSON encoded in Base64.`);
+    throw new Error(
+      `${sourceName} must contain the complete service-account JSON encoded in Base64.`,
+    );
   }
 
   return normalizeCredentials(parseCredentialJson(decodedValue, sourceName), sourceName);

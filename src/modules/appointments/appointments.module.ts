@@ -3,6 +3,7 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { Appointment, AppointmentStatusHistory, TherapyProduct } from '@/database/models';
 import { AuditModule } from '../audit/audit.module';
 import { MessagingModule } from '../messaging/messaging.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { SchedulingModule } from '../scheduling/scheduling.module';
 import { AppointmentsController } from './appointments.controller';
 import { AppointmentsService } from './appointments.service';
@@ -13,6 +14,7 @@ import { AppointmentsService } from './appointments.service';
     SchedulingModule,
     AuditModule,
     MessagingModule,
+    NotificationsModule,
   ],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],

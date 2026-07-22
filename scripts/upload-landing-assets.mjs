@@ -18,32 +18,27 @@ import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join, basename, extname } from "node:path";
 import { fileURLToPath } from "node:url";
+import dotenv from "dotenv";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 const ASSETS_DIR = join(ROOT, "assets", "landing");
 
 function loadEnv() {
-  const out = {
-    cloud: process.env.CLOUDINARY_CLOUD_NAME,
-    key: process.env.CLOUDINARY_API_KEY,
-    secret: process.env.CLOUDINARY_API_SECRET,
-    folder: process.env.CLOUDINARY_FOLDER,
-  };
+  // Usa el mismo parser (dotenv) que el backend en runtime: tolera BOM,
+  // saltos de linea CRLF/CR, comillas y codificaciones que un regex casero
+  // no maneja. Las variables ya presentes en process.env tienen prioridad.
   const envPath = join(ROOT, ".env");
-  if (existsSync(envPath)) {
-    for (const line of readFileSync(envPath, "utf8").split("\n")) {
-      const m = line.match(/^\s*(CLOUDINARY_[A-Z_]+)\s*=\s*(.*)$/);
-      if (!m) continue;
-      const v = m[2].trim().replace(/^["']|["']$/g, "");
-      if (m[1] === "CLOUDINARY_CLOUD_NAME") out.cloud ||= v;
-      if (m[1] === "CLOUDINARY_API_KEY") out.key ||= v;
-      if (m[1] === "CLOUDINARY_API_SECRET") out.secret ||= v;
-      if (m[1] === "CLOUDINARY_FOLDER") out.folder ||= v;
-    }
-  }
-  out.folder ||= "corazon-migrante";
-  return out;
+  const fromFile = existsSync(envPath)
+    ? dotenv.parse(readFileSync(envPath))
+    : {};
+  const pick = (name) => process.env[name] ?? fromFile[name];
+  return {
+    cloud: pick("CLOUDINARY_CLOUD_NAME"),
+    key: pick("CLOUDINARY_API_KEY"),
+    secret: pick("CLOUDINARY_API_SECRET"),
+    folder: pick("CLOUDINARY_FOLDER") || "corazon-migrante",
+  };
 }
 
 async function uploadOne(file, cfg, targetFolder) {

@@ -13,10 +13,7 @@ import { ResetPasswordDto } from './dto/password-reset.dto';
 function hashesMatch(leftHash: string, rightHash: string) {
   const leftBuffer = Buffer.from(leftHash, 'hex');
   const rightBuffer = Buffer.from(rightHash, 'hex');
-  return (
-    leftBuffer.length === rightBuffer.length &&
-    timingSafeEqual(leftBuffer, rightBuffer)
-  );
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
 }
 
 @Injectable()
@@ -37,9 +34,7 @@ export class PasswordResetService {
     const pin = String(randomInt(100_000, 1_000_000));
     const expiresAt = new Date(
       Date.now() +
-        (this.config.get<number>('security.passwordResetExpiryMinutes') ?? 15) *
-          60 *
-          1_000,
+        (this.config.get<number>('security.passwordResetExpiryMinutes') ?? 15) * 60 * 1_000,
     );
 
     await this.authPinModel.sequelize!.transaction(async (transaction) => {
@@ -80,64 +75,61 @@ export class PasswordResetService {
   }
 
   async reset(dto: ResetPasswordDto) {
-    const succeeded = await this.authPinModel.sequelize!.transaction(
-      async (transaction) => {
-        const pin = await this.authPinModel.findOne({
-          where: {
-            email: dto.email,
-            purpose: 'PASSWORD_RESET',
-            consumedAt: null,
-            expiresAt: { [Op.gt]: new Date() },
-          },
-          order: [['createdAt', 'DESC']],
-          transaction,
-          lock: transaction.LOCK.UPDATE,
-        });
-        if (!pin) return false;
+    const succeeded = await this.authPinModel.sequelize!.transaction(async (transaction) => {
+      const pin = await this.authPinModel.findOne({
+        where: {
+          email: dto.email,
+          purpose: 'PASSWORD_RESET',
+          consumedAt: null,
+          expiresAt: { [Op.gt]: new Date() },
+        },
+        order: [['createdAt', 'DESC']],
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      if (!pin) return false;
 
-        const maxAttempts =
-          this.config.get<number>('security.passwordResetMaxAttempts') ?? 5;
-        if (!hashesMatch(pin.pinHash, sha256(dto.pin))) {
-          pin.attempts += 1;
-          if (pin.attempts >= maxAttempts) pin.consumedAt = new Date();
-          await pin.save({ transaction });
-          return false;
-        }
-
-        const user = await this.userModel.findOne({
-          where: { email: dto.email },
-          transaction,
-          lock: transaction.LOCK.UPDATE,
-        });
-        if (!user) {
-          pin.consumedAt = new Date();
-          await pin.save({ transaction });
-          return false;
-        }
-
-        user.passwordHash = await bcrypt.hash(
-          dto.newPassword,
-          this.config.get<number>('security.bcryptRounds') ?? 12,
-        );
-        pin.consumedAt = new Date();
-        await user.save({ transaction });
+      const maxAttempts = this.config.get<number>('security.passwordResetMaxAttempts') ?? 5;
+      if (!hashesMatch(pin.pinHash, sha256(dto.pin))) {
+        pin.attempts += 1;
+        if (pin.attempts >= maxAttempts) pin.consumedAt = new Date();
         await pin.save({ transaction });
-        await this.refreshTokenModel.update(
-          { revokedAt: new Date() },
-          { where: { userId: user.id, revokedAt: null }, transaction },
-        );
-        await this.audit.log(
-          {
-            actorUserId: user.id,
-            action: 'auth.password_reset',
-            entityType: 'User',
-            entityId: user.id,
-          },
-          { transaction },
-        );
-        return true;
-      },
-    );
+        return false;
+      }
+
+      const user = await this.userModel.findOne({
+        where: { email: dto.email },
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      if (!user) {
+        pin.consumedAt = new Date();
+        await pin.save({ transaction });
+        return false;
+      }
+
+      user.passwordHash = await bcrypt.hash(
+        dto.newPassword,
+        this.config.get<number>('security.bcryptRounds') ?? 12,
+      );
+      pin.consumedAt = new Date();
+      await user.save({ transaction });
+      await pin.save({ transaction });
+      await this.refreshTokenModel.update(
+        { revokedAt: new Date() },
+        { where: { userId: user.id, revokedAt: null }, transaction },
+      );
+      await this.audit.log(
+        {
+          actorUserId: user.id,
+          action: 'auth.password_reset',
+          entityType: 'User',
+          entityId: user.id,
+        },
+        { transaction },
+      );
+      return true;
+    });
 
     if (!succeeded) {
       throw new BadRequestException({

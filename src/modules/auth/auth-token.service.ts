@@ -32,9 +32,7 @@ export class AuthTokenService {
     metadata: { ipAddress?: string; userAgent?: string },
     transaction?: Transaction,
   ) {
-    const { roles, permissions } = await this.rolesPermissions.getUserRolesAndPermissions(
-      user.id,
-    );
+    const { roles, permissions } = await this.rolesPermissions.getUserRolesAndPermissions(user.id);
     const accessExpiresIn = this.config.get<string>('jwt.accessExpiresIn') ?? '15m';
     const accessToken = await this.jwtService.signAsync(
       {
@@ -60,11 +58,7 @@ export class AuthTokenService {
         tokenHash: sha256(refreshToken),
         expiresAt: new Date(
           Date.now() +
-            (this.config.get<number>('jwt.refreshExpiresDays') ?? 30) *
-              24 *
-              60 *
-              60 *
-              1_000,
+            (this.config.get<number>('jwt.refreshExpiresDays') ?? 30) * 24 * 60 * 60 * 1_000,
         ),
         userAgent: metadata.userAgent,
         ipAddress: metadata.ipAddress,

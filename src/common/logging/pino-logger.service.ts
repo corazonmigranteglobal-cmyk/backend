@@ -6,18 +6,8 @@ import pino, { LevelWithSilent, Logger as PinoLogger, StreamEntry } from 'pino';
 const DEFAULT_LOG_LEVEL: LevelWithSilent = 'info';
 
 function resolveLogLevel(value?: string): LevelWithSilent {
-  const levels: LevelWithSilent[] = [
-    'fatal',
-    'error',
-    'warn',
-    'info',
-    'debug',
-    'trace',
-    'silent',
-  ];
-  return levels.includes(value as LevelWithSilent)
-    ? (value as LevelWithSilent)
-    : DEFAULT_LOG_LEVEL;
+  const levels: LevelWithSilent[] = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'];
+  return levels.includes(value as LevelWithSilent) ? (value as LevelWithSilent) : DEFAULT_LOG_LEVEL;
 }
 
 function normalizeMessage(message: unknown): string {

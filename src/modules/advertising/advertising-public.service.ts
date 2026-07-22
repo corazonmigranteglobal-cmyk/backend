@@ -25,10 +25,16 @@ export class AdvertisingPublicService {
     const requestedPlacementCode = query.placementCode ?? query.placement;
     const requestedPageSlug = this.normalizePageSlug(query.pageSlug);
     const publication = requestedPublicationId
-      ? await this.publicationModel.findByPk(requestedPublicationId, { attributes: ['id', 'categoryId'] })
+      ? await this.publicationModel.findByPk(requestedPublicationId, {
+          attributes: ['id', 'categoryId'],
+        })
       : null;
     const context: PublicationContext = publication
-      ? { publicationId: publication.id, categoryId: publication.categoryId, pageSlug: requestedPageSlug }
+      ? {
+          publicationId: publication.id,
+          categoryId: publication.categoryId,
+          pageSlug: requestedPageSlug,
+        }
       : { pageSlug: requestedPageSlug };
 
     const campaigns = await this.campaignModel.findAll({
@@ -88,7 +94,9 @@ export class AdvertisingPublicService {
       Boolean(target.categoryId && target.categoryId === context.categoryId) ||
       Boolean(target.pageSlug && context.pageSlug && target.pageSlug === context.pageSlug);
 
-    const excluded = targets.some((target) => target.targetingMode === 'EXCLUDE' && matches(target));
+    const excluded = targets.some(
+      (target) => target.targetingMode === 'EXCLUDE' && matches(target),
+    );
     if (excluded) return false;
 
     const includeTargets = targets.filter((target) => target.targetingMode !== 'EXCLUDE');
@@ -97,7 +105,10 @@ export class AdvertisingPublicService {
   }
 
   private normalizePageSlug(value?: string) {
-    const slug = String(value ?? '').trim().toLowerCase().replace(/^\/+|\/+$/g, '');
+    const slug = String(value ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/^\/+|\/+$/g, '');
     return slug || undefined;
   }
 }

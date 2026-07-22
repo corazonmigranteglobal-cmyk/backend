@@ -147,7 +147,13 @@ export class AdvertisingCampaignsService {
         { transaction },
       );
       await this.replacePlacements(campaign.id, placementIds ?? [], transaction);
-      await this.replaceTargets(campaign.id, publicationIds ?? [], categoryIds ?? [], pageSlugs ?? [], transaction);
+      await this.replaceTargets(
+        campaign.id,
+        publicationIds ?? [],
+        categoryIds ?? [],
+        pageSlugs ?? [],
+        transaction,
+      );
       await this.auditCampaign(actorUserId, 'create', campaign, undefined, transaction);
       return this.get(campaign.id);
     });
@@ -174,7 +180,13 @@ export class AdvertisingCampaignsService {
       );
       if (placementIds) await this.replacePlacements(campaign.id, placementIds, transaction);
       if (publicationIds || categoryIds || pageSlugs)
-        await this.replaceTargets(campaign.id, publicationIds ?? [], categoryIds ?? [], pageSlugs ?? [], transaction);
+        await this.replaceTargets(
+          campaign.id,
+          publicationIds ?? [],
+          categoryIds ?? [],
+          pageSlugs ?? [],
+          transaction,
+        );
       await this.auditCampaign(actorUserId, 'update', campaign, before, transaction);
       return this.get(campaign.id);
     });
@@ -183,7 +195,12 @@ export class AdvertisingCampaignsService {
   async addAssociations(
     actorUserId: string,
     id: string,
-    associations: { placementIds?: string[]; publicationIds?: string[]; categoryIds?: string[]; pageSlugs?: string[] },
+    associations: {
+      placementIds?: string[];
+      publicationIds?: string[];
+      categoryIds?: string[];
+      pageSlugs?: string[];
+    },
   ) {
     const campaign = await this.find(id);
     const existingPlacementIds = (campaign.placements ?? [])
@@ -199,9 +216,15 @@ export class AdvertisingCampaignsService {
       .map((target) => target.pageSlug)
       .filter((value): value is string => Boolean(value));
 
-    const placementIds = Array.from(new Set([...existingPlacementIds, ...(associations.placementIds ?? [])]));
-    const publicationIds = Array.from(new Set([...existingPublicationIds, ...(associations.publicationIds ?? [])]));
-    const categoryIds = Array.from(new Set([...existingCategoryIds, ...(associations.categoryIds ?? [])]));
+    const placementIds = Array.from(
+      new Set([...existingPlacementIds, ...(associations.placementIds ?? [])]),
+    );
+    const publicationIds = Array.from(
+      new Set([...existingPublicationIds, ...(associations.publicationIds ?? [])]),
+    );
+    const categoryIds = Array.from(
+      new Set([...existingCategoryIds, ...(associations.categoryIds ?? [])]),
+    );
     const incomingPageSlugs = (associations.pageSlugs ?? [])
       .map((slug) => this.normalizePageSlug(slug))
       .filter((value): value is string => Boolean(value));
@@ -273,7 +296,11 @@ export class AdvertisingCampaignsService {
     }
   }
 
-  private async assertTargets(publicationIds?: string[], categoryIds?: string[], pageSlugs?: string[]) {
+  private async assertTargets(
+    publicationIds?: string[],
+    categoryIds?: string[],
+    pageSlugs?: string[],
+  ) {
     if (publicationIds?.length) {
       const unique = [...new Set(publicationIds)];
       const count = await this.publicationModel.count({ where: { id: { [Op.in]: unique } } });
@@ -342,19 +369,23 @@ export class AdvertisingCampaignsService {
         targetingMode: 'INCLUDE',
         reason: 'Asociada desde administración a una categoría editorial.',
       })),
-      ...[...new Set(pageSlugs.map((slug) => this.normalizePageSlug(slug)).filter(Boolean))].map((pageSlug) => ({
-        campaignId,
-        pageSlug,
-        targetingMode: 'INCLUDE',
-        reason: 'Asociada desde administración a una página pública.',
-      })),
+      ...[...new Set(pageSlugs.map((slug) => this.normalizePageSlug(slug)).filter(Boolean))].map(
+        (pageSlug) => ({
+          campaignId,
+          pageSlug,
+          targetingMode: 'INCLUDE',
+          reason: 'Asociada desde administración a una página pública.',
+        }),
+      ),
     ];
     if (rows.length) await this.campaignTargetModel.bulkCreate(rows as any[], { transaction });
   }
 
-
   private normalizePageSlug(value?: string) {
-    const slug = String(value ?? '').trim().toLowerCase().replace(/^\/+|\/+$/g, '');
+    const slug = String(value ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/^\/+|\/+$/g, '');
     return slug || undefined;
   }
 

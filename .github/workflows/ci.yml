@@ -1,0 +1,176 @@
+name: CI — Backend
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  quality:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Check secrets
+        run: node scripts/check-no-secrets.js
+
+      - name: Audit dependencies
+        run: yarn audit:dependencies
+        continue-on-error: true   # alerta pero no bloquea el merge
+
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    needs: quality
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: cm_test
+          POSTGRES_USER: cm_test
+          POSTGRES_PASSWORD: cm_test_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cm_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 5432
+      DATABASE_NAME: cm_test
+      DATABASE_USER: cm_test
+      DATABASE_PASSWORD: cm_test_pass
+      DATABASE_SSL: false
+      DATABASE_MIGRATE_ON_STARTUP: false
+      DATABASE_SEED_BOOT_ON_STARTUP: false
+      DATABASE_SEED_MOCKUP_ON_STARTUP: false
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_ENABLED: true
+      JWT_ACCESS_SECRET: test-access-secret-at-least-32-chars!!
+      JWT_REFRESH_SECRET: test-refresh-secret-at-least-32-chars!!
+      STORAGE_PROVIDER: LOCAL
+      EMAIL_PROVIDER: DEV_NULL
+      SWAGGER_ENABLED: false
+      OUTBOX_WORKER_ENABLED: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run unit tests with coverage
+        run: yarn test:cov --ci --forceExit --passWithNoTests
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: coverage/
+          retention-days: 7
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: cm_e2e
+          POSTGRES_USER: cm_e2e
+          POSTGRES_PASSWORD: cm_e2e_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cm_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    env:
+      NODE_ENV: test
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 5432
+      DATABASE_NAME: cm_e2e
+      DATABASE_USER: cm_e2e
+      DATABASE_PASSWORD: cm_e2e_pass
+      DATABASE_SSL: false
+      DATABASE_MIGRATE_ON_STARTUP: true
+      DATABASE_SEED_BOOT_ON_STARTUP: true
+      DATABASE_SEED_MOCKUP_ON_STARTUP: true
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_ENABLED: true
+      JWT_ACCESS_SECRET: e2e-access-secret-at-least-32-chars!!
+      JWT_REFRESH_SECRET: e2e-refresh-secret-at-least-32-chars!!
+      STORAGE_PROVIDER: LOCAL
+      EMAIL_PROVIDER: DEV_NULL
+      SWAGGER_ENABLED: false
+      OUTBOX_WORKER_ENABLED: false
+      PORT: 3099
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build
+
+      - name: Run E2E tests
+        run: yarn test:e2e --forceExit --passWithNoTests

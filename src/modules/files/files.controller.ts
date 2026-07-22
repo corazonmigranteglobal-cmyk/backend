@@ -16,15 +16,17 @@ import { Public } from '@/common/decorators/public.decorator';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
 import { FilesService } from './files.service';
 import { buildMulterOptions } from './multer-options';
-import { CloudinaryUploadSignatureDto, CompleteCloudinaryUploadDto, UploadFileDto } from './dto/file.dto';
+import {
+  CloudinaryUploadSignatureDto,
+  CompleteCloudinaryUploadDto,
+  UploadFileDto,
+} from './dto/file.dto';
 
 @ApiTags('Files')
 @ApiBearerAuth()
 @Controller('files')
 export class FilesController {
   constructor(private readonly service: FilesService) {}
-
-
 
   @Post('cloudinary/signature')
   createCloudinarySignature(
@@ -44,9 +46,7 @@ export class FilesController {
 
   @Post()
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('file', buildMulterOptions()),
-  )
+  @UseInterceptors(FileInterceptor('file', buildMulterOptions()))
   upload(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UploadFileDto,

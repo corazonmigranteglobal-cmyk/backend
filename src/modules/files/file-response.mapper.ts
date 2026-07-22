@@ -3,10 +3,7 @@ import { FileAsset } from '@/database/models';
 
 export function buildBackendDownloadUrl(config: ConfigService, fileId: string) {
   const baseUrl = (config.get<string>('files.publicBaseUrl') ?? '').replace(/\/+$/, '');
-  const apiPrefix = (config.get<string>('app.apiPrefix') ?? 'api/v1').replace(
-    /^\/+|\/+$/g,
-    '',
-  );
+  const apiPrefix = (config.get<string>('app.apiPrefix') ?? 'api/v1').replace(/^\/+|\/+$/g, '');
   return `${baseUrl}/${apiPrefix}/files/${fileId}/download`;
 }
 

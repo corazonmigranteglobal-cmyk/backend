@@ -15,6 +15,7 @@ describe('AppointmentsService', () => {
     const scheduling = { isSlotAvailable: jest.fn(), getAvailability: jest.fn() };
     const audit = { log: jest.fn() };
     const messaging = { enqueue: jest.fn() };
+    const notifications = { emit: jest.fn().mockResolvedValue(undefined) };
 
     const service = new AppointmentsService(
       appointmentModel as any,
@@ -23,9 +24,10 @@ describe('AppointmentsService', () => {
       scheduling as any,
       audit as any,
       messaging as any,
+      notifications as any,
     );
 
-    return { service, appointmentModel, historyModel, productModel, scheduling, audit, messaging };
+    return { service, appointmentModel, historyModel, productModel, scheduling, audit, messaging, notifications };
   };
 
   it('creates an appointment for the requested patient when the actor is an admin', async () => {
@@ -39,7 +41,9 @@ describe('AppointmentsService', () => {
       currency: 'BOB',
     });
     scheduling.isSlotAvailable.mockResolvedValue(true);
-    appointmentModel.sequelize.transaction.mockImplementation(async (callback: any) => callback('tx'));
+    appointmentModel.sequelize.transaction.mockImplementation(async (callback: any) =>
+      callback('tx'),
+    );
     appointmentModel.create.mockResolvedValue({ id: 'appt-1', toJSON: () => ({ id: 'appt-1' }) });
 
     await service.create(
@@ -89,5 +93,35 @@ describe('AppointmentsService', () => {
         } as any,
       ),
     ).rejects.toMatchObject({ response: { code: 'THERAPY_PRODUCT_NOT_FOUND' } });
+  });
+
+  it('emits domain event after successful appointment creation', async () => {
+    const { service, appointmentModel, productModel, scheduling, notifications } = makeService();
+
+    productModel.findByPk.mockResolvedValue({
+      id: 'product-1',
+      durationMinutes: 45,
+      price: 100,
+      currency: 'BOB',
+    });
+    scheduling.isSlotAvailable.mockResolvedValue(true);
+    appointmentModel.sequelize.transaction.mockImplementation(async (callback: any) =>
+      callback('tx'),
+    );
+    appointmentModel.create.mockResolvedValue({ id: 'appt-1', toJSON: () => ({ id: 'appt-1' }) });
+
+    await service.create(
+      { sub: 'patient-1', email: 'p@example.com', roles: ['PATIENT'], permissions: [], status: 'ACTIVE' },
+      {
+        therapistUserId: 'therapist-1',
+        productId: 'product-1',
+        scheduledStartAt: '2026-07-17T09:00:00.000Z',
+        timezone: 'America/La_Paz',
+      } as any,
+    );
+
+    expect(notifications.emit).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'APPOINTMENT_REQUESTED', entityType: 'Appointment' }),
+    );
   });
 });

@@ -60,11 +60,8 @@ export class MessagingProviderService {
       ),
       metadata: {
         statusCode:
-          typeof statusCode === 'string' || typeof statusCode === 'number'
-            ? statusCode
-            : undefined,
-        requestId:
-          readHeader(headers, 'x-request-id') ?? readHeader(headers, 'x-message-id'),
+          typeof statusCode === 'string' || typeof statusCode === 'number' ? statusCode : undefined,
+        requestId: readHeader(headers, 'x-request-id') ?? readHeader(headers, 'x-message-id'),
         provider: this.currentEmailProvider,
       },
     };
@@ -93,8 +90,7 @@ export class MessagingProviderService {
   private async sendEmailWithSendGrid(message: MessageOutbox): Promise<MessageProviderResult> {
     const apiKey = this.config.get<string>('email.sendgrid.apiKey');
     const defaultFromEmail = this.config.get<string>('email.fromEmail');
-    const defaultFromName =
-      this.config.get<string>('email.fromName') ?? 'Corazon Migrante';
+    const defaultFromName = this.config.get<string>('email.fromName') ?? 'Corazon Migrante';
     const replyTo = this.config.get<string>('email.replyTo') || undefined;
 
     if (!apiKey) {
@@ -113,8 +109,7 @@ export class MessagingProviderService {
     const payload = message.payload as EmailMessagePayload;
     const subject = payload.subject ?? `Corazon Migrante - ${message.templateCode}`;
     const text =
-      payload.text ??
-      `Mensaje automatico de Corazon Migrante. Plantilla: ${message.templateCode}`;
+      payload.text ?? `Mensaje automatico de Corazon Migrante. Plantilla: ${message.templateCode}`;
 
     sendGridMail.setApiKey(apiKey.trim());
     const [response] = await sendGridMail.send({

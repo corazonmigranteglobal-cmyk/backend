@@ -5,14 +5,11 @@ import { resolveRedisConnection } from './redis.config';
 export default () => {
   const storageProvider = (process.env.STORAGE_PROVIDER ?? 'CLOUDINARY').toUpperCase();
   const redisConnection = resolveRedisConnection();
-  const googleCredentials =
-    storageProvider === 'GCS' ? resolveGoogleCredentials() : {};
+  const googleCredentials = storageProvider === 'GCS' ? resolveGoogleCredentials() : {};
   const emailProvider = process.env.EMAIL_PROVIDER ?? process.env.MAIL_PROVIDER ?? 'DEV_NULL';
   const gcsBucket = process.env.GCS_BUCKET ?? process.env.GCS_BUCKET_NAME_USER_MEDIA;
   const cloudinaryFolder =
-    process.env.CLOUDINARY_FOLDER ??
-    process.env.CLOUDINARY_UPLOAD_FOLDER ??
-    'corazon-migrante';
+    process.env.CLOUDINARY_FOLDER ?? process.env.CLOUDINARY_UPLOAD_FOLDER ?? 'corazon-migrante';
   const gcsFallbackValue =
     process.env.GCS_UPLOAD_FALLBACK_TO_LOCAL ?? process.env.FILES_GCS_FALLBACK_TO_LOCAL;
 
@@ -36,24 +33,24 @@ export default () => {
       password: process.env.DATABASE_PASSWORD,
       ssl: process.env.DATABASE_SSL === 'true',
       sslRejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false',
-      sslCa: decodeOptionalBase64(
-        process.env.DATABASE_SSL_CA_BASE64,
-        'DATABASE_SSL_CA_BASE64',
-      ),
+      sslCa: decodeOptionalBase64(process.env.DATABASE_SSL_CA_BASE64, 'DATABASE_SSL_CA_BASE64'),
       logging: process.env.DATABASE_LOGGING === 'true',
       connectionTimeoutMs: Number(process.env.DATABASE_CONNECTION_TIMEOUT_MS ?? 15_000),
       statementTimeoutMs: Number(process.env.DATABASE_STATEMENT_TIMEOUT_MS ?? 30_000),
-      idleTransactionTimeoutMs: Number(
-        process.env.DATABASE_IDLE_TRANSACTION_TIMEOUT_MS ?? 30_000,
-      ),
+      idleTransactionTimeoutMs: Number(process.env.DATABASE_IDLE_TRANSACTION_TIMEOUT_MS ?? 30_000),
       poolMax: Number(process.env.DATABASE_POOL_MAX ?? 10),
       poolMin: Number(process.env.DATABASE_POOL_MIN ?? 0),
       poolIdleMs: Number(process.env.DATABASE_POOL_IDLE_MS ?? 10_000),
       poolAcquireMs: Number(process.env.DATABASE_POOL_ACQUIRE_MS ?? 30_000),
       applicationName: process.env.DATABASE_APPLICATION_NAME ?? 'corazon-migrante-backend',
-      bootstrapOnStartup: process.env.DATABASE_BOOTSTRAP_ON_STARTUP === 'true',
+      migrateOnStartup: process.env.DATABASE_MIGRATE_ON_STARTUP !== 'false',
+      seedBootOnStartup: process.env.DATABASE_SEED_BOOT_ON_STARTUP !== 'false',
+      seedMockupOnStartup:
+        process.env.DATABASE_SEED_MOCKUP_ON_STARTUP !== undefined
+          ? process.env.DATABASE_SEED_MOCKUP_ON_STARTUP === 'true'
+          : process.env.NODE_ENV !== 'production',
+      seedRerun: process.env.DATABASE_SEED_RERUN === 'true',
       bootstrapFailFast: process.env.DATABASE_BOOTSTRAP_FAIL_FAST !== 'false',
-      seedPublicCmsOnStartup: process.env.DATABASE_SEED_PUBLIC_CMS_ON_STARTUP === 'true',
     },
     redis: {
       enabled: String(process.env.REDIS_ENABLED ?? 'true').toLowerCase() !== 'false',
@@ -76,6 +73,10 @@ export default () => {
       bcryptRounds: Number(process.env.BCRYPT_ROUNDS ?? 12),
       passwordResetExpiryMinutes: Number(process.env.PASSWORD_RESET_EXPIRY_MINUTES ?? 15),
       passwordResetMaxAttempts: Number(process.env.PASSWORD_RESET_MAX_ATTEMPTS ?? 5),
+    },
+    throttler: {
+      ttl: Number(process.env.THROTTLER_TTL_MS ?? 60_000),
+      limit: Number(process.env.THROTTLER_LIMIT ?? 120),
     },
     outbox: {
       workerEnabled: process.env.OUTBOX_WORKER_ENABLED !== 'false',
@@ -128,8 +129,7 @@ export default () => {
     },
     content: {
       subscriptionQrFileId:
-        process.env.NEWS_SUBSCRIPTION_QR_FILE_ID ??
-        process.env.PREMIUM_SUBSCRIPTION_QR_FILE_ID,
+        process.env.NEWS_SUBSCRIPTION_QR_FILE_ID ?? process.env.PREMIUM_SUBSCRIPTION_QR_FILE_ID,
       subscriptionInstructionsFileId:
         process.env.NEWS_SUBSCRIPTION_INSTRUCTIONS_FILE_ID ??
         process.env.PREMIUM_SUBSCRIPTION_INSTRUCTIONS_FILE_ID,
@@ -144,8 +144,7 @@ export default () => {
     email: {
       provider: emailProvider,
       fromEmail: process.env.EMAIL_FROM_EMAIL ?? process.env.MAIL_FROM,
-      fromName:
-        process.env.EMAIL_FROM_NAME ?? process.env.MAIL_FROM_NAME ?? 'Corazón Migrante',
+      fromName: process.env.EMAIL_FROM_NAME ?? process.env.MAIL_FROM_NAME ?? 'Corazón Migrante',
       replyTo: process.env.MAIL_REPLY_TO,
       sendgrid: {
         apiKey: process.env.SENDGRID_API_KEY,

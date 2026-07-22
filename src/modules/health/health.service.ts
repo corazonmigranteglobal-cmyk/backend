@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectConnection } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { RedisService } from '@/infrastructure/redis/redis.service';
@@ -8,16 +9,30 @@ export class HealthService {
   constructor(
     @InjectConnection() private readonly sequelize: Sequelize,
     private readonly redis: RedisService,
+    private readonly config: ConfigService,
   ) {}
 
   async check() {
-    const database = await this.checkDatabase();
-    const redis = await this.checkRedis();
+    const [database, redis] = await Promise.all([this.checkDatabase(), this.checkRedis()]);
+
+    const allOk = database === 'ok' && redis === 'ok';
     return {
-      status: database === 'ok' && redis === 'ok' ? 'ok' : 'degraded',
-      database,
-      redis,
+      status: allOk ? 'ok' : 'degraded',
+      checks: { database, redis },
+      version: process.env['npm_package_version'] ?? 'unknown',
+      commit: process.env['GIT_COMMIT'] ?? 'unknown',
+      env: process.env['NODE_ENV'] ?? 'unknown',
+      uptime: Math.round(process.uptime()),
       timestamp: new Date().toISOString(),
+    };
+  }
+
+  version() {
+    return {
+      version: process.env['npm_package_version'] ?? 'unknown',
+      commit: process.env['GIT_COMMIT'] ?? 'unknown',
+      buildAt: process.env['BUILD_AT'] ?? 'unknown',
+      env: process.env['NODE_ENV'] ?? 'unknown',
     };
   }
 

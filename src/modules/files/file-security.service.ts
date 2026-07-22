@@ -118,7 +118,11 @@ export class FileSecurityService {
       const header = signature.subarray(0, bytesRead);
       if (header.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))) return 'image/png';
       if (header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) return 'image/jpeg';
-      if (header.subarray(0, 4).toString('ascii') === 'RIFF' && header.subarray(8, 12).toString('ascii') === 'WEBP') return 'image/webp';
+      if (
+        header.subarray(0, 4).toString('ascii') === 'RIFF' &&
+        header.subarray(8, 12).toString('ascii') === 'WEBP'
+      )
+        return 'image/webp';
       if (header.subarray(0, 5).toString('ascii') === '%PDF-') return 'application/pdf';
       return undefined;
     } finally {

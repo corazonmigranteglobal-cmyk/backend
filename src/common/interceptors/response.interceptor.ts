@@ -32,6 +32,9 @@ export class ResponseInterceptor implements NestInterceptor {
       }),
     );
 
+    // Expose the request ID as a response header so clients can correlate errors.
+    response.setHeader('X-Request-Id', Array.isArray(requestId) ? requestId[0] : requestId);
+
     return next.handle().pipe(
       map((value) => {
         if (value && typeof value === 'object' && (value as any).__raw === true) {

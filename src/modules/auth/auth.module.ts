@@ -13,13 +13,7 @@ import { PasswordResetService } from './password-reset.service';
 @Module({
   imports: [
     JwtModule.register({}),
-    SequelizeModule.forFeature([
-      User,
-      PatientProfile,
-      TherapistProfile,
-      RefreshToken,
-      AuthPin,
-    ]),
+    SequelizeModule.forFeature([User, PatientProfile, TherapistProfile, RefreshToken, AuthPin]),
     RolesPermissionsModule,
     AuditModule,
     MessagingModule,

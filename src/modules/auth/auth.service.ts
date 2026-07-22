@@ -154,10 +154,7 @@ export class AuthService {
     });
   }
 
-  async refresh(
-    refreshToken: string,
-    metadata: { ipAddress?: string; userAgent?: string } = {},
-  ) {
+  async refresh(refreshToken: string, metadata: { ipAddress?: string; userAgent?: string } = {}) {
     const tokenHash = sha256(refreshToken);
     return this.refreshTokenModel.sequelize!.transaction(async (transaction) => {
       const currentToken = await this.refreshTokenModel.findOne({

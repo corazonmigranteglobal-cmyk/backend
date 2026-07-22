@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '@/common/decorators/public.decorator';
 import { ContentPublicationsService } from './content-publications.service';
 import { ContentTaxonomyService } from './content-taxonomy.service';
@@ -7,7 +8,7 @@ import { ContentSubscribersService } from './content-subscribers.service';
 import { PublicContentQueryDto } from './dto/content-query.dto';
 import { UpsertContentSubscriberDto } from './dto/subscriber.dto';
 
-@ApiTags('Publicaciones públicas')
+@ApiTags('Publicaciones p\u00fablicas')
 @Public()
 @Controller('publications')
 export class PublicContentController {
@@ -47,16 +48,14 @@ export class PublicContentController {
     return this.taxonomy.listTags();
   }
 
-
   @Post('subscribers')
+  @Throttle({ default: { limit: 5, ttl: 300_000 } })
   subscribe(@Body() dto: UpsertContentSubscriberDto) {
     return this.subscribers.upsert(undefined, { ...dto, source: dto.source ?? 'PUBLIC_FORM' });
   }
-
 }
 
-
-@ApiTags('Contenido público')
+@ApiTags('Contenido p\u00fablico')
 @Public()
 @Controller('public/content')
 export class PublicContentAliasController {
@@ -81,10 +80,10 @@ export class PublicContentAliasController {
       items: [
         { value: 'NEWS', label: 'Novedades' },
         { value: 'COLUMN', label: 'Columnas' },
-        { value: 'OPINION', label: 'Opinión' },
+        { value: 'OPINION', label: 'Opini\u00f3n' },
         { value: 'INTERVIEW', label: 'Entrevistas' },
         { value: 'REPORT', label: 'Reportes' },
-        { value: 'ANALYSIS', label: 'Análisis' },
+        { value: 'ANALYSIS', label: 'An\u00e1lisis' },
       ],
     };
   }

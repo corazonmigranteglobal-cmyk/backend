@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import './load-dotenv.mjs';
+
 const BASE_URL =
   process.env.SMOKE_BASE_URL || process.env.API_BASE_URL || 'http://localhost:3000/api/v1';
 const flags = new Set(process.argv.slice(2));

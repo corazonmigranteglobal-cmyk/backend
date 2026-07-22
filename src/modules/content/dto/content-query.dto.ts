@@ -38,7 +38,7 @@ function normalizeToken(value: unknown) {
 
 function normalizePublicationStatus(value: unknown) {
   const token = normalizeToken(value);
-  return token ? PUBLICATION_STATUS_ALIASES[token] ?? token : undefined;
+  return token ? (PUBLICATION_STATUS_ALIASES[token] ?? token) : undefined;
 }
 
 export class ContentPublicationQueryDto extends PaginationQueryDto {
@@ -70,7 +70,9 @@ export class ContentPublicationQueryDto extends PaginationQueryDto {
   @IsString()
   tagSlug?: string;
 
-  @ApiPropertyOptional({ description: 'Slug de página pública donde debe aparecer/incrustarse la publicación.' })
+  @ApiPropertyOptional({
+    description: 'Slug de página pública donde debe aparecer/incrustarse la publicación.',
+  })
   @IsOptional()
   @IsString()
   pageSlug?: string;
@@ -92,7 +94,9 @@ export class PublicContentQueryDto extends PaginationQueryDto {
   @IsString()
   tagSlug?: string;
 
-  @ApiPropertyOptional({ description: 'Slug de página pública donde debe aparecer/incrustarse la publicación.' })
+  @ApiPropertyOptional({
+    description: 'Slug de página pública donde debe aparecer/incrustarse la publicación.',
+  })
   @IsOptional()
   @IsString()
   pageSlug?: string;

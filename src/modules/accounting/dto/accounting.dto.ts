@@ -48,7 +48,9 @@ export class CreateSaleFromAppointmentDto {
   @ApiProperty({ description: 'Cuenta donde entra el dinero (por ejemplo Caja o Banco).' })
   @IsUUID()
   debitAccountId: string;
-  @ApiProperty({ description: 'Cuenta de ingresos donde se registra la venta (por ejemplo Ventas de servicios).' })
+  @ApiProperty({
+    description: 'Cuenta de ingresos donde se registra la venta (por ejemplo Ventas de servicios).',
+  })
   @IsUUID()
   creditAccountId: string;
   @ApiPropertyOptional() @IsOptional() @IsUUID() costCenterId?: string;

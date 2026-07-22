@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis, { RedisOptions } from 'ioredis';
 
@@ -22,8 +17,7 @@ export class RedisService implements OnModuleDestroy {
     this.enabled = this.config.get<boolean>('redis.enabled') !== false;
     this.scanCount = this.config.get<number>('redis.scanCount') ?? 250;
     this.deleteBatchSize = this.config.get<number>('redis.deleteBatchSize') ?? 250;
-    this.maxPatternDeleteKeys =
-      this.config.get<number>('redis.maxPatternDeleteKeys') ?? 10_000;
+    this.maxPatternDeleteKeys = this.config.get<number>('redis.maxPatternDeleteKeys') ?? 10_000;
 
     if (!this.enabled) {
       this.endpointLabel = 'disabled';

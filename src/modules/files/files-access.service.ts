@@ -1,9 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  StreamableFile,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/sequelize';
 import { createReadStream } from 'node:fs';
@@ -50,11 +45,7 @@ export class FilesAccessService {
     };
   }
 
-  async downloadLocal(
-    user: AuthenticatedUser | undefined,
-    id: string,
-    response: Response,
-  ) {
+  async downloadLocal(user: AuthenticatedUser | undefined, id: string, response: Response) {
     const file = await this.findAllowedFile(user, id);
     if (file.storageProvider === STORAGE_PROVIDER_GCS) {
       response.redirect((await this.storage.getGcsSignedUrl(file)).url);
@@ -92,7 +83,10 @@ export class FilesAccessService {
     const isOwner = user?.sub === file.ownerUserId;
     const isAdmin = user?.roles?.some((role) => ['ADMIN', 'SUPER_ADMIN'].includes(role));
     if (file.visibility !== 'PUBLIC' && !isOwner && !isAdmin) {
-      throw new ForbiddenException({ code: 'FILE_FORBIDDEN', message: 'No puede acceder a este archivo.' });
+      throw new ForbiddenException({
+        code: 'FILE_FORBIDDEN',
+        message: 'No puede acceder a este archivo.',
+      });
     }
     return file;
   }

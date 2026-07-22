@@ -142,7 +142,6 @@ export class AdminContentController {
     return this.authors.update(user.sub, id, dto);
   }
 
-
   @Get('subscribers')
   @Permissions('content:read')
   listSubscribers(@Query() query: PaginationQueryDto) {

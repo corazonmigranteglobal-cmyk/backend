@@ -6,7 +6,10 @@ const bodyLimitPattern = /^\d+(kb|mb)$/i;
 export const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
   PORT: Joi.number().integer().port().default(3000),
-  API_PREFIX: Joi.string().trim().pattern(/^[a-zA-Z0-9/_-]+$/).default('api/v1'),
+  API_PREFIX: Joi.string()
+    .trim()
+    .pattern(/^[a-zA-Z0-9/_-]+$/)
+    .default('api/v1'),
   APP_NAME: Joi.string().trim().max(120).default('Corazon Migrante Backend'),
   CORS_ORIGINS: Joi.string().allow('').default('http://localhost:5173'),
   HTTP_BODY_LIMIT: Joi.string().pattern(bodyLimitPattern).default('1mb'),
@@ -39,12 +42,20 @@ export const envValidationSchema = Joi.object({
   DATABASE_POOL_IDLE_MS: Joi.number().integer().min(1_000).max(300_000).default(10_000),
   DATABASE_POOL_ACQUIRE_MS: Joi.number().integer().min(1_000).max(120_000).default(30_000),
   DATABASE_APPLICATION_NAME: Joi.string().trim().max(63).default('corazon-migrante-backend'),
-  DATABASE_BOOTSTRAP_ON_STARTUP: Joi.boolean().default(false),
+  DATABASE_MIGRATE_ON_STARTUP: Joi.boolean().default(true),
+  DATABASE_SEED_BOOT_ON_STARTUP: Joi.boolean().default(true),
+  DATABASE_SEED_MOCKUP_ON_STARTUP: Joi.boolean().optional(),
+  DATABASE_SEED_RERUN: Joi.boolean().default(false),
   DATABASE_BOOTSTRAP_FAIL_FAST: Joi.boolean().default(true),
-  DATABASE_SEED_PUBLIC_CMS_ON_STARTUP: Joi.boolean().default(false),
+  DATABASE_MIGRATIONS_DIR: Joi.string().allow('').optional(),
+  DATABASE_SEEDS_BOOT_DIR: Joi.string().allow('').optional(),
+  DATABASE_SEEDS_MOCKUP_DIR: Joi.string().allow('').optional(),
 
   REDIS_ENABLED: Joi.boolean().default(true),
-  REDIS_URL: Joi.string().uri({ scheme: ['redis', 'rediss'] }).allow('').optional(),
+  REDIS_URL: Joi.string()
+    .uri({ scheme: ['redis', 'rediss'] })
+    .allow('')
+    .optional(),
   REDIS_HOST: Joi.string().trim().allow('').optional(),
   REDIS_PORT: Joi.number().integer().port().default(6379),
   REDIS_USERNAME: Joi.string().allow('').optional(),
@@ -169,7 +180,8 @@ export const envValidationSchema = Joi.object({
 
   if (production && String(environment.DATABASE_NAME).toLowerCase() === 'postgres') {
     return helpers.error('any.custom', {
-      message: 'Production must use a dedicated database instead of the administrative postgres database.',
+      message:
+        'Production must use a dedicated database instead of the administrative postgres database.',
     });
   }
 
@@ -202,12 +214,12 @@ export const envValidationSchema = Joi.object({
     const usesApplicationDefaultCredentials = environment.GCS_USE_ADC === true;
     const hasLegacyCredentials = Boolean(
       environment.GOOGLE_APPLICATION_CREDENTIALS ||
-        environment.GOOGLE_APPLICATION_CREDENTIALS_JSON ||
-        environment.GOOGLE_APPLICATION_CREDENTIALS_BASE64 ||
-        environment.GOOGLE_CREDENTIALS_JSON ||
-        environment.GOOGLE_CREDENTIALS ||
-        environment.GOOGLE_SERVICE_ACCOUNT_BASE64 ||
-        environment.GCP_SERVICE_ACCOUNT_BASE64,
+      environment.GOOGLE_APPLICATION_CREDENTIALS_JSON ||
+      environment.GOOGLE_APPLICATION_CREDENTIALS_BASE64 ||
+      environment.GOOGLE_CREDENTIALS_JSON ||
+      environment.GOOGLE_CREDENTIALS ||
+      environment.GOOGLE_SERVICE_ACCOUNT_BASE64 ||
+      environment.GCP_SERVICE_ACCOUNT_BASE64,
     );
 
     if (production && !hasCanonicalCredentials && !usesApplicationDefaultCredentials) {
@@ -215,7 +227,12 @@ export const envValidationSchema = Joi.object({
         message: 'Production GCS requires GOOGLE_CREDENTIALS_BASE64 or GCS_USE_ADC=true.',
       });
     }
-    if (!production && !hasCanonicalCredentials && !usesApplicationDefaultCredentials && !hasLegacyCredentials) {
+    if (
+      !production &&
+      !hasCanonicalCredentials &&
+      !usesApplicationDefaultCredentials &&
+      !hasLegacyCredentials
+    ) {
       return helpers.error('any.custom', {
         message: 'GCS credentials are required when STORAGE_PROVIDER=GCS.',
       });

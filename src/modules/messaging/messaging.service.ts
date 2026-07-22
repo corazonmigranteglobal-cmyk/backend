@@ -38,8 +38,7 @@ export class MessagingService {
     private readonly config: ConfigService,
     private readonly provider: MessagingProviderService,
   ) {
-    this.workerId =
-      process.env.OUTBOX_WORKER_ID?.trim() || `${hostname()}-${process.pid}`;
+    this.workerId = process.env.OUTBOX_WORKER_ID?.trim() || `${hostname()}-${process.pid}`;
   }
 
   async enqueue(
@@ -78,8 +77,7 @@ export class MessagingService {
         payload: {
           subject: dto.subject ?? `Corazon Migrante - smoke test ${timestamp}`,
           text:
-            dto.text ??
-            `Correo de prueba enviado por Corazon Migrante. Fecha UTC: ${timestamp}`,
+            dto.text ?? `Correo de prueba enviado por Corazon Migrante. Fecha UTC: ${timestamp}`,
           html: `<p>Correo de prueba enviado por <strong>Corazon Migrante</strong>.</p><p>Fecha UTC: ${timestamp}</p>`,
         },
       }),

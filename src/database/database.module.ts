@@ -34,8 +34,7 @@ const databaseLogger = new Logger('Sequelize');
           dialectOptions: {
             application_name:
               config.get<string>('database.applicationName') ?? 'corazon-migrante-backend',
-            connectionTimeoutMillis:
-              config.get<number>('database.connectionTimeoutMs') ?? 15_000,
+            connectionTimeoutMillis: config.get<number>('database.connectionTimeoutMs') ?? 15_000,
             statement_timeout: config.get<number>('database.statementTimeoutMs') ?? 30_000,
             idle_in_transaction_session_timeout:
               config.get<number>('database.idleTransactionTimeoutMs') ?? 30_000,

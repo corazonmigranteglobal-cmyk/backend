@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
 import { DateTime, IANAZone } from 'luxon';
 import {
   Appointment,
@@ -22,7 +22,12 @@ import {
 
 const ACTIVE_APPOINTMENT_STATUSES = ['REQUESTED', 'CONFIRMED'];
 
-type UnavailableInterval = { startAt?: Date | string; endAt?: Date | string; scheduledStartAt?: Date | string; scheduledEndAt?: Date | string };
+type UnavailableInterval = {
+  startAt?: Date | string;
+  endAt?: Date | string;
+  scheduledStartAt?: Date | string;
+  scheduledEndAt?: Date | string;
+};
 type NormalizedAvailabilityQuery = {
   therapistUserId: string;
   productId: string;
@@ -40,7 +45,8 @@ type ScheduleRangeInput = {
   status?: string;
 };
 
-const UUID_LIKE_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_LIKE_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function firstNonEmptyString(source: Record<string, unknown>, keys: string[]): string | undefined {
   for (const key of keys) {
@@ -152,19 +158,27 @@ export class SchedulingService {
     }
   }
 
-
   private buildFileUrl(fileId?: string | null, file?: FileAsset | null) {
     const metadata = (file?.metadata ?? {}) as Record<string, unknown>;
-    const explicitUrl = String(metadata.publicUrl ?? metadata.downloadUrl ?? metadata.url ?? '').trim();
+    const explicitUrl = String(
+      metadata.publicUrl ?? metadata.downloadUrl ?? metadata.url ?? '',
+    ).trim();
     if (explicitUrl) return explicitUrl;
     if (!fileId) return undefined;
-    const baseUrl = (process.env.PUBLIC_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`).replace(/\/+$/, '');
+    const baseUrl = (
+      process.env.PUBLIC_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`
+    ).replace(/\/+$/, '');
     const apiPrefix = (process.env.API_PREFIX ?? 'api/v1').replace(/^\/+|\/+$/g, '');
     return `${baseUrl}/${apiPrefix}/files/${fileId}/download`;
   }
 
   async listPublicTherapists(rawQuery: Record<string, unknown> = {}) {
-    const productId = firstNonEmptyString(rawQuery, ['productId', 'therapyProductId', 'product_id', 'serviceId']);
+    const productId = firstNonEmptyString(rawQuery, [
+      'productId',
+      'therapyProductId',
+      'product_id',
+      'serviceId',
+    ]);
     const search = firstNonEmptyString(rawQuery, ['search', 'q', 'query']);
 
     const profiles = await this.therapistProfileModel.findAll({
@@ -186,7 +200,9 @@ export class SchedulingService {
 
     let allowedTherapistIds: Set<string> | undefined;
     if (productId && UUID_LIKE_PATTERN.test(productId)) {
-      const links = await this.therapistProductModel.findAll({ where: { productId, isActive: true } as any });
+      const links = await this.therapistProductModel.findAll({
+        where: { productId, isActive: true } as any,
+      });
       if (links.length > 0) {
         allowedTherapistIds = new Set(links.map((link) => link.therapistUserId));
       }
@@ -194,7 +210,9 @@ export class SchedulingService {
 
     const avatarIds = profiles.map((profile) => profile.avatarFileId).filter(Boolean) as string[];
     const avatarFiles = avatarIds.length
-      ? await this.fileModel.findAll({ where: { id: { [Op.in]: avatarIds }, status: 'ACTIVE' } as any })
+      ? await this.fileModel.findAll({
+          where: { id: { [Op.in]: avatarIds }, status: 'ACTIVE' } as any,
+        })
       : [];
     const avatarById = new Map(avatarFiles.map((file) => [file.id, file]));
 
@@ -224,14 +242,22 @@ export class SchedulingService {
       })
       .filter((item) => {
         if (!search) return true;
-        const text = `${item.name} ${item.email ?? ''} ${item.title ?? ''} ${item.specialty ?? ''}`.toLowerCase();
+        const text =
+          `${item.name} ${item.email ?? ''} ${item.title ?? ''} ${item.specialty ?? ''}`.toLowerCase();
         return text.includes(search.toLowerCase());
       });
 
-    return { items, pagination: { page: 1, pageSize: items.length || 100, total: items.length, totalPages: 1 } };
+    return {
+      items,
+      pagination: { page: 1, pageSize: items.length || 100, total: items.length, totalPages: 1 },
+    };
   }
 
-  async createSchedule(therapistUserId: string, dto: CreateScheduleDto, actorUserId = therapistUserId) {
+  async createSchedule(
+    therapistUserId: string,
+    dto: CreateScheduleDto,
+    actorUserId = therapistUserId,
+  ) {
     const payload = compactScheduleDto(dto) as unknown as CreateScheduleDto;
     const scheduleInput: ScheduleRangeInput = {
       weekday: Number(payload.weekday),
@@ -294,7 +320,9 @@ export class SchedulingService {
     dto: UpdateScheduleDto,
     actorUserId = therapistUserId,
   ) {
-    const schedule = await this.scheduleModel.findOne({ where: { id: scheduleId, therapistUserId } });
+    const schedule = await this.scheduleModel.findOne({
+      where: { id: scheduleId, therapistUserId },
+    });
     if (!schedule) {
       throw new NotFoundException({
         code: 'SCHEDULE_NOT_FOUND',
@@ -310,7 +338,10 @@ export class SchedulingService {
       startTime: normalizeTime(String(payload.startTime ?? schedule.startTime)),
       endTime: normalizeTime(String(payload.endTime ?? schedule.endTime)),
       effectiveFrom: String(payload.effectiveFrom ?? schedule.effectiveFrom),
-      effectiveTo: (payload as any).effectiveTo === null ? null : String(payload.effectiveTo ?? schedule.effectiveTo ?? ''),
+      effectiveTo:
+        (payload as any).effectiveTo === null
+          ? null
+          : String(payload.effectiveTo ?? schedule.effectiveTo ?? ''),
       status: String(payload.status ?? schedule.status ?? 'ACTIVE'),
     };
 
@@ -345,8 +376,17 @@ export class SchedulingService {
     });
   }
 
-  async deactivateScheduleForTherapist(therapistUserId: string, scheduleId: string, actorUserId = therapistUserId) {
-    return this.updateScheduleForTherapist(therapistUserId, scheduleId, { status: 'INACTIVE' }, actorUserId);
+  async deactivateScheduleForTherapist(
+    therapistUserId: string,
+    scheduleId: string,
+    actorUserId = therapistUserId,
+  ) {
+    return this.updateScheduleForTherapist(
+      therapistUserId,
+      scheduleId,
+      { status: 'INACTIVE' },
+      actorUserId,
+    );
   }
 
   async createBlockedTime(therapistUserId: string, dto: CreateBlockedTimeDto) {
@@ -355,7 +395,8 @@ export class SchedulingService {
     if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime()) || endAt <= startAt)
       throw new BadRequestException({
         code: 'BLOCK_INVALID_RANGE',
-        message: 'El bloqueo debe tener una fecha/hora inicial y final válida, y la final debe ser mayor.',
+        message:
+          'El bloqueo debe tener una fecha/hora inicial y final válida, y la final debe ser mayor.',
       });
     return this.blockedModel.sequelize!.transaction(async (transaction) => {
       const blocked = await this.blockedModel.create(
@@ -382,7 +423,9 @@ export class SchedulingService {
     });
   }
 
-  private normalizeAvailabilityQuery(query: AvailabilityQueryDto | Record<string, unknown>): NormalizedAvailabilityQuery {
+  private normalizeAvailabilityQuery(
+    query: AvailabilityQueryDto | Record<string, unknown>,
+  ): NormalizedAvailabilityQuery {
     const source = query as Record<string, unknown>;
     const therapistUserId = firstNonEmptyString(source, [
       'therapistUserId',
@@ -398,9 +441,23 @@ export class SchedulingService {
       'serviceId',
       'servicioId',
     ]);
-    const from = normalizeIsoDate(firstNonEmptyString(source, ['from', 'startDate', 'start', 'dateFrom', 'fechaDesde', 'fecha']));
-    const to = normalizeIsoDate(firstNonEmptyString(source, ['to', 'endDate', 'end', 'dateTo', 'fechaHasta'])) ?? from;
-    const timezone = normalizeTimezone(firstNonEmptyString(source, ['timezone', 'timeZone', 'tz', 'zonaHoraria']));
+    const from = normalizeIsoDate(
+      firstNonEmptyString(source, [
+        'from',
+        'startDate',
+        'start',
+        'dateFrom',
+        'fechaDesde',
+        'fecha',
+      ]),
+    );
+    const to =
+      normalizeIsoDate(
+        firstNonEmptyString(source, ['to', 'endDate', 'end', 'dateTo', 'fechaHasta']),
+      ) ?? from;
+    const timezone = normalizeTimezone(
+      firstNonEmptyString(source, ['timezone', 'timeZone', 'tz', 'zonaHoraria']),
+    );
 
     const details: string[] = [];
     if (!therapistUserId) details.push('therapistUserId es requerido.');
@@ -417,12 +474,19 @@ export class SchedulingService {
     if (details.length) {
       throw new BadRequestException({
         code: 'AVAILABILITY_QUERY_INVALID',
-        message: 'No se pudo consultar disponibilidad porque faltan datos obligatorios o algún valor no es válido.',
+        message:
+          'No se pudo consultar disponibilidad porque faltan datos obligatorios o algún valor no es válido.',
         details,
       });
     }
 
-    return { therapistUserId: therapistUserId!, productId: productId!, from: from!, to: to!, timezone };
+    return {
+      therapistUserId: therapistUserId!,
+      productId: productId!,
+      from: from!,
+      to: to!,
+      timezone,
+    };
   }
 
   async getAvailability(rawQuery: AvailabilityQueryDto | Record<string, unknown>) {
@@ -525,7 +589,21 @@ export class SchedulingService {
     return { therapistUserId: query.therapistUserId, productId: query.productId, slots };
   }
 
-  async isSlotAvailable(therapistUserId: string, startAt: Date, endAt: Date) {
+  /**
+   * Check whether a therapist slot is free.
+   *
+   * When called with a `transaction` (pessimistic mode), both queries use
+   * SELECT … FOR UPDATE so that concurrent bookings for the same slot are
+   * serialised at the database level and cannot produce a double-booking.
+   */
+  async isSlotAvailable(
+    therapistUserId: string,
+    startAt: Date,
+    endAt: Date,
+    transaction?: Transaction,
+  ): Promise<boolean> {
+    const lockOpts = transaction ? { transaction, lock: Transaction.LOCK.UPDATE } : {};
+
     const appointment = await this.appointmentModel.findOne({
       where: {
         therapistUserId,
@@ -533,6 +611,7 @@ export class SchedulingService {
         scheduledStartAt: { [Op.lt]: endAt },
         scheduledEndAt: { [Op.gt]: startAt },
       } as any,
+      ...lockOpts,
     });
     const block = await this.blockedModel.findOne({
       where: {
@@ -541,6 +620,7 @@ export class SchedulingService {
         startAt: { [Op.lt]: endAt },
         endAt: { [Op.gt]: startAt },
       },
+      ...lockOpts,
     });
     return !appointment && !block;
   }

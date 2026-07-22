@@ -30,7 +30,32 @@ async function bootstrap() {
   app.set('trust proxy', config.get<number>('app.trustProxyHops') ?? 1);
   app.useBodyParser('json', { limit: bodyLimit });
   app.useBodyParser('urlencoded', { extended: true, limit: bodyLimit });
-  app.use(helmet());
+  const allowedImgSrc = [
+    "'self'",
+    'data:',
+    'blob:',
+    'https://storage.googleapis.com',
+    'https://res.cloudinary.com',
+  ];
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: allowedImgSrc,
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'", 'data:'],
+          frameSrc: ["'none'"],
+          objectSrc: ["'none'"],
+          upgradeInsecureRequests: [],
+        },
+      },
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
   app.enableCors({
     origin: corsOrigins,
     credentials: true,
@@ -40,23 +65,20 @@ async function bootstrap() {
     maxAge: 600,
   });
   app.setGlobalPrefix(apiPrefix, {
-    // The health controller remains available at /health for ingress and orchestration probes.
     exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
 
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted:
-        process.env.NODE_ENV === 'production' ||
-        process.env.VALIDATION_FORBID_NON_WHITELISTED === 'true',
+      forbidNonWhitelisted: true,
       forbidUnknownValues: true,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
       exceptionFactory: (errors) =>
         new BadRequestException({
           code: 'VALIDATION_ERROR',
-          message: 'La solicitud contiene datos con un formato inválido.',
+          message: 'La solicitud contiene datos con un formato invalido.',
           details: errors.map((error) => ({
             field: error.property,
             constraints: error.constraints ?? {},
@@ -73,8 +95,8 @@ async function bootstrap() {
 
   if (config.get<boolean>('app.swaggerEnabled')) {
     const swaggerConfiguration = new DocumentBuilder()
-      .setTitle('Corazón Migrante API')
-      .setDescription('API /api/v1 para Corazón Migrante')
+      .setTitle('Corazon Migrante API')
+      .setDescription('API /api/v1 para Corazon Migrante')
       .setVersion('1.0.0')
       .addBearerAuth()
       .build();

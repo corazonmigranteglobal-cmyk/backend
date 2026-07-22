@@ -1,4 +1,10 @@
-import { AdsCampaign, AdsCampaignContentTarget, AdsCampaignCreative, AdsCompany, AdsPlacement } from '@/database/models';
+import {
+  AdsCampaign,
+  AdsCampaignContentTarget,
+  AdsCampaignCreative,
+  AdsCompany,
+  AdsPlacement,
+} from '@/database/models';
 
 export function toAdsCompanyDto(company: AdsCompany) {
   return {
@@ -44,7 +50,6 @@ export function toAdsCreativeDto(creative: AdsCampaignCreative) {
     isPrimary: creative.isPrimary,
   };
 }
-
 
 export function toAdsContentTargetDto(target: AdsCampaignContentTarget) {
   return {

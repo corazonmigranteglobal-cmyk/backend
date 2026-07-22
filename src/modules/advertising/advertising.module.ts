@@ -13,7 +13,10 @@ import {
 } from '@/database/models';
 import { AuditModule } from '../audit/audit.module';
 import { AdminAdvertisingController } from './admin-advertising.controller';
-import { PublicAdvertisingAliasController, PublicAdvertisingController } from './public-advertising.controller';
+import {
+  PublicAdvertisingAliasController,
+  PublicAdvertisingController,
+} from './public-advertising.controller';
 import { AdvertisingCampaignsService } from './advertising-campaigns.service';
 import { AdvertisingCompaniesService } from './advertising-companies.service';
 import { AdvertisingCreativesService } from './advertising-creatives.service';
@@ -35,7 +38,11 @@ import { AdvertisingPublicService } from './advertising-public.service';
     ]),
     AuditModule,
   ],
-  controllers: [PublicAdvertisingController, PublicAdvertisingAliasController, AdminAdvertisingController],
+  controllers: [
+    PublicAdvertisingController,
+    PublicAdvertisingAliasController,
+    AdminAdvertisingController,
+  ],
   providers: [
     AdvertisingCampaignsService,
     AdvertisingCompaniesService,

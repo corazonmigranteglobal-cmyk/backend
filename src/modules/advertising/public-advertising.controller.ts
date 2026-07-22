@@ -25,7 +25,6 @@ export class PublicAdvertisingController {
   }
 }
 
-
 @ApiTags('Publicidad pública')
 @Public()
 @Controller('public/advertising')

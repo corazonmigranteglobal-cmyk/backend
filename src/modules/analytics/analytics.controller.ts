@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Permissions } from '@/common/decorators/permissions.decorator';
 import { Public } from '@/common/decorators/public.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -11,7 +12,9 @@ import { CreateUiEventDto } from './dto/ui-event.dto';
 @Public()
 export class AnalyticsController {
   constructor(private readonly service: AnalyticsService) {}
-  @Post('ui-events') track(@Body() dto: CreateUiEventDto) {
+  @Post('ui-events')
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
+  track(@Body() dto: CreateUiEventDto) {
     return this.service.trackUiEvent(dto);
   }
 }

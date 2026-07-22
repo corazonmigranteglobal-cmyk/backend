@@ -21,9 +21,7 @@ const SENSITIVE_KEYS = [
 
 function isSensitiveKey(key: string) {
   const normalizedKey = key.toLowerCase();
-  return SENSITIVE_KEYS.some((sensitiveKey) =>
-    normalizedKey.includes(sensitiveKey.toLowerCase()),
-  );
+  return SENSITIVE_KEYS.some((sensitiveKey) => normalizedKey.includes(sensitiveKey.toLowerCase()));
 }
 
 function truncateString(value: string) {
@@ -56,9 +54,7 @@ export function sanitizeForLog(value: unknown, depth = 0): unknown {
   if (depth >= MAX_DEPTH) return '[MaxDepth]';
 
   if (Array.isArray(value)) {
-    const items = value
-      .slice(0, MAX_ARRAY_ITEMS)
-      .map((item) => sanitizeForLog(item, depth + 1));
+    const items = value.slice(0, MAX_ARRAY_ITEMS).map((item) => sanitizeForLog(item, depth + 1));
     if (value.length > MAX_ARRAY_ITEMS) items.push(`[truncated:${value.length}]`);
     return items;
   }
