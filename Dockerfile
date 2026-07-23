@@ -27,9 +27,11 @@ COPY --from=builder /app/dist ./dist
 COPY src/database/migrations ./src/database/migrations
 COPY src/database/seeders ./src/database/seeders
 COPY src/database/sequelize-cli.config.cjs ./src/database/sequelize-cli.config.cjs
+COPY scripts/deploy-db.mjs ./scripts/deploy-db.mjs
 COPY .sequelizerc ./
 
 RUN mkdir -p storage/uploads storage/tmp
 
 EXPOSE 3003
-CMD ["node", "dist/main.js"]
+# Corre migraciones (db:deploy) y luego arranca la app — paridad con el start de Nixpacks.
+CMD ["sh", "-c", "node scripts/deploy-db.mjs && node dist/main.js"]
