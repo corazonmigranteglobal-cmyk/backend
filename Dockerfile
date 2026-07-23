@@ -2,8 +2,8 @@ FROM node:22-bookworm-slim AS deps
 WORKDIR /app
 
 RUN corepack enable && corepack prepare yarn@1.22.22 --activate
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+COPY package.json yarn.lock .yarnrc ./
+RUN yarn install --frozen-lockfile --production=false --network-concurrency 1 --network-timeout 600000
 
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app

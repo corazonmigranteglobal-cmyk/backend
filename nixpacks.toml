@@ -2,7 +2,11 @@
 NIXPACKS_NODE_VERSION = "22"
 
 [phases.install]
-cmds = ["corepack enable", "corepack prepare yarn@1.22.22 --activate", "yarn install --frozen-lockfile"]
+cmds = [
+  "corepack enable",
+  "corepack prepare yarn@1.22.22 --activate",
+  "yarn install --frozen-lockfile --production=false --network-concurrency 1 --network-timeout 600000"
+]
 
 [phases.build]
 cmds = ["yarn build"]
