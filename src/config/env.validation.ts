@@ -265,4 +265,7 @@ export const envValidationSchema = Joi.object({
   }
 
   return environment;
-});
+})
+  // Sin esto, Joi imprime "failed custom validation because " y descarta el
+  // texto que pasamos en `{ message }`, dejando el error de config indiagnosticable.
+  .messages({ 'any.custom': '{{#message}}' });
