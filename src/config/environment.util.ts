@@ -48,6 +48,24 @@ export function parseEnvironmentList(value?: string): string[] {
 }
 
 /**
+ * Parses the CORS allow-list and, in production, keeps only real HTTPS origins.
+ * Development origins (localhost / http) are dropped instead of reaching the
+ * browser CORS middleware, mirroring the env validation rules.
+ */
+export function parseCorsOrigins(value?: string, options?: { production?: boolean }): string[] {
+  const origins = parseEnvironmentList(value);
+  if (!options?.production) return origins;
+
+  return origins.filter((origin) => {
+    try {
+      return new URL(origin).protocol === 'https:';
+    } catch {
+      return false;
+    }
+  });
+}
+
+/**
  * Decodes an optional Base64 UTF-8 value and fails early when it is malformed.
  */
 export function decodeOptionalBase64(

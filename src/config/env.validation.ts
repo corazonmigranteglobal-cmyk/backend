@@ -150,26 +150,30 @@ export const envValidationSchema = Joi.object({
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-  if (production && corsOrigins.length === 0) {
-    return helpers.error('any.custom', {
-      message: 'CORS_ORIGINS must contain an explicit production allow-list.',
-    });
-  }
-
+  const productionOrigins: string[] = [];
   for (const origin of corsOrigins) {
     if (origin === '*') {
       return helpers.error('any.custom', { message: 'CORS_ORIGINS cannot contain a wildcard.' });
     }
+    let parsedOrigin: URL;
     try {
-      const parsedOrigin = new URL(origin);
-      if (production && parsedOrigin.protocol !== 'https:') {
-        return helpers.error('any.custom', {
-          message: `Production CORS origin must use HTTPS: ${origin}`,
-        });
-      }
+      parsedOrigin = new URL(origin);
     } catch {
       return helpers.error('any.custom', { message: `Invalid CORS origin: ${origin}` });
     }
+    // En produccion solo se admiten origenes HTTPS reales. Los de desarrollo
+    // (localhost / http) se ignoran en vez de tumbar el arranque, para que un
+    // .env que arrastra origenes locales no deje la app en bucle de reinicios.
+    if (production && parsedOrigin.protocol !== 'https:') {
+      continue;
+    }
+    productionOrigins.push(origin);
+  }
+
+  if (production && productionOrigins.length === 0) {
+    return helpers.error('any.custom', {
+      message: 'CORS_ORIGINS must contain at least one HTTPS production origin.',
+    });
   }
 
   if (production && new URL(environment.PUBLIC_BASE_URL).protocol !== 'https:') {

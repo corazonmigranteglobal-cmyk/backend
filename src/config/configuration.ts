@@ -1,4 +1,4 @@
-import { decodeOptionalBase64, parseEnvironmentList } from './environment.util';
+import { decodeOptionalBase64, parseCorsOrigins } from './environment.util';
 import { resolveGoogleCredentials } from './google-credentials.config';
 import { resolveRedisConnection } from './redis.config';
 
@@ -18,7 +18,9 @@ export default () => {
       port: Number(process.env.PORT ?? 3000),
       apiPrefix: process.env.API_PREFIX ?? 'api/v1',
       name: process.env.APP_NAME ?? 'Corazon Migrante Backend',
-      corsOrigins: parseEnvironmentList(process.env.CORS_ORIGINS),
+      corsOrigins: parseCorsOrigins(process.env.CORS_ORIGINS, {
+        production: process.env.NODE_ENV === 'production',
+      }),
       bodyLimit: process.env.HTTP_BODY_LIMIT ?? '1mb',
       trustProxyHops: Number(process.env.TRUST_PROXY_HOPS ?? 1),
       swaggerEnabled:
