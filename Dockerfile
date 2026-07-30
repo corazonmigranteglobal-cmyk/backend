@@ -1,9 +1,14 @@
+# syntax=docker/dockerfile:1.7
 FROM node:22-bookworm-slim AS deps
 WORKDIR /app
 
 RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 COPY package.json yarn.lock .yarnrc ./
-RUN yarn install --frozen-lockfile --production=false --network-concurrency 1 --network-timeout 600000
+# Cache mount de BuildKit: los tarballs ya descargados persisten entre builds,
+# asi que la descarga serial lenta (network-concurrency 1) solo ocurre la 1a vez.
+RUN --mount=type=cache,target=/root/.yarn-cache \
+    yarn install --frozen-lockfile --production=false --network-concurrency 1 \
+    --network-timeout 600000 --cache-folder /root/.yarn-cache
 
 FROM node:22-bookworm-slim AS builder
 WORKDIR /app

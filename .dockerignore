@@ -3,6 +3,13 @@
 node_modules
 dist
 coverage
+# Artefactos pesados que no hacen falta para compilar la imagen.
+graphify-out
+scripts/graphify-query.ps1
+scripts/graphify-query.sh
+.claude
+.vscode
+*.md
 .env
 .env.*
 secrets
