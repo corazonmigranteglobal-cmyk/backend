@@ -1,6 +1,7 @@
 import { Op, WhereOptions } from 'sequelize';
 import { ContentPublication } from '@/database/models';
 import { getEffectiveSearch, getEffectiveStatusFilter } from '@/common/pagination/pagination.dto';
+import { containsPattern } from '@/common/utils/like.util';
 import { ContentPublicationQueryDto, PublicContentQueryDto } from './dto/content-query.dto';
 
 const ADMIN_PUBLICATION_STATUS_ALIASES: Record<string, string> = {
@@ -67,7 +68,7 @@ export function buildAdminPublicationWhere(
   if (query.publicationType) where.publicationType = query.publicationType;
   if (query.accessType) where.accessType = query.accessType;
   if (query.authorId) where.authorId = query.authorId;
-  if (search) where.title = { [Op.iLike]: `%${search}%` } as any;
+  if (search) where.title = { [Op.iLike]: containsPattern(search) } as any;
   applyPageSlugFilter(where, query.pageSlug);
   return where;
 }
@@ -82,7 +83,7 @@ export function buildPublicPublicationWhere(
   };
   const search = getEffectiveSearch(query);
   if (publicationType) where.publicationType = publicationTypeWhere(publicationType);
-  if (search) where.title = { [Op.iLike]: `%${search}%` } as any;
+  if (search) where.title = { [Op.iLike]: containsPattern(search) } as any;
   applyPageSlugFilter(where, query.pageSlug);
   return where;
 }

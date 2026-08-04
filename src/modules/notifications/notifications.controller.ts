@@ -14,7 +14,7 @@ import { Roles } from '@/common/decorators/roles.decorator';
 import { PaginationQueryDto } from '@/common/pagination/pagination.dto';
 import { NotificationsService } from './notifications.service';
 
-@ApiTags('Notifications')
+@ApiTags('Notificaciones')
 @ApiBearerAuth()
 @Roles('ADMIN', 'SUPER_ADMIN')
 @Controller('admin/notifications')

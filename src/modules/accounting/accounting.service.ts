@@ -187,6 +187,31 @@ export class AccountingService {
     const description = dto.description ?? `Venta por cita del ${date} (cita ${appointment.id})`;
 
     return this.txModel.sequelize!.transaction(async (transaction) => {
+      // Las comprobaciones anteriores son sólo para dar un error temprano y
+      // claro. La garantía real está aquí: se recarga la cita con FOR UPDATE
+      // dentro de la transacción, para que dos peticiones simultáneas no
+      // registren dos veces la misma venta.
+      const locked = await this.appointmentModel.findByPk(appointmentId, {
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
+      if (!locked)
+        throw new NotFoundException({
+          code: 'APPOINTMENT_NOT_FOUND',
+          message: 'Cita no encontrada.',
+        });
+      if (!locked.isPaid)
+        throw new BadRequestException({
+          code: 'APPOINTMENT_NOT_PAID',
+          message:
+            'Solo se pueden registrar como venta las citas que ya fueron marcadas como pagadas.',
+        });
+      if (locked.saleTransactionId)
+        throw new BadRequestException({
+          code: 'APPOINTMENT_SALE_ALREADY_REGISTERED',
+          message: 'Esta cita ya tiene una venta registrada en contabilidad.',
+        });
+
       const created = await this.txModel.create(
         {
           date,
@@ -216,7 +241,7 @@ export class AccountingService {
         ] as any,
         { transaction },
       );
-      await appointment.update({ saleTransactionId: created.id } as any, { transaction });
+      await locked.update({ saleTransactionId: created.id } as any, { transaction });
       await this.audit.log(
         {
           actorUserId,

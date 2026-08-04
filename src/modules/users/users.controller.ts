@@ -13,7 +13,7 @@ import {
   UpdateUserStatusDto,
 } from './dto/update-profile.dto';
 
-@ApiTags('Users')
+@ApiTags('Usuarios')
 @ApiBearerAuth()
 @Controller()
 export class UsersController {
@@ -93,7 +93,7 @@ export class UsersController {
 
   @Patch('admin/users/:userId/status')
   @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiOperation({ summary: '[Admin] Cambiar estado de usuario (ACTIVE/INACTIVE/SUSPENDED)' })
+  @ApiOperation({ summary: '[Admin] Cambiar estado de usuario (ACTIVE/INACTIVE/BLOCKED/PENDING)' })
   @ApiResponse({ status: 200, description: 'Estado actualizado.' })
   updateUserStatus(
     @CurrentUser() user: AuthenticatedUser,

@@ -15,7 +15,9 @@ export const envValidationSchema = Joi.object({
   HTTP_BODY_LIMIT: Joi.string().pattern(bodyLimitPattern).default('1mb'),
   TRUST_PROXY_HOPS: Joi.number().integer().min(0).max(10).default(1),
   SWAGGER_ENABLED: Joi.boolean().optional(),
-  VALIDATION_FORBID_NON_WHITELISTED: Joi.boolean().default(false),
+  // VALIDATION_FORBID_NON_WHITELISTED se retiró a propósito: la validación es
+  // estricta siempre. Hacerla configurable permitía reabrir por entorno el
+  // agujero de reserva de citas en nombre de otro paciente.
   LOG_LEVEL: Joi.string()
     .valid('fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent')
     .default('info'),
@@ -137,139 +139,173 @@ export const envValidationSchema = Joi.object({
   MAIL_REPLY_TO: Joi.string().email().allow('').optional(),
   SENDGRID_API_KEY: Joi.string().allow('').optional(),
 
+  // ---------------------------------------------------------------------
+  // OBSERVABILIDAD (OpenTelemetry -> OTLP -> Jaeger / Collector)
+  // Todas opcionales con defecto seguro: OTEL_ENABLED=false deja el backend
+  // funcionando exactamente igual que antes de introducir la telemetría.
+  // ---------------------------------------------------------------------
+  OTEL_ENABLED: Joi.boolean().default(false),
+  OTEL_SERVICE_NAME: Joi.string().trim().max(120).optional(),
+  OTEL_SERVICE_NAMESPACE: Joi.string().trim().max(120).optional(),
+  OTEL_SERVICE_VERSION: Joi.string().trim().max(60).optional(),
+  OTEL_DEPLOYMENT_ENVIRONMENT: Joi.string().trim().max(60).optional(),
+  OTEL_EXPORTER_OTLP_PROTOCOL: Joi.string().valid('http/protobuf').default('http/protobuf'),
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: Joi.string()
+    .uri({ scheme: ['http', 'https'] })
+    .default('http://localhost:4318/v1/traces'),
+  OTEL_EXPORT_TIMEOUT_MS: Joi.number().integer().min(1_000).max(60_000).default(10_000),
+  OTEL_TRACES_SAMPLER: Joi.string()
+    .valid(
+      'always_on',
+      'always_off',
+      'traceidratio',
+      'parentbased_always_on',
+      'parentbased_always_off',
+      'parentbased_traceidratio',
+    )
+    .default('parentbased_traceidratio'),
+  OTEL_TRACES_SAMPLER_ARG: Joi.number().min(0).max(1).default(1),
+  OTEL_PROPAGATORS: Joi.string().trim().default('tracecontext,baggage'),
+  OTEL_DIAG_LOG_LEVEL: Joi.string()
+    .valid('NONE', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'VERBOSE', 'ALL')
+    .default('ERROR'),
+  OTEL_EXCLUDED_URLS: Joi.string().allow('').optional(),
+  OTEL_SHUTDOWN_TIMEOUT_MS: Joi.number().integer().min(500).max(60_000).default(5_000),
+
   API_KEY: Joi.string().allow('').optional(),
   SOURCE_DATABASE_URL: Joi.string().allow('').optional(),
   NEON_BACKUP_DATABASE_URL: Joi.string().allow('').optional(),
   BACKUP_CONFIRM_REMOTE_NEON: Joi.boolean().optional(),
   BACKUP_REQUIRE_NEON_HOST: Joi.boolean().optional(),
   SMOKE_TEST_EMAIL: Joi.string().email().allow('').optional(),
-}).custom((environment, helpers) => {
-  const production = environment.NODE_ENV === 'production';
-  const corsOrigins = String(environment.CORS_ORIGINS ?? '')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+})
+  .custom((environment, helpers) => {
+    const production = environment.NODE_ENV === 'production';
+    const corsOrigins = String(environment.CORS_ORIGINS ?? '')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
 
-  const productionOrigins: string[] = [];
-  for (const origin of corsOrigins) {
-    if (origin === '*') {
-      return helpers.error('any.custom', { message: 'CORS_ORIGINS cannot contain a wildcard.' });
+    const productionOrigins: string[] = [];
+    for (const origin of corsOrigins) {
+      if (origin === '*') {
+        return helpers.error('any.custom', { message: 'CORS_ORIGINS cannot contain a wildcard.' });
+      }
+      let parsedOrigin: URL;
+      try {
+        parsedOrigin = new URL(origin);
+      } catch {
+        return helpers.error('any.custom', { message: `Invalid CORS origin: ${origin}` });
+      }
+      // En produccion solo se admiten origenes HTTPS reales. Los de desarrollo
+      // (localhost / http) se ignoran en vez de tumbar el arranque, para que un
+      // .env que arrastra origenes locales no deje la app en bucle de reinicios.
+      if (production && parsedOrigin.protocol !== 'https:') {
+        continue;
+      }
+      productionOrigins.push(origin);
     }
-    let parsedOrigin: URL;
-    try {
-      parsedOrigin = new URL(origin);
-    } catch {
-      return helpers.error('any.custom', { message: `Invalid CORS origin: ${origin}` });
-    }
-    // En produccion solo se admiten origenes HTTPS reales. Los de desarrollo
-    // (localhost / http) se ignoran en vez de tumbar el arranque, para que un
-    // .env que arrastra origenes locales no deje la app en bucle de reinicios.
-    if (production && parsedOrigin.protocol !== 'https:') {
-      continue;
-    }
-    productionOrigins.push(origin);
-  }
 
-  if (production && productionOrigins.length === 0) {
-    return helpers.error('any.custom', {
-      message: 'CORS_ORIGINS must contain at least one HTTPS production origin.',
-    });
-  }
-
-  if (production && new URL(environment.PUBLIC_BASE_URL).protocol !== 'https:') {
-    return helpers.error('any.custom', {
-      message: 'PUBLIC_BASE_URL must use HTTPS in production.',
-    });
-  }
-
-  if (production && String(environment.DATABASE_NAME).toLowerCase() === 'postgres') {
-    return helpers.error('any.custom', {
-      message:
-        'Production must use a dedicated database instead of the administrative postgres database.',
-    });
-  }
-
-  if (environment.DATABASE_POOL_MIN > environment.DATABASE_POOL_MAX) {
-    return helpers.error('any.custom', {
-      message: 'DATABASE_POOL_MIN cannot exceed DATABASE_POOL_MAX.',
-    });
-  }
-
-  if (environment.JWT_ACCESS_SECRET === environment.JWT_REFRESH_SECRET) {
-    return helpers.error('any.custom', {
-      message: 'JWT access and refresh secrets must be different.',
-    });
-  }
-
-  if (environment.OUTBOX_RETRY_BASE_DELAY_MS > environment.OUTBOX_RETRY_MAX_DELAY_MS) {
-    return helpers.error('any.custom', {
-      message: 'OUTBOX_RETRY_BASE_DELAY_MS cannot exceed OUTBOX_RETRY_MAX_DELAY_MS.',
-    });
-  }
-
-  if (environment.STORAGE_PROVIDER === 'GCS') {
-    if (!environment.GCS_BUCKET && !environment.GCS_BUCKET_NAME_USER_MEDIA) {
+    if (production && productionOrigins.length === 0) {
       return helpers.error('any.custom', {
-        message: 'Configure GCS_BUCKET or GCS_BUCKET_NAME_USER_MEDIA when STORAGE_PROVIDER=GCS.',
+        message: 'CORS_ORIGINS must contain at least one HTTPS production origin.',
       });
     }
 
-    const hasCanonicalCredentials = Boolean(environment.GOOGLE_CREDENTIALS_BASE64);
-    const usesApplicationDefaultCredentials = environment.GCS_USE_ADC === true;
-    const hasLegacyCredentials = Boolean(
-      environment.GOOGLE_APPLICATION_CREDENTIALS ||
-      environment.GOOGLE_APPLICATION_CREDENTIALS_JSON ||
-      environment.GOOGLE_APPLICATION_CREDENTIALS_BASE64 ||
-      environment.GOOGLE_CREDENTIALS_JSON ||
-      environment.GOOGLE_CREDENTIALS ||
-      environment.GOOGLE_SERVICE_ACCOUNT_BASE64 ||
-      environment.GCP_SERVICE_ACCOUNT_BASE64,
-    );
-
-    if (production && !hasCanonicalCredentials && !usesApplicationDefaultCredentials) {
+    if (production && new URL(environment.PUBLIC_BASE_URL).protocol !== 'https:') {
       return helpers.error('any.custom', {
-        message: 'Production GCS requires GOOGLE_CREDENTIALS_BASE64 or GCS_USE_ADC=true.',
+        message: 'PUBLIC_BASE_URL must use HTTPS in production.',
       });
     }
+
+    if (production && String(environment.DATABASE_NAME).toLowerCase() === 'postgres') {
+      return helpers.error('any.custom', {
+        message:
+          'Production must use a dedicated database instead of the administrative postgres database.',
+      });
+    }
+
+    if (environment.DATABASE_POOL_MIN > environment.DATABASE_POOL_MAX) {
+      return helpers.error('any.custom', {
+        message: 'DATABASE_POOL_MIN cannot exceed DATABASE_POOL_MAX.',
+      });
+    }
+
+    if (environment.JWT_ACCESS_SECRET === environment.JWT_REFRESH_SECRET) {
+      return helpers.error('any.custom', {
+        message: 'JWT access and refresh secrets must be different.',
+      });
+    }
+
+    if (environment.OUTBOX_RETRY_BASE_DELAY_MS > environment.OUTBOX_RETRY_MAX_DELAY_MS) {
+      return helpers.error('any.custom', {
+        message: 'OUTBOX_RETRY_BASE_DELAY_MS cannot exceed OUTBOX_RETRY_MAX_DELAY_MS.',
+      });
+    }
+
+    if (environment.STORAGE_PROVIDER === 'GCS') {
+      if (!environment.GCS_BUCKET && !environment.GCS_BUCKET_NAME_USER_MEDIA) {
+        return helpers.error('any.custom', {
+          message: 'Configure GCS_BUCKET or GCS_BUCKET_NAME_USER_MEDIA when STORAGE_PROVIDER=GCS.',
+        });
+      }
+
+      const hasCanonicalCredentials = Boolean(environment.GOOGLE_CREDENTIALS_BASE64);
+      const usesApplicationDefaultCredentials = environment.GCS_USE_ADC === true;
+      const hasLegacyCredentials = Boolean(
+        environment.GOOGLE_APPLICATION_CREDENTIALS ||
+        environment.GOOGLE_APPLICATION_CREDENTIALS_JSON ||
+        environment.GOOGLE_APPLICATION_CREDENTIALS_BASE64 ||
+        environment.GOOGLE_CREDENTIALS_JSON ||
+        environment.GOOGLE_CREDENTIALS ||
+        environment.GOOGLE_SERVICE_ACCOUNT_BASE64 ||
+        environment.GCP_SERVICE_ACCOUNT_BASE64,
+      );
+
+      if (production && !hasCanonicalCredentials && !usesApplicationDefaultCredentials) {
+        return helpers.error('any.custom', {
+          message: 'Production GCS requires GOOGLE_CREDENTIALS_BASE64 or GCS_USE_ADC=true.',
+        });
+      }
+      if (
+        !production &&
+        !hasCanonicalCredentials &&
+        !usesApplicationDefaultCredentials &&
+        !hasLegacyCredentials
+      ) {
+        return helpers.error('any.custom', {
+          message: 'GCS credentials are required when STORAGE_PROVIDER=GCS.',
+        });
+      }
+    }
+
     if (
-      !production &&
-      !hasCanonicalCredentials &&
-      !usesApplicationDefaultCredentials &&
-      !hasLegacyCredentials
+      environment.STORAGE_PROVIDER === 'CLOUDINARY' &&
+      (!environment.CLOUDINARY_CLOUD_NAME ||
+        !environment.CLOUDINARY_API_KEY ||
+        !environment.CLOUDINARY_API_SECRET)
     ) {
       return helpers.error('any.custom', {
-        message: 'GCS credentials are required when STORAGE_PROVIDER=GCS.',
+        message: 'Configure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.',
       });
     }
-  }
 
-  if (
-    environment.STORAGE_PROVIDER === 'CLOUDINARY' &&
-    (!environment.CLOUDINARY_CLOUD_NAME ||
-      !environment.CLOUDINARY_API_KEY ||
-      !environment.CLOUDINARY_API_SECRET)
-  ) {
-    return helpers.error('any.custom', {
-      message: 'Configure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.',
-    });
-  }
-
-  const emailProvider = environment.EMAIL_PROVIDER ?? environment.MAIL_PROVIDER ?? 'DEV_NULL';
-  if (emailProvider === 'SENDGRID') {
-    if (!(environment.EMAIL_FROM_EMAIL ?? environment.MAIL_FROM)) {
-      return helpers.error('any.custom', {
-        message: 'Configure EMAIL_FROM_EMAIL or MAIL_FROM when SendGrid is enabled.',
-      });
+    const emailProvider = environment.EMAIL_PROVIDER ?? environment.MAIL_PROVIDER ?? 'DEV_NULL';
+    if (emailProvider === 'SENDGRID') {
+      if (!(environment.EMAIL_FROM_EMAIL ?? environment.MAIL_FROM)) {
+        return helpers.error('any.custom', {
+          message: 'Configure EMAIL_FROM_EMAIL or MAIL_FROM when SendGrid is enabled.',
+        });
+      }
+      if (!environment.SENDGRID_API_KEY) {
+        return helpers.error('any.custom', {
+          message: 'Configure SENDGRID_API_KEY when SendGrid is enabled.',
+        });
+      }
     }
-    if (!environment.SENDGRID_API_KEY) {
-      return helpers.error('any.custom', {
-        message: 'Configure SENDGRID_API_KEY when SendGrid is enabled.',
-      });
-    }
-  }
 
-  return environment;
-})
+    return environment;
+  })
   // Sin esto, Joi imprime "failed custom validation because " y descarta el
   // texto que pasamos en `{ message }`, dejando el error de config indiagnosticable.
   .messages({ 'any.custom': '{{#message}}' });

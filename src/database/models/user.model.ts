@@ -13,6 +13,7 @@ import { PatientProfile } from './patient-profile.model';
 import { TherapistProfile } from './therapist-profile.model';
 import { AdminProfile } from './admin-profile.model';
 import { RefreshToken } from './refresh-token.model';
+import { ContentSubscriber } from './content-subscriber.model';
 
 @Table({ tableName: 'users', underscored: true, timestamps: true, paranoid: true })
 export class User extends Model<User> {
@@ -29,4 +30,7 @@ export class User extends Model<User> {
   @HasOne(() => TherapistProfile) therapistProfile?: TherapistProfile;
   @HasOne(() => AdminProfile) adminProfile?: AdminProfile;
   @HasMany(() => RefreshToken) refreshTokens?: RefreshToken[];
+  // Lado inverso de ContentSubscriber.@BelongsTo(User). Sin él no se puede
+  // filtrar el padrón de pacientes por estado de suscripción en SQL.
+  @HasOne(() => ContentSubscriber) contentSubscriber?: ContentSubscriber;
 }

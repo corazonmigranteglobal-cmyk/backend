@@ -6,7 +6,6 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
 import {
   BaseError as SequelizeBaseError,
   DatabaseError,
@@ -14,6 +13,9 @@ import {
   UniqueConstraintError,
   ValidationError as SequelizeValidationError,
 } from 'sequelize';
+import { markActiveSpanAsFailed } from '@/observability/trace-error.util';
+import { setTraceIdHeader } from '@/observability/trace-response.interceptor';
+import { resolveRequestId } from '../http/request-id';
 import { sanitizeForLog } from '../logging/log-sanitizer';
 
 interface NormalizedError {
@@ -31,9 +33,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
     const request = ctx.getRequest();
-    const requestId = request.headers['x-request-id'] ?? randomUUID();
+    const requestId = resolveRequestId(request.headers['x-request-id']);
 
     const normalized = this.normalize(exception);
+
+    // Punto único de marcado de errores en la traza: este filtro es el `@Catch()`
+    // global y por tanto también ve los errores de guards y pipes, que nunca
+    // llegan a los interceptores. No crea ni cierra spans.
+    markActiveSpanAsFailed(exception, normalized.status, normalized.code);
+
+    // Las rutas inexistentes (404) y los rechazos de guards (401/403) nunca
+    // pasan por los interceptores, así que la cabecera se fija también aquí:
+    // son justo los errores que un usuario acaba reportando a soporte.
+    setTraceIdHeader(response);
 
     const logPayload = JSON.stringify({
       event: 'HTTP_EXCEPTION_FILTER_CAUGHT',

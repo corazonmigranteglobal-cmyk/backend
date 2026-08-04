@@ -8,7 +8,7 @@ import { AuthenticatedUser } from '@/common/types/authenticated-user';
 import { CreateBlockedTimeDto, CreateScheduleDto, UpdateScheduleDto } from './dto/scheduling.dto';
 import { SchedulingService } from './scheduling.service';
 
-@ApiTags('Scheduling')
+@ApiTags('Agenda')
 @ApiBearerAuth()
 @Controller('therapists/me')
 @Roles('THERAPIST')
@@ -55,7 +55,7 @@ export class SchedulingController {
   }
 }
 
-@ApiTags('Admin scheduling')
+@ApiTags('Agenda')
 @ApiBearerAuth()
 @Controller('admin/therapists')
 @Roles('ADMIN', 'SUPER_ADMIN')
@@ -104,7 +104,7 @@ export class AdminSchedulingController {
   }
 }
 
-@ApiTags('Booking')
+@ApiTags('Agenda')
 @Controller('booking')
 @Public()
 export class BookingController {
@@ -112,8 +112,12 @@ export class BookingController {
 
   @Get('therapists')
   @Throttle({ default: { limit: 60, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Listar terapeutas disponibles (endpoint público)' })
-  @ApiResponse({ status: 200, description: 'Lista de terapeutas.' })
+  @ApiOperation({
+    summary: 'Listar terapeutas disponibles (endpoint público)',
+    description:
+      'Directorio anónimo y paginado. No expone el email ni datos de contacto del terapeuta. Acepta page/pageSize (máx. 100), search y productId.',
+  })
+  @ApiResponse({ status: 200, description: 'Lista paginada de terapeutas.' })
   listPublicTherapists(@Query() query: Record<string, unknown>) {
     return this.service.listPublicTherapists(query);
   }

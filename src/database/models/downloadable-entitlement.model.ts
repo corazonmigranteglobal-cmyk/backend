@@ -1,9 +1,15 @@
 import { Column, DataType, Model, Table } from 'sequelize-typescript';
 
-export type EntitlementSource = 'ADMIN_GRANT' | 'PREMIUM' | 'PURCHASE' | 'ROLE' | 'TEAM' | 'PROMOTION' | 'TEMPORARY';
+export type EntitlementSource =
+  'ADMIN_GRANT' | 'PREMIUM' | 'PURCHASE' | 'ROLE' | 'TEAM' | 'PROMOTION' | 'TEMPORARY';
 export type EntitlementStatus = 'ACTIVE' | 'REVOKED' | 'EXPIRED';
 
-@Table({ tableName: 'downloadable_entitlements', underscored: true, timestamps: false, paranoid: false })
+@Table({
+  tableName: 'downloadable_entitlements',
+  underscored: true,
+  timestamps: false,
+  paranoid: false,
+})
 export class DownloadableEntitlement extends Model<DownloadableEntitlement> {
   @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, primaryKey: true })
   id: string;
@@ -32,7 +38,12 @@ export class DownloadableEntitlement extends Model<DownloadableEntitlement> {
   @Column({ type: DataType.UUID, allowNull: true, field: 'granted_by' })
   grantedBy?: string | null;
 
-  @Column({ type: DataType.DATE, allowNull: false, defaultValue: DataType.NOW, field: 'granted_at' })
+  @Column({
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: DataType.NOW,
+    field: 'granted_at',
+  })
   grantedAt: Date;
 
   @Column({ type: DataType.DATE, allowNull: true, field: 'revoked_at' })

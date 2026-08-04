@@ -1,20 +1,10 @@
 import { Column, DataType, Model, Table } from 'sequelize-typescript';
 
 export type DownloadableVisibility =
-  | 'PUBLIC'
-  | 'PREMIUM'
-  | 'PRIVATE'
-  | 'PURCHASE_REQUIRED'
-  | 'UNLISTED';
+  'PUBLIC' | 'PREMIUM' | 'PRIVATE' | 'PURCHASE_REQUIRED' | 'UNLISTED';
 
 export type DownloadableStatus =
-  | 'DRAFT'
-  | 'IN_REVIEW'
-  | 'CHANGES_REQUESTED'
-  | 'APPROVED'
-  | 'PUBLISHED'
-  | 'ARCHIVED'
-  | 'REJECTED';
+  'DRAFT' | 'IN_REVIEW' | 'CHANGES_REQUESTED' | 'APPROVED' | 'PUBLISHED' | 'ARCHIVED' | 'REJECTED';
 
 @Table({
   tableName: 'downloadable_resources',
@@ -41,7 +31,12 @@ export class DownloadableResource extends Model<DownloadableResource> {
   @Column({ type: DataType.TEXT, allowNull: true })
   description?: string | null;
 
-  @Column({ type: DataType.STRING(60), allowNull: false, defaultValue: 'FILE', field: 'resource_type' })
+  @Column({
+    type: DataType.STRING(60),
+    allowNull: false,
+    defaultValue: 'FILE',
+    field: 'resource_type',
+  })
   resourceType: string;
 
   @Column({ type: DataType.STRING(120), allowNull: true })
@@ -77,7 +72,12 @@ export class DownloadableResource extends Model<DownloadableResource> {
   @Column({ type: DataType.STRING(128), allowNull: true })
   checksum?: string | null;
 
-  @Column({ type: DataType.STRING(40), allowNull: false, defaultValue: 'CLOUDINARY', field: 'storage_provider' })
+  @Column({
+    type: DataType.STRING(40),
+    allowNull: false,
+    defaultValue: 'CLOUDINARY',
+    field: 'storage_provider',
+  })
   storageProvider: string;
 
   @Column({ type: DataType.STRING(30), allowNull: false, defaultValue: 'DRAFT' })
@@ -86,10 +86,20 @@ export class DownloadableResource extends Model<DownloadableResource> {
   @Column({ type: DataType.STRING(30), allowNull: false, defaultValue: 'PUBLIC' })
   visibility: DownloadableVisibility;
 
-  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: false, field: 'requires_premium' })
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'requires_premium',
+  })
   requiresPremium: boolean;
 
-  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: false, field: 'requires_purchase' })
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'requires_purchase',
+  })
   requiresPurchase: boolean;
 
   @Column({ type: DataType.STRING(40), allowNull: true, field: 'commercial_provider' })
@@ -107,7 +117,12 @@ export class DownloadableResource extends Model<DownloadableResource> {
   @Column({ type: DataType.STRING(180), allowNull: true, field: 'external_reference' })
   externalReference?: string | null;
 
-  @Column({ type: DataType.STRING(40), allowNull: false, defaultValue: 'NONE', field: 'integration_status' })
+  @Column({
+    type: DataType.STRING(40),
+    allowNull: false,
+    defaultValue: 'NONE',
+    field: 'integration_status',
+  })
   integrationStatus: string;
 
   @Column({ type: DataType.TEXT, allowNull: true, field: 'integration_last_error' })

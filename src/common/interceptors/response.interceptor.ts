@@ -1,8 +1,18 @@
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
 import { Observable, catchError, map, throwError } from 'rxjs';
-import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
+import { resolveRequestId } from '../http/request-id';
 import { sanitizeForLog } from '../logging/log-sanitizer';
+
+/**
+ * Los cuerpos de petición/respuesta llevan datos clínicos y personales
+ * (perfiles de paciente, notas para el terapeuta, emails). Serializarlos en
+ * cada request es además el mayor coste de CPU del pipeline en listados de
+ * hasta 100 elementos, así que sólo se emiten cuando el nivel de log es debug.
+ */
+const VERBOSE_PAYLOAD_LOGGING = ['debug', 'trace'].includes(
+  (process.env.LOG_LEVEL ?? 'info').toLowerCase(),
+);
 
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {
@@ -12,7 +22,7 @@ export class ResponseInterceptor implements NestInterceptor {
     const http = context.switchToHttp();
     const request = http.getRequest<Request>();
     const response = http.getResponse<Response>();
-    const requestId = request.headers['x-request-id'] ?? randomUUID();
+    const requestId = resolveRequestId(request.headers['x-request-id']);
     const startedAt = Date.now();
     const handler = context.getHandler();
     const controller = context.getClass();
@@ -26,14 +36,18 @@ export class ResponseInterceptor implements NestInterceptor {
         controller: controller?.name,
         handler: handler?.name,
         ip: request.ip,
-        query: sanitizeForLog(request.query),
-        params: sanitizeForLog(request.params),
-        body: sanitizeForLog(request.body),
+        ...(VERBOSE_PAYLOAD_LOGGING
+          ? {
+              query: sanitizeForLog(request.query),
+              params: sanitizeForLog(request.params),
+              body: sanitizeForLog(request.body),
+            }
+          : {}),
       }),
     );
 
     // Expose the request ID as a response header so clients can correlate errors.
-    response.setHeader('X-Request-Id', Array.isArray(requestId) ? requestId[0] : requestId);
+    response.setHeader('X-Request-Id', requestId);
 
     return next.handle().pipe(
       map((value) => {
@@ -84,7 +98,7 @@ export class ResponseInterceptor implements NestInterceptor {
   private logResponse(
     request: Request,
     response: Response,
-    requestId: string | string[],
+    requestId: string,
     startedAt: number,
     payload: unknown,
   ) {
@@ -96,7 +110,7 @@ export class ResponseInterceptor implements NestInterceptor {
         url: request.originalUrl ?? request.url,
         statusCode: response.statusCode,
         durationMs: Date.now() - startedAt,
-        response: sanitizeForLog(payload),
+        ...(VERBOSE_PAYLOAD_LOGGING ? { response: sanitizeForLog(payload) } : {}),
       }),
     );
   }

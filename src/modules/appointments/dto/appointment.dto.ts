@@ -6,14 +6,12 @@ export class CreateAppointmentDto {
   @ApiProperty() @IsISO8601() scheduledStartAt: string;
   @ApiProperty({ example: 'America/La_Paz' }) @IsString() timezone: string;
   @ApiPropertyOptional() @IsOptional() @IsString() notesForTherapist?: string;
-  @ApiPropertyOptional({
-    description:
-      'Solo para booking asistido (ADMIN/SUPER_ADMIN/THERAPIST vía POST /appointments/admin): ID del paciente para el que se registra la cita.',
-  })
-  @IsOptional()
-  @IsUUID()
-  patientUserId?: string;
 }
+/**
+ * `patientUserId` sólo existe en el DTO de booking asistido. En el DTO de
+ * auto-reserva se rechaza por `forbidNonWhitelisted`, de forma que un paciente
+ * no puede registrar citas a nombre de otro usuario.
+ */
 export class CreateAppointmentForPatientDto extends CreateAppointmentDto {
   @ApiProperty({ description: 'ID del paciente para el que se registra la cita.' })
   @IsUUID()

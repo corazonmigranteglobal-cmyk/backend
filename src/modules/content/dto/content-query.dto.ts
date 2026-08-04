@@ -48,7 +48,13 @@ export class ContentPublicationQueryDto extends PaginationQueryDto {
   @IsIn(['NEWS', 'COLUMN', 'OPINION', 'INTERVIEW', 'REPORT', 'ANALYSIS'])
   publicationType?: string;
 
-  @ApiPropertyOptional({ enum: ['DRAFT', 'IN_REVIEW', 'SCHEDULED', 'PUBLISHED', 'ARCHIVED'] })
+  // El `example` se redeclara a propósito: sin él se hereda el de
+  // `PaginationQueryDto.status` (`ACTIVE`), que no pertenece a este enum y
+  // publicaba en el contrato un ejemplo que la API rechaza con 400.
+  @ApiPropertyOptional({
+    enum: ['DRAFT', 'IN_REVIEW', 'SCHEDULED', 'PUBLISHED', 'ARCHIVED'],
+    example: 'PUBLISHED',
+  })
   @IsOptional()
   @Transform(({ value }) => normalizePublicationStatus(value))
   @IsIn(['DRAFT', 'IN_REVIEW', 'SCHEDULED', 'PUBLISHED', 'ARCHIVED'])

@@ -6,6 +6,7 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
+  "setupFiles": ["<rootDir>/test/observability/otel-e2e.setup.ts"],
   "moduleNameMapper": {
     "^@/(.*)$": "<rootDir>/src/$1"
   }

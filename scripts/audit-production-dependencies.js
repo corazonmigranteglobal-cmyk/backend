@@ -5,10 +5,13 @@ const { spawnSync } = require('node:child_process');
 
 const blockedSeverities = new Set(['critical', 'high']);
 const findings = [];
+// En Windows hay que ejecutar `yarn.cmd` a traves del shell: desde Node 20.12
+// spawnSync rechaza los `.cmd` sin `shell: true` y devuelve EINVAL.
+const isWindows = process.platform === 'win32';
 const audit = spawnSync(
-  process.platform === 'win32' ? 'yarn.cmd' : 'yarn',
+  isWindows ? 'yarn.cmd' : 'yarn',
   ['audit', '--groups', 'dependencies', '--json'],
-  { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 },
+  { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024, shell: isWindows },
 );
 
 if (audit.error) {

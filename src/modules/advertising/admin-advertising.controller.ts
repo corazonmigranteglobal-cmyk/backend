@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
@@ -17,7 +17,7 @@ import { CreateAdsCompanyDto, UpdateAdsCompanyDto } from './dto/company.dto';
 import { CreateAdsAdDto, CreateAdsCreativeDto, UpdateAdsCreativeDto } from './dto/creative.dto';
 import { CreateAdsPlacementDto, UpdateAdsPlacementDto } from './dto/placement.dto';
 
-@ApiTags('Administración de publicidad')
+@ApiTags('Publicidad')
 @ApiBearerAuth()
 @Controller('admin/advertising')
 @Roles('ADMIN', 'SUPER_ADMIN')
@@ -30,16 +30,19 @@ export class AdminAdvertisingController {
   ) {}
 
   @Get('companies')
+  @ApiOperation({ summary: 'Listar empresas anunciantes' })
   listCompanies() {
     return this.companies.list();
   }
 
   @Post('companies')
+  @ApiOperation({ summary: 'Registrar una empresa anunciante' })
   createCompany(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAdsCompanyDto) {
     return this.companies.create(user.sub, dto);
   }
 
   @Patch('companies/:id')
+  @ApiOperation({ summary: 'Actualizar una empresa anunciante' })
   updateCompany(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -49,21 +52,25 @@ export class AdminAdvertisingController {
   }
 
   @Delete('companies/:id')
+  @ApiOperation({ summary: 'Dar de baja una empresa anunciante' })
   removeCompany(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.companies.remove(user.sub, id);
   }
 
   @Get('placements')
+  @ApiOperation({ summary: 'Listar emplazamientos publicitarios disponibles' })
   listPlacements() {
     return this.placements.list();
   }
 
   @Post('placements')
+  @ApiOperation({ summary: 'Crear un emplazamiento publicitario' })
   createPlacement(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAdsPlacementDto) {
     return this.placements.create(user.sub, dto);
   }
 
   @Patch('placements/:id')
+  @ApiOperation({ summary: 'Actualizar un emplazamiento publicitario' })
   updatePlacement(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -73,11 +80,13 @@ export class AdminAdvertisingController {
   }
 
   @Get('ads')
+  @ApiOperation({ summary: 'Listar creatividades del catálogo' })
   listAds() {
     return this.creatives.listAll();
   }
 
   @Post('ads')
+  @ApiOperation({ summary: 'Crear una creatividad' })
   async createAd(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAdsAdDto) {
     const {
       campaignId,
@@ -116,6 +125,7 @@ export class AdminAdvertisingController {
   }
 
   @Patch('ads/:id')
+  @ApiOperation({ summary: 'Actualizar una creatividad' })
   updateAd(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -125,26 +135,31 @@ export class AdminAdvertisingController {
   }
 
   @Delete('ads/:id')
+  @ApiOperation({ summary: 'Eliminar una creatividad' })
   removeAd(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.creatives.remove(user.sub, id);
   }
 
   @Get('campaigns')
+  @ApiOperation({ summary: 'Listar campañas publicitarias' })
   listCampaigns(@Query() query: AdvertisingQueryDto) {
     return this.campaigns.list(query);
   }
 
   @Post('campaigns')
+  @ApiOperation({ summary: 'Crear una campaña publicitaria' })
   createCampaign(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAdsCampaignDto) {
     return this.campaigns.create(user.sub, dto);
   }
 
   @Get('campaigns/:id')
+  @ApiOperation({ summary: 'Consultar el detalle de una campaña' })
   getCampaign(@Param('id') id: string) {
     return this.campaigns.get(id);
   }
 
   @Patch('campaigns/:id')
+  @ApiOperation({ summary: 'Actualizar una campaña publicitaria' })
   updateCampaign(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -154,11 +169,13 @@ export class AdminAdvertisingController {
   }
 
   @Delete('campaigns/:id')
+  @ApiOperation({ summary: 'Eliminar una campaña publicitaria' })
   removeCampaign(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.campaigns.remove(user.sub, id);
   }
 
   @Post('campaigns/:id/status')
+  @ApiOperation({ summary: 'Cambiar el estado de una campaña' })
   setCampaignStatus(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -168,11 +185,13 @@ export class AdminAdvertisingController {
   }
 
   @Get('campaigns/:campaignId/creatives')
+  @ApiOperation({ summary: 'Listar las creatividades asociadas a una campaña' })
   listCreatives(@Param('campaignId') campaignId: string) {
     return this.creatives.list(campaignId);
   }
 
   @Post('campaigns/:campaignId/creatives')
+  @ApiOperation({ summary: 'Asociar una creatividad a una campaña' })
   createCreative(
     @CurrentUser() user: AuthenticatedUser,
     @Param('campaignId') campaignId: string,
@@ -182,6 +201,7 @@ export class AdminAdvertisingController {
   }
 
   @Patch('creatives/:id')
+  @ApiOperation({ summary: 'Actualizar una creatividad de campaña' })
   updateCreative(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,

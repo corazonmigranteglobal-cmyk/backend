@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Permissions } from '@/common/decorators/permissions.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -13,55 +13,62 @@ import {
   CreateSaleFromAppointmentDto,
   CreateTransactionDto,
 } from './dto/accounting.dto';
-@ApiTags('Accounting')
+@ApiTags('Contabilidad')
 @ApiBearerAuth()
 @Controller('admin/accounting')
 @Roles('ACCOUNTANT', 'ADMIN', 'SUPER_ADMIN')
 export class AccountingController {
   constructor(private readonly service: AccountingService) {}
-  @Get('account-groups') @Permissions('accounting:read') listGroups(
-    @Query() q: PaginationQueryDto,
-  ) {
+  @ApiOperation({ summary: 'Listar grupos de cuentas contables' })
+  @Get('account-groups')
+  @Permissions('accounting:read')
+  listGroups(@Query() q: PaginationQueryDto) {
     return this.service.listGroups(q);
   }
-  @Post('account-groups') @Permissions('accounting:write') createGroup(
-    @CurrentUser() u: AuthenticatedUser,
-    @Body() dto: CreateAccountGroupDto,
-  ) {
+  @ApiOperation({ summary: 'Crear un grupo de cuentas contables' })
+  @Post('account-groups')
+  @Permissions('accounting:write')
+  createGroup(@CurrentUser() u: AuthenticatedUser, @Body() dto: CreateAccountGroupDto) {
     return this.service.createGroup(u.sub, dto);
   }
-  @Get('accounts') @Permissions('accounting:read') listAccounts(@Query() q: PaginationQueryDto) {
+  @ApiOperation({ summary: 'Listar cuentas del plan contable' })
+  @Get('accounts')
+  @Permissions('accounting:read')
+  listAccounts(@Query() q: PaginationQueryDto) {
     return this.service.listAccounts(q);
   }
-  @Post('accounts') @Permissions('accounting:write') createAccount(
-    @CurrentUser() u: AuthenticatedUser,
-    @Body() dto: CreateAccountDto,
-  ) {
+  @ApiOperation({ summary: 'Crear una cuenta en el plan contable' })
+  @Post('accounts')
+  @Permissions('accounting:write')
+  createAccount(@CurrentUser() u: AuthenticatedUser, @Body() dto: CreateAccountDto) {
     return this.service.createAccount(u.sub, dto);
   }
-  @Get('cost-centers') @Permissions('accounting:read') listCostCenters(
-    @Query() q: PaginationQueryDto,
-  ) {
+  @ApiOperation({ summary: 'Listar centros de coste' })
+  @Get('cost-centers')
+  @Permissions('accounting:read')
+  listCostCenters(@Query() q: PaginationQueryDto) {
     return this.service.listCostCenters(q);
   }
-  @Post('cost-centers') @Permissions('accounting:write') createCostCenter(
-    @CurrentUser() u: AuthenticatedUser,
-    @Body() dto: CreateCostCenterDto,
-  ) {
+  @ApiOperation({ summary: 'Crear un centro de coste' })
+  @Post('cost-centers')
+  @Permissions('accounting:write')
+  createCostCenter(@CurrentUser() u: AuthenticatedUser, @Body() dto: CreateCostCenterDto) {
     return this.service.createCostCenter(u.sub, dto);
   }
-  @Get('transactions') @Permissions('accounting:read') listTransactions(
-    @Query() q: PaginationQueryDto,
-  ) {
+  @ApiOperation({ summary: 'Listar transacciones contables' })
+  @Get('transactions')
+  @Permissions('accounting:read')
+  listTransactions(@Query() q: PaginationQueryDto) {
     return this.service.listTransactions(q);
   }
-  @Post('transactions') @Permissions('accounting:write') createTransaction(
-    @CurrentUser() u: AuthenticatedUser,
-    @Body() dto: CreateTransactionDto,
-  ) {
+  @ApiOperation({ summary: 'Registrar una transacción contable con sus asientos' })
+  @Post('transactions')
+  @Permissions('accounting:write')
+  createTransaction(@CurrentUser() u: AuthenticatedUser, @Body() dto: CreateTransactionDto) {
     return this.service.createTransaction(u.sub, dto);
   }
   @Post('transactions/from-appointment/:appointmentId')
+  @ApiOperation({ summary: 'Generar el asiento contable de una cita atendida' })
   @Permissions('accounting:write')
   createSaleFromAppointment(
     @CurrentUser() u: AuthenticatedUser,

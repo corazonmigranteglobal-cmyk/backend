@@ -6,8 +6,12 @@ services:
       POSTGRES_DB: corazon_migrante
       POSTGRES_USER: corazon
       POSTGRES_PASSWORD: corazon
+    # El puerto del host es configurable porque una instalación nativa de
+    # PostgreSQL en la máquina de desarrollo se queda con el 5432 y Docker no
+    # avisa del conflicto: publica el mapeo igualmente y las conexiones acaban
+    # en el servidor equivocado. Exporta `POSTGRES_HOST_PORT` para reubicarlo.
     ports:
-      - "5432:5432"
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -20,7 +24,7 @@ services:
     image: redis:7-alpine
     container_name: corazon_migrante_redis
     ports:
-      - "6379:6379"
+      - "${REDIS_HOST_PORT:-6379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s

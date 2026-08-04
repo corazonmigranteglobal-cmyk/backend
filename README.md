@@ -35,6 +35,7 @@ Swagger disponible en `http://localhost:<PORT>/api/docs`
 | SEEDING.md         | Estrategia de migraciones y seeds, arranque desde cero |
 | TRACKING.md        | Analítica de comportamiento (visits + UI events)       |
 | DESIGN.md          | Decisiones de arquitectura y trade-offs                |
+| docs/observability/ | Trazabilidad distribuida (OpenTelemetry → OTLP → Jaeger) |
 
 ## Variables de entorno clave
 
@@ -67,6 +68,11 @@ npx tsc --noEmit           # verificar tipos
 npx sequelize-cli db:migrate          # aplicar pendientes
 npx sequelize-cli db:migrate:undo     # revertir última
 npx sequelize-cli db:migrate:status   # ver estado
+
+# Observabilidad (trazas)
+yarn jaeger:up             # Jaeger local, UI en http://localhost:16686
+yarn verify:jaeger         # verificación end-to-end de una traza real
+yarn jaeger:down           # apagar
 ```
 
 ## Stack
@@ -78,6 +84,9 @@ npx sequelize-cli db:migrate:status   # ver estado
 - **JWT** — autenticación con refresh token rotativo
 - **Pino** — logging estructurado JSON
 - **Swagger/OpenAPI** — documentación automática de la API
+- **OpenTelemetry** — trazabilidad distribuida vía OTLP (Jaeger en desarrollo,
+  OpenTelemetry Collector en producción). Desactivada por defecto:
+  `OTEL_ENABLED=true` para habilitarla. Ver [docs/observability/](docs/observability/README.md)
 - **Jest + ts-jest** — pruebas unitarias
 
 ## Seguridad implementada

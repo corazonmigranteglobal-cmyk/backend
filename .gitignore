@@ -36,3 +36,5 @@ yarn-error.log*
 
 
 /graphify-out
+# Portal MkDocs generado (yarn docs:build)
+site/

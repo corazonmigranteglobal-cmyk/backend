@@ -1,6 +1,11 @@
 import { Column, DataType, Model, Table } from 'sequelize-typescript';
 
-@Table({ tableName: 'downloadable_resource_versions', underscored: true, timestamps: true, paranoid: false })
+@Table({
+  tableName: 'downloadable_resource_versions',
+  underscored: true,
+  timestamps: true,
+  paranoid: false,
+})
 export class DownloadableResourceVersion extends Model<DownloadableResourceVersion> {
   @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, primaryKey: true })
   id: string;

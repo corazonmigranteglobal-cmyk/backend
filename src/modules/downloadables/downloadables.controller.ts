@@ -13,6 +13,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { Public } from '@/common/decorators/public.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -31,7 +32,7 @@ import {
 } from './dto/downloadable.dto';
 
 // Administracion
-@ApiTags('Downloadables (admin)')
+@ApiTags('Descargables')
 @ApiBearerAuth()
 @Roles('ADMIN', 'SUPER_ADMIN')
 @Controller('admin/downloadables')
@@ -47,7 +48,11 @@ export class AdminDownloadablesController {
   @Get()
   @ApiOperation({ summary: '[Admin] Listar descargables' })
   list(@Query() query: PaginationQueryDto) {
-    return this.service.adminList(Number(query.page ?? 1), Number(query.pageSize ?? 20), query.search);
+    return this.service.adminList(
+      Number(query.page ?? 1),
+      Number(query.pageSize ?? 20),
+      query.search,
+    );
   }
 
   @Get('metrics')
@@ -109,43 +114,73 @@ export class AdminDownloadablesController {
 
   @Post(':id/versions/:versionId/submit-review')
   @ApiOperation({ summary: '[Admin] Enviar version a revision' })
-  submit(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string, @Param('versionId', ParseUUIDPipe) versionId: string) {
+  submit(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('versionId', ParseUUIDPipe) versionId: string,
+  ) {
     return this.service.submitReview(id, versionId, user.sub);
   }
 
   @Post(':id/versions/:versionId/approve')
   @ApiOperation({ summary: '[Admin] Aprobar version' })
-  approve(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string, @Param('versionId', ParseUUIDPipe) versionId: string) {
+  approve(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('versionId', ParseUUIDPipe) versionId: string,
+  ) {
     return this.service.approveVersion(id, versionId, user.sub);
   }
 
   @Post(':id/versions/:versionId/reject')
   @ApiOperation({ summary: '[Admin] Rechazar version' })
-  reject(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string, @Param('versionId', ParseUUIDPipe) versionId: string, @Body() dto: ReviewCommentDto) {
+  reject(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('versionId', ParseUUIDPipe) versionId: string,
+    @Body() dto: ReviewCommentDto,
+  ) {
     return this.service.rejectVersion(id, versionId, dto.comment, user.sub);
   }
 
   @Post(':id/versions/:versionId/request-changes')
   @ApiOperation({ summary: '[Admin] Solicitar cambios' })
-  requestChanges(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string, @Param('versionId', ParseUUIDPipe) versionId: string, @Body() dto: ReviewCommentDto) {
+  requestChanges(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('versionId', ParseUUIDPipe) versionId: string,
+    @Body() dto: ReviewCommentDto,
+  ) {
     return this.service.requestChanges(id, versionId, dto.comment, user.sub);
   }
 
   @Post(':id/versions/:versionId/publish')
   @ApiOperation({ summary: '[Admin] Publicar version (inmutable)' })
-  publish(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string, @Param('versionId', ParseUUIDPipe) versionId: string) {
+  publish(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('versionId', ParseUUIDPipe) versionId: string,
+  ) {
     return this.service.publishVersion(id, versionId, user.sub);
   }
 
   @Post(':id/versions/:versionId/restore')
   @ApiOperation({ summary: '[Admin] Restaurar version (crea nueva)' })
-  restore(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string, @Param('versionId', ParseUUIDPipe) versionId: string) {
+  restore(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('versionId', ParseUUIDPipe) versionId: string,
+  ) {
     return this.service.restoreVersion(id, versionId, user.sub);
   }
 
   @Post(':id/entitlements')
   @ApiOperation({ summary: '[Admin] Conceder acceso a un usuario' })
-  grant(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: GrantEntitlementDto) {
+  grant(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: GrantEntitlementDto,
+  ) {
     return this.service.grantEntitlement({
       resourceId: id,
       userId: dto.userId,
@@ -163,7 +198,7 @@ export class AdminDownloadablesController {
 }
 
 // Publicaciones
-@ApiTags('Publications downloadables')
+@ApiTags('Descargables')
 @Controller()
 export class PublicationDownloadablesController {
   constructor(private readonly service: DownloadablesService) {}
@@ -199,13 +234,16 @@ export class PublicationDownloadablesController {
   @Public()
   @Get('publications/:publicationId/downloadables')
   @ApiOperation({ summary: 'Descargables de una publicacion (con estado de acceso)' })
-  listForPublication(@Param('publicationId', ParseUUIDPipe) publicationId: string, @CurrentUser() user: AuthenticatedUser) {
+  listForPublication(
+    @Param('publicationId', ParseUUIDPipe) publicationId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.service.listForPublication(publicationId, user);
   }
 }
 
 // Usuario final
-@ApiTags('Downloadables')
+@ApiTags('Descargables')
 @Controller('downloadables')
 export class DownloadablesController {
   constructor(private readonly service: DownloadablesService) {}
@@ -226,14 +264,18 @@ export class DownloadablesController {
   @Get('me/history')
   @ApiOperation({ summary: 'Historial de descargas del usuario' })
   history(@CurrentUser() user: AuthenticatedUser, @Query() query: PaginationQueryDto) {
-    return this.service.downloadHistory(user.sub, Number(query.page ?? 1), Number(query.pageSize ?? 20));
+    return this.service.downloadHistory(
+      user.sub,
+      Number(query.page ?? 1),
+      Number(query.pageSize ?? 20),
+    );
   }
 
   @Public()
   @Get(':slug')
   @ApiOperation({ summary: 'Detalle publico (sin URL privada)' })
   async detail(@Param('slug') slug: string) {
-    const resource = await this.service.getBySlugOrFail(slug);
+    const resource = await this.service.getPublicBySlugOrFail(slug);
     return this.service.toPublicCard(resource);
   }
 
@@ -258,13 +300,16 @@ export class DownloadablesController {
 }
 
 // Webhook Hotmart
-@ApiTags('Hotmart webhook')
+@ApiTags('Descargables')
 @Controller('webhooks/hotmart')
 export class DownloadablesWebhookController {
   constructor(private readonly service: DownloadablesService) {}
 
   @Public()
   @Post()
+  // Endpoint anónimo que concede acceso pagado: se acota para que la firma no
+  // pueda sondearse a volumen desde una sola IP.
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
   @ApiOperation({ summary: 'Webhook de confirmacion de compra Hotmart (idempotente)' })
   handle(@Body() dto: HotmartNotificationDto, @Headers('x-hotmart-hottok') hottok: string) {
     return this.service.processHotmartNotification({

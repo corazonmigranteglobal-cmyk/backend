@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, Transaction } from 'sequelize';
+import { createHash } from 'node:crypto';
 import { DateTime, IANAZone } from 'luxon';
 import {
   Appointment,
@@ -12,6 +13,7 @@ import {
   TherapyProduct,
   User,
 } from '@/database/models';
+import { containsPattern } from '@/common/utils/like.util';
 import { AuditService } from '../audit/audit.service';
 import {
   AvailabilityQueryDto,
@@ -82,6 +84,34 @@ function normalizeTimezone(value?: string): string {
 
 function normalizeTime(value: string) {
   return value.length >= 5 ? value.slice(0, 5) : value;
+}
+
+/**
+ * Deriva la clave del advisory lock de agenda a partir del id del terapeuta.
+ *
+ * `pg_advisory_xact_lock` toma un bigint con signo, así que se toman 63 bits del
+ * SHA-256 del id. Las colisiones sólo harían que dos terapeutas compartan cola
+ * de reserva; nunca permiten una doble reserva.
+ */
+function agendaLockKey(therapistUserId: string): string {
+  const digest = createHash('sha256').update(`agenda:${therapistUserId}`).digest();
+  return (digest.readBigUInt64BE(0) & 0x7fff_ffff_ffff_ffffn).toString();
+}
+
+/**
+ * `GET /booking/*` recibe la query cruda (sin ValidationPipe) por compatibilidad
+ * con los aliases del frontend legacy, así que la paginación se acota aquí.
+ */
+function normalizePublicPaging(source: Record<string, unknown>) {
+  const rawPage = Number(firstNonEmptyString(source, ['page', 'p_page', 'pagina']) ?? 1);
+  const rawPageSize = Number(
+    firstNonEmptyString(source, ['pageSize', 'limit', 'p_limit', 'porPagina']) ?? 50,
+  );
+  const page = Number.isFinite(rawPage) ? Math.min(Math.max(Math.trunc(rawPage), 1), 1_000) : 1;
+  const pageSize = Number.isFinite(rawPageSize)
+    ? Math.min(Math.max(Math.trunc(rawPageSize), 1), 100)
+    : 50;
+  return { page, pageSize };
 }
 
 function compactScheduleDto(dto: CreateScheduleDto | UpdateScheduleDto) {
@@ -172,6 +202,13 @@ export class SchedulingService {
     return `${baseUrl}/${apiPrefix}/files/${fileId}/download`;
   }
 
+  /**
+   * Directorio público de terapeutas.
+   *
+   * Es un endpoint anónimo: no expone el email del terapeuta ni ningún otro
+   * dato de contacto. Búsqueda, filtro por producto y paginación se resuelven
+   * en SQL para que la respuesta no crezca con el tamaño del catálogo.
+   */
   async listPublicTherapists(rawQuery: Record<string, unknown> = {}) {
     const productId = firstNonEmptyString(rawQuery, [
       'productId',
@@ -180,15 +217,40 @@ export class SchedulingService {
       'serviceId',
     ]);
     const search = firstNonEmptyString(rawQuery, ['search', 'q', 'query']);
+    const { page, pageSize } = normalizePublicPaging(rawQuery);
 
-    const profiles = await this.therapistProfileModel.findAll({
+    let allowedTherapistIds: string[] | undefined;
+    if (productId && UUID_LIKE_PATTERN.test(productId)) {
+      const links = await this.therapistProductModel.findAll({
+        where: { productId, isActive: true } as any,
+        attributes: ['therapistUserId'],
+      });
+      if (links.length > 0) {
+        allowedTherapistIds = links.map((link) => link.therapistUserId);
+      }
+    }
+
+    const searchPattern = search ? containsPattern(search) : undefined;
+    const { rows: profiles, count } = await this.therapistProfileModel.findAndCountAll({
       where: {
         approvalStatus: { [Op.notIn]: ['REJECTED', 'SUSPENDED', 'INACTIVE'] },
+        ...(allowedTherapistIds ? { userId: { [Op.in]: allowedTherapistIds } } : {}),
+        ...(searchPattern
+          ? {
+              [Op.or]: [
+                { firstName: { [Op.iLike]: searchPattern } },
+                { lastName: { [Op.iLike]: searchPattern } },
+                { title: { [Op.iLike]: searchPattern } },
+                { mainSpecialty: { [Op.iLike]: searchPattern } },
+              ],
+            }
+          : {}),
       } as any,
       include: [
         {
           model: User,
           required: true,
+          attributes: ['id'],
           where: { status: 'ACTIVE' } as any,
         },
       ],
@@ -196,17 +258,10 @@ export class SchedulingService {
         ['lastName', 'ASC'],
         ['firstName', 'ASC'],
       ],
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+      distinct: true,
     });
-
-    let allowedTherapistIds: Set<string> | undefined;
-    if (productId && UUID_LIKE_PATTERN.test(productId)) {
-      const links = await this.therapistProductModel.findAll({
-        where: { productId, isActive: true } as any,
-      });
-      if (links.length > 0) {
-        allowedTherapistIds = new Set(links.map((link) => link.therapistUserId));
-      }
-    }
 
     const avatarIds = profiles.map((profile) => profile.avatarFileId).filter(Boolean) as string[];
     const avatarFiles = avatarIds.length
@@ -216,40 +271,36 @@ export class SchedulingService {
       : [];
     const avatarById = new Map(avatarFiles.map((file) => [file.id, file]));
 
-    const items = profiles
-      .filter((profile) => !allowedTherapistIds || allowedTherapistIds.has(profile.userId))
-      .map((profile) => {
-        const name = `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim() || 'Terapeuta';
-        const avatarFile = profile.avatarFileId ? avatarById.get(profile.avatarFileId) : undefined;
-        return {
-          id: profile.userId,
-          userId: profile.userId,
-          therapistUserId: profile.userId,
-          name,
-          email: profile.user?.email,
-          title: profile.title,
-          mainSpecialty: profile.mainSpecialty,
-          specialty: profile.mainSpecialty,
-          bio: profile.bio ?? '',
-          personalPhrase: profile.personalPhrase ?? '',
-          city: profile.city ?? '',
-          country: profile.country ?? '',
-          approvalStatus: profile.approvalStatus,
-          avatarFileId: profile.avatarFileId ?? null,
-          avatarUrl: this.buildFileUrl(profile.avatarFileId, avatarFile),
-          timezone: 'America/La_Paz',
-        };
-      })
-      .filter((item) => {
-        if (!search) return true;
-        const text =
-          `${item.name} ${item.email ?? ''} ${item.title ?? ''} ${item.specialty ?? ''}`.toLowerCase();
-        return text.includes(search.toLowerCase());
-      });
+    const items = profiles.map((profile) => {
+      const name = `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim() || 'Terapeuta';
+      const avatarFile = profile.avatarFileId ? avatarById.get(profile.avatarFileId) : undefined;
+      return {
+        id: profile.userId,
+        userId: profile.userId,
+        therapistUserId: profile.userId,
+        name,
+        title: profile.title,
+        mainSpecialty: profile.mainSpecialty,
+        specialty: profile.mainSpecialty,
+        bio: profile.bio ?? '',
+        personalPhrase: profile.personalPhrase ?? '',
+        city: profile.city ?? '',
+        country: profile.country ?? '',
+        approvalStatus: profile.approvalStatus,
+        avatarFileId: profile.avatarFileId ?? null,
+        avatarUrl: this.buildFileUrl(profile.avatarFileId, avatarFile),
+        timezone: 'America/La_Paz',
+      };
+    });
 
     return {
       items,
-      pagination: { page: 1, pageSize: items.length || 100, total: items.length, totalPages: 1 },
+      pagination: {
+        page,
+        pageSize,
+        total: count,
+        totalPages: Math.max(1, Math.ceil(count / pageSize)),
+      },
     };
   }
 
@@ -554,7 +605,11 @@ export class SchedulingService {
     ]);
     const unavailable: UnavailableInterval[] = [...appointments, ...blocks];
 
-    const duration = Number(product.durationMinutes || 60);
+    // El cursor de slots avanza `duration` minutos por iteración: una duración
+    // no positiva (dato corrupto en el catálogo) haría que el bucle no avance
+    // nunca y colgaría el proceso atendiendo una petición pública.
+    const rawDuration = Number(product.durationMinutes);
+    const duration = Number.isFinite(rawDuration) && rawDuration > 0 ? Math.trunc(rawDuration) : 60;
     const slots: { startAt: string; endAt: string; timezone: string }[] = [];
     for (let day = from; day <= to; day = day.plus({ days: 1 })) {
       const jsWeekday = day.weekday % 7;
@@ -590,11 +645,14 @@ export class SchedulingService {
   }
 
   /**
-   * Check whether a therapist slot is free.
+   * Comprueba si un hueco del terapeuta está libre.
    *
-   * When called with a `transaction` (pessimistic mode), both queries use
-   * SELECT … FOR UPDATE so that concurrent bookings for the same slot are
-   * serialised at the database level and cannot produce a double-booking.
+   * Cuando se llama con `transaction` primero se toma un advisory lock sobre el
+   * terapeuta. `SELECT … FOR UPDATE` NO sirve aquí: bloquea las filas que
+   * existen, y el caso a evitar es justo el contrario —dos transacciones
+   * concurrentes que no encuentran nada, ambas concluyen "libre" y ambas
+   * insertan—. El advisory lock serializa a los que reservan agenda del mismo
+   * terapeuta y se libera solo al terminar la transacción.
    */
   async isSlotAvailable(
     therapistUserId: string,
@@ -602,27 +660,44 @@ export class SchedulingService {
     endAt: Date,
     transaction?: Transaction,
   ): Promise<boolean> {
-    const lockOpts = transaction ? { transaction, lock: Transaction.LOCK.UPDATE } : {};
+    if (transaction) {
+      await this.acquireTherapistAgendaLock(therapistUserId, transaction);
+    }
 
-    const appointment = await this.appointmentModel.findOne({
-      where: {
-        therapistUserId,
-        status: ACTIVE_APPOINTMENT_STATUSES,
-        scheduledStartAt: { [Op.lt]: endAt },
-        scheduledEndAt: { [Op.gt]: startAt },
-      } as any,
-      ...lockOpts,
-    });
-    const block = await this.blockedModel.findOne({
-      where: {
-        therapistUserId,
-        status: 'ACTIVE',
-        startAt: { [Op.lt]: endAt },
-        endAt: { [Op.gt]: startAt },
-      },
-      ...lockOpts,
-    });
+    const [appointment, block] = await Promise.all([
+      this.appointmentModel.findOne({
+        where: {
+          therapistUserId,
+          status: ACTIVE_APPOINTMENT_STATUSES,
+          scheduledStartAt: { [Op.lt]: endAt },
+          scheduledEndAt: { [Op.gt]: startAt },
+        } as any,
+        transaction,
+      }),
+      this.blockedModel.findOne({
+        where: {
+          therapistUserId,
+          status: 'ACTIVE',
+          startAt: { [Op.lt]: endAt },
+          endAt: { [Op.gt]: startAt },
+        },
+        transaction,
+      }),
+    ]);
     return !appointment && !block;
+  }
+
+  /**
+   * Serializa las escrituras sobre la agenda de un terapeuta dentro de la
+   * transacción en curso. La clave es un entero de 64 bits derivado del UUID,
+   * que es lo que acepta `pg_advisory_xact_lock`.
+   */
+  private async acquireTherapistAgendaLock(therapistUserId: string, transaction: Transaction) {
+    const lockKey = agendaLockKey(therapistUserId);
+    await this.appointmentModel.sequelize!.query(
+      'SELECT pg_advisory_xact_lock(CAST(:lockKey AS bigint))',
+      { replacements: { lockKey }, transaction },
+    );
   }
 
   private overlapsAny(start: Date, end: Date, list: UnavailableInterval[]) {

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
@@ -19,6 +20,8 @@ import { DownloadablePublicationLink } from '@/database/models/downloadable-publ
 import { DownloadableExternalEvent } from '@/database/models/downloadable-external-event.model';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
+import { APP_ATTR } from '@/observability/telemetry.constants';
+import { TracingService } from '@/observability/tracing.service';
 import {
   CreateDownloadableDto,
   UpdateDownloadableDto,
@@ -43,6 +46,15 @@ export interface AccessDecision {
   checkoutUrl?: string;
 }
 
+/**
+ * Estado del usuario precalculado para evaluar un lote de recursos sin repetir
+ * consultas por cada uno.
+ */
+interface AccessContext {
+  hasActivePremium: boolean;
+  entitledResourceIds: Set<string>;
+}
+
 const REVIEW_TRANSITIONS: Record<string, string[]> = {
   DRAFT: ['IN_REVIEW'],
   IN_REVIEW: ['APPROVED', 'REJECTED', 'CHANGES_REQUESTED'],
@@ -65,6 +77,8 @@ function slugify(input: string): string {
 
 @Injectable()
 export class DownloadablesService {
+  private readonly logger = new Logger(DownloadablesService.name);
+
   constructor(
     @InjectModel(DownloadableResource)
     private readonly resourceModel: typeof DownloadableResource,
@@ -82,15 +96,30 @@ export class DownloadablesService {
     private readonly subscriberModel: typeof ContentSubscriber,
     private readonly hotmart: HotmartAdapter,
     private readonly notifications: NotificationsService,
+    private readonly tracing: TracingService,
   ) {}
 
-  private emit(type: string, resource: { id: string }, payload: Record<string, unknown> = {}): void {
-    void this.notifications.emit({
-      type,
-      entityType: 'DownloadableResource',
-      entityId: resource.id,
-      payload,
-    });
+  /**
+   * Emisión best-effort: el evento nunca debe tumbar la operación de negocio.
+   * Sin el `catch` el rechazo queda sin manejar y Node aborta el proceso.
+   */
+  private emit(
+    type: string,
+    resource: { id: string },
+    payload: Record<string, unknown> = {},
+  ): void {
+    void this.notifications
+      .emit({
+        type,
+        entityType: 'DownloadableResource',
+        entityId: resource.id,
+        payload,
+      })
+      .catch((error: unknown) => {
+        this.logger.error(
+          `No se pudo emitir el evento ${type}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      });
   }
 
   private async hasActivePremium(userId?: string): Promise<boolean> {
@@ -116,11 +145,81 @@ export class DownloadablesService {
     return Boolean(ent);
   }
 
+  /**
+   * Precalcula, con dos consultas, todo lo que hace falta para decidir el
+   * acceso de un usuario a un conjunto de recursos. Sin esto cada recurso de un
+   * listado disparaba sus propias consultas de premium y de entitlement.
+   */
+  private async buildAccessContext(
+    resourceIds: string[],
+    user?: AuthenticatedUser,
+  ): Promise<AccessContext> {
+    if (!user?.sub || !resourceIds.length) {
+      return { hasActivePremium: false, entitledResourceIds: new Set() };
+    }
+
+    const now = new Date();
+    const [hasActivePremium, entitlements] = await Promise.all([
+      this.hasActivePremium(user.sub),
+      this.entitlementModel.findAll({
+        where: {
+          resourceId: { [Op.in]: [...new Set(resourceIds)] },
+          userId: user.sub,
+          status: 'ACTIVE',
+          [Op.or]: [{ expiresAt: null }, { expiresAt: { [Op.gt]: now } }],
+        },
+        attributes: ['resourceId'],
+      }),
+    ]);
+
+    return {
+      hasActivePremium,
+      entitledResourceIds: new Set(entitlements.map((entitlement) => entitlement.resourceId)),
+    };
+  }
+
+  /**
+   * `downloadable.evaluate-access` explica por qué un usuario obtuvo o no un
+   * recurso: la decisión combina visibilidad, entitlements, premium y Hotmart, y
+   * es la fuente habitual de incidencias de soporte.
+   */
   async evaluateAccess(
     resource: DownloadableResource,
     user?: AuthenticatedUser,
+    context?: AccessContext,
+  ): Promise<AccessDecision> {
+    return this.tracing.runInSpan(
+      'downloadable.evaluate-access',
+      {
+        [APP_ATTR.module]: 'downloadables',
+        [APP_ATTR.operation]: 'evaluate-access',
+        [APP_ATTR.entityType]: 'downloadable-resource',
+        [APP_ATTR.entityId]: resource.id,
+        'app.downloadable.visibility': resource.visibility,
+      },
+      async (span) => {
+        const decision = await this.decideAccess(resource, user, context);
+        span.setAttributes({
+          [APP_ATTR.result]: decision.allowed ? 'granted' : 'denied',
+          'app.downloadable.action': decision.action,
+        });
+        return decision;
+      },
+    );
+  }
+
+  private async decideAccess(
+    resource: DownloadableResource,
+    user?: AuthenticatedUser,
+    context?: AccessContext,
   ): Promise<AccessDecision> {
     const isAdmin = (user?.roles ?? []).some((r) => ['ADMIN', 'SUPER_ADMIN'].includes(r));
+    const isEntitled = context
+      ? async () => context.entitledResourceIds.has(resource.id)
+      : () => this.hasActiveEntitlement(resource.id, user?.sub);
+    const isPremium = context
+      ? async () => context.hasActivePremium
+      : () => this.hasActivePremium(user?.sub);
 
     if (resource.status !== 'PUBLISHED' && !isAdmin) {
       return { allowed: false, action: 'NOT_AVAILABLE', reason: 'Recurso no publicado' };
@@ -137,30 +236,36 @@ export class DownloadablesService {
         return { allowed: true, action: 'DIRECT_DOWNLOAD' };
 
       case 'PREMIUM': {
-        if (!user) return { allowed: false, action: 'LOGIN_REQUIRED', reason: 'Requiere iniciar sesion' };
-        if (await this.hasActiveEntitlement(resource.id, user.sub)) {
+        if (!user)
+          return { allowed: false, action: 'LOGIN_REQUIRED', reason: 'Requiere iniciar sesion' };
+        if (await isEntitled()) {
           return { allowed: true, action: 'PREMIUM_DOWNLOAD' };
         }
-        const premium = await this.hasActivePremium(user.sub);
-        return premium
+        return (await isPremium())
           ? { allowed: true, action: 'PREMIUM_DOWNLOAD' }
           : { allowed: false, action: 'UPGRADE_REQUIRED', reason: 'Requiere membresia premium' };
       }
 
       case 'PRIVATE': {
-        if (!user) return { allowed: false, action: 'LOGIN_REQUIRED', reason: 'Requiere iniciar sesion' };
-        return (await this.hasActiveEntitlement(resource.id, user.sub))
+        if (!user)
+          return { allowed: false, action: 'LOGIN_REQUIRED', reason: 'Requiere iniciar sesion' };
+        return (await isEntitled())
           ? { allowed: true, action: 'DIRECT_DOWNLOAD' }
           : { allowed: false, action: 'NOT_AVAILABLE', reason: 'Recurso privado' };
       }
 
       case 'PURCHASE_REQUIRED': {
-        if (user && (await this.hasActiveEntitlement(resource.id, user.sub))) {
+        if (user && (await isEntitled())) {
           return { allowed: true, action: 'HOTMART_PRODUCT_ACCESS' };
         }
         const checkoutUrl = resource.hotmartCheckoutUrl ?? undefined;
         if (resource.hotmartProductId && checkoutUrl) {
-          return { allowed: false, action: 'HOTMART_CHECKOUT', reason: 'Requiere compra', checkoutUrl };
+          return {
+            allowed: false,
+            action: 'HOTMART_CHECKOUT',
+            reason: 'Requiere compra',
+            checkoutUrl,
+          };
         }
         return { allowed: false, action: 'NOT_AVAILABLE', reason: 'Requiere compra' };
       }
@@ -248,7 +353,11 @@ export class DownloadablesService {
     return resource;
   }
 
-  async update(id: string, dto: UpdateDownloadableDto, actorId?: string): Promise<DownloadableResource> {
+  async update(
+    id: string,
+    dto: UpdateDownloadableDto,
+    actorId?: string,
+  ): Promise<DownloadableResource> {
     const resource = await this.getByIdOrFail(id);
     if (resource.status === 'PUBLISHED') {
       throw new BadRequestException(
@@ -345,17 +454,25 @@ export class DownloadablesService {
     return version;
   }
 
-  submitReview(resourceId: string, versionId: string, actorId?: string) {
-    void this.emit('DownloadableSubmittedForReview', { id: resourceId }, {});
-    return this.transitionVersion(resourceId, versionId, 'IN_REVIEW', { actorId });
+  // El evento se emite DESPUÉS de que la transición se valide y persista: si la
+  // transición es inválida no debe quedar rastro de una revisión que no ocurrió.
+  async submitReview(resourceId: string, versionId: string, actorId?: string) {
+    const version = await this.transitionVersion(resourceId, versionId, 'IN_REVIEW', { actorId });
+    this.emit('DownloadableSubmittedForReview', { id: resourceId }, {});
+    return version;
   }
-  approveVersion(resourceId: string, versionId: string, actorId?: string) {
-    void this.emit('DownloadableApproved', { id: resourceId }, {});
-    return this.transitionVersion(resourceId, versionId, 'APPROVED', { actorId });
+  async approveVersion(resourceId: string, versionId: string, actorId?: string) {
+    const version = await this.transitionVersion(resourceId, versionId, 'APPROVED', { actorId });
+    this.emit('DownloadableApproved', { id: resourceId }, {});
+    return version;
   }
-  rejectVersion(resourceId: string, versionId: string, comment?: string, actorId?: string) {
-    void this.emit('DownloadableRejected', { id: resourceId }, {});
-    return this.transitionVersion(resourceId, versionId, 'REJECTED', { comment, actorId });
+  async rejectVersion(resourceId: string, versionId: string, comment?: string, actorId?: string) {
+    const version = await this.transitionVersion(resourceId, versionId, 'REJECTED', {
+      comment,
+      actorId,
+    });
+    this.emit('DownloadableRejected', { id: resourceId }, {});
+    return version;
   }
   requestChanges(resourceId: string, versionId: string, comment?: string, actorId?: string) {
     return this.transitionVersion(resourceId, versionId, 'CHANGES_REQUESTED', { comment, actorId });
@@ -366,7 +483,10 @@ export class DownloadablesService {
     if (version.status !== 'APPROVED') {
       throw new BadRequestException('Solo se puede publicar una version aprobada');
     }
-    await version.update({ status: 'PUBLISHED', isPublished: true } as Partial<DownloadableResourceVersion>);
+    await version.update({
+      status: 'PUBLISHED',
+      isPublished: true,
+    } as Partial<DownloadableResourceVersion>);
     const resource = await this.getByIdOrFail(resourceId);
     await resource.update({
       status: 'PUBLISHED',
@@ -410,6 +530,24 @@ export class DownloadablesService {
     expiresAt?: Date;
   }): Promise<DownloadableEntitlement> {
     await this.getByIdOrFail(params.resourceId);
+    return this.upsertEntitlement(params);
+  }
+
+  /**
+   * Alta/reactivación del permiso. Se separa de `grantEntitlement` porque los
+   * flujos que ya tienen el recurso cargado (webhook de Hotmart) no deben
+   * volver a leerlo de la base por cada concesión.
+   */
+  private async upsertEntitlement(params: {
+    resourceId: string;
+    userId?: string;
+    subjectEmail?: string;
+    source?: DownloadableEntitlement['source'];
+    externalReference?: string;
+    externalTransaction?: string;
+    grantedBy?: string;
+    expiresAt?: Date;
+  }): Promise<DownloadableEntitlement> {
     const existing = params.userId
       ? await this.entitlementModel.findOne({
           where: {
@@ -421,7 +559,10 @@ export class DownloadablesService {
       : null;
     if (existing) {
       if (existing.status !== 'ACTIVE') {
-        await existing.update({ status: 'ACTIVE', revokedAt: null } as Partial<DownloadableEntitlement>);
+        await existing.update({
+          status: 'ACTIVE',
+          revokedAt: null,
+        } as Partial<DownloadableEntitlement>);
       }
       return existing;
     }
@@ -445,7 +586,10 @@ export class DownloadablesService {
       where: { resourceId, userId, externalReference: externalReference ?? null },
     });
     if (!ent) throw new NotFoundException('Entitlement no encontrado');
-    await ent.update({ status: 'REVOKED', revokedAt: new Date() } as Partial<DownloadableEntitlement>);
+    await ent.update({
+      status: 'REVOKED',
+      revokedAt: new Date(),
+    } as Partial<DownloadableEntitlement>);
     this.emit('PremiumAccessRevoked', { id: resourceId }, { userId });
     return ent;
   }
@@ -503,20 +647,47 @@ export class DownloadablesService {
       where: { id: { [Op.in]: links.map((l) => l.resourceId) }, status: 'PUBLISHED' },
     });
     const byId = new Map(resources.map((r) => [r.id, r]));
+    const context = await this.buildAccessContext(
+      resources.map((r) => r.id),
+      user,
+    );
     const out: Array<Record<string, unknown>> = [];
     for (const link of links) {
       const resource = byId.get(link.resourceId);
       if (!resource) continue;
-      const decision = await this.evaluateAccess(resource, user);
-      out.push({ ...this.toPublicCard(resource), label: link.label, isPrimary: link.isPrimary, access: decision });
+      const decision = await this.evaluateAccess(resource, user, context);
+      out.push({
+        ...this.toPublicCard(resource),
+        label: link.label,
+        isPrimary: link.isPrimary,
+        access: decision,
+      });
     }
     return out;
   }
 
   async processHotmartNotification(payload: HotmartPurchaseNotification) {
+    return this.tracing.runInSpan(
+      'downloadable.hotmart-notification',
+      {
+        [APP_ATTR.module]: 'downloadables',
+        [APP_ATTR.operation]: 'hotmart-notification',
+        [APP_ATTR.entityType]: 'external-event',
+        // `status` es un enum cerrado de Hotmart; el email del comprador y la
+        // firma del webhook nunca se registran.
+        [APP_ATTR.eventType]: payload.status,
+      },
+      () => this.applyHotmartNotification(payload),
+    );
+  }
+
+  private async applyHotmartNotification(payload: HotmartPurchaseNotification) {
     const verification = this.hotmart.verifyNotification(payload);
     if (!verification.valid) {
-      throw new ForbiddenException({ code: 'HOTMART_INVALID_SIGNATURE', reason: verification.reason });
+      throw new ForbiddenException({
+        code: 'HOTMART_INVALID_SIGNATURE',
+        reason: verification.reason,
+      });
     }
     const [event, created] = await this.externalEventModel.findOrCreate({
       where: { provider: 'HOTMART', eventId: payload.eventId },
@@ -540,7 +711,7 @@ export class DownloadablesService {
     let result = 'NO_MATCHING_RESOURCE';
     for (const resource of resources) {
       if (this.hotmart.grantsAccess(payload)) {
-        await this.grantEntitlement({
+        await this.upsertEntitlement({
           resourceId: resource.id,
           userId: payload.buyerUserId,
           subjectEmail: payload.buyerEmail,
@@ -573,12 +744,35 @@ export class DownloadablesService {
       limit: pageSize,
       offset: (page - 1) * pageSize,
     });
-    return { items: rows.map((r) => this.toPublicCard(r)), pagination: this.paginate(page, pageSize, count) };
+    return {
+      items: rows.map((r) => this.toPublicCard(r)),
+      pagination: this.paginate(page, pageSize, count),
+    };
   }
 
   async getBySlugOrFail(slug: string): Promise<DownloadableResource> {
     const resource = await this.resourceModel.findOne({ where: { slug } });
     if (!resource) throw new NotFoundException('Descargable no encontrado');
+    return resource;
+  }
+
+  /**
+   * Resolución de slug para el detalle anónimo. A diferencia de
+   * `getBySlugOrFail`, nunca revela borradores, archivados, recursos privados ni
+   * expirados: responde 404 igual que si no existieran.
+   */
+  async getPublicBySlugOrFail(slug: string): Promise<DownloadableResource> {
+    const resource = await this.resourceModel.findOne({
+      where: {
+        slug,
+        status: 'PUBLISHED',
+        visibility: { [Op.in]: ['PUBLIC', 'UNLISTED', 'PREMIUM', 'PURCHASE_REQUIRED'] },
+      },
+    });
+    if (!resource) throw new NotFoundException('Descargable no encontrado');
+    if (resource.expiresAt && new Date(resource.expiresAt).getTime() < Date.now()) {
+      throw new NotFoundException('Descargable no encontrado');
+    }
     return resource;
   }
 
@@ -603,14 +797,21 @@ export class DownloadablesService {
 
   async myLibrary(user: AuthenticatedUser, page = 1, pageSize = 24) {
     const { rows, count } = await this.resourceModel.findAndCountAll({
-      where: { status: 'PUBLISHED', visibility: { [Op.in]: ['PUBLIC', 'PREMIUM', 'PURCHASE_REQUIRED'] } },
+      where: {
+        status: 'PUBLISHED',
+        visibility: { [Op.in]: ['PUBLIC', 'PREMIUM', 'PURCHASE_REQUIRED'] },
+      },
       order: [['publishedAt', 'DESC']],
       limit: pageSize,
       offset: (page - 1) * pageSize,
     });
+    const context = await this.buildAccessContext(
+      rows.map((r) => r.id),
+      user,
+    );
     const items: Array<Record<string, unknown>> = [];
     for (const r of rows) {
-      const access = await this.evaluateAccess(r, user);
+      const access = await this.evaluateAccess(r, user, context);
       items.push({ ...this.toPublicCard(r), access });
     }
     return { items, pagination: this.paginate(page, pageSize, count) };
@@ -621,11 +822,23 @@ export class DownloadablesService {
     user: AuthenticatedUser | undefined,
     ctx: { ip?: string; userAgent?: string },
   ): Promise<{ url: string; action: DownloadableAction }> {
-    await this.recordDownloadEvent({ resource, user, result: 'REQUESTED', action: 'DIRECT_DOWNLOAD', ...ctx });
+    await this.recordDownloadEvent({
+      resource,
+      user,
+      result: 'REQUESTED',
+      action: 'DIRECT_DOWNLOAD',
+      ...ctx,
+    });
     this.emit('DownloadRequested', resource, { userId: user?.sub });
     const decision = await this.evaluateAccess(resource, user);
     if (!decision.allowed) {
-      await this.recordDownloadEvent({ resource, user, result: 'DENIED', action: decision.action, ...ctx });
+      await this.recordDownloadEvent({
+        resource,
+        user,
+        result: 'DENIED',
+        action: decision.action,
+        ...ctx,
+      });
       this.emit('DownloadDenied', resource, { userId: user?.sub, action: decision.action });
       throw new ForbiddenException({
         code: 'DOWNLOAD_NOT_AUTHORIZED',
@@ -634,11 +847,23 @@ export class DownloadablesService {
       });
     }
     if (!resource.fileUrl) {
-      await this.recordDownloadEvent({ resource, user, result: 'FAILED', action: decision.action, ...ctx });
+      await this.recordDownloadEvent({
+        resource,
+        user,
+        result: 'FAILED',
+        action: decision.action,
+        ...ctx,
+      });
       throw new NotFoundException('El recurso no tiene archivo asociado');
     }
     await this.resourceModel.increment('downloadCount', { where: { id: resource.id } });
-    await this.recordDownloadEvent({ resource, user, result: 'AUTHORIZED', action: decision.action, ...ctx });
+    await this.recordDownloadEvent({
+      resource,
+      user,
+      result: 'AUTHORIZED',
+      action: decision.action,
+      ...ctx,
+    });
     this.emit('DownloadAuthorized', resource, { userId: user?.sub, action: decision.action });
     return { url: resource.fileUrl, action: decision.action };
   }
@@ -660,7 +885,9 @@ export class DownloadablesService {
       this.resourceModel.count({ where: { visibility: 'PREMIUM' } }),
       this.resourceModel.count({ where: { commercialProvider: 'HOTMART' } }),
     ]);
-    const downloads = await this.eventModel.count({ where: { result: { [Op.in]: ['AUTHORIZED', 'COMPLETED'] } } });
+    const downloads = await this.eventModel.count({
+      where: { result: { [Op.in]: ['AUTHORIZED', 'COMPLETED'] } },
+    });
     const denied = await this.eventModel.count({ where: { result: 'DENIED' } });
     return { total, published, premium, hotmart, downloads, denied };
   }
