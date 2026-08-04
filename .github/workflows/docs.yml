@@ -136,6 +136,12 @@ jobs:
       - run: yarn install --frozen-lockfile
       - run: yarn test:e2e
 
+      # Comprueba que no queden metadatos de archivo apuntando a objetos
+      # inexistentes. Con la base de CI vacia es trivial, pero el job existe
+      # para que el comando no se pudra sin que nadie lo note.
+      - name: Coherencia entre la base y el almacenamiento
+        run: yarn files:check
+
   dependencias:
     name: Auditoría de dependencias de producción
     runs-on: ubuntu-latest

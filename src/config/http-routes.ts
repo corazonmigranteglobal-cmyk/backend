@@ -15,6 +15,9 @@ import type { RouteInfo } from '@nestjs/common/interfaces';
  */
 export const API_PREFIX_EXCLUDED_ROUTES: RouteInfo[] = [
   { path: 'health', method: RequestMethod.GET },
+  //  no forma parte de la API del producto: lo consume la
+  // infraestructura de monitorizacion, que espera esa ruta en la raiz.
+  { path: 'metrics', method: RequestMethod.GET },
 ];
 
 /** ¿Esta operación queda fuera del prefijo global? */

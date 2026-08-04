@@ -54,7 +54,7 @@ Todo lo de esta sección se ha ejecutado y su salida es reproducible.
 | Instalación desde lockfile | `yarn install --frozen-lockfile` | ✅ |
 | Tipos | `yarn typecheck` | ✅ |
 | Lint | `yarn lint` | ✅ |
-| Pruebas unitarias | `yarn test --runInBand` | ✅ 290/290 |
+| Pruebas unitarias | `yarn test --runInBand` | ✅ 294/294 |
 | Pruebas e2e | `yarn test:e2e` | ✅ 8/8 |
 | Construcción | `yarn build` | ✅ `dist/main.js` |
 | Higiene del repositorio | `yarn check:repository` | ✅ |
@@ -63,9 +63,9 @@ Todo lo de esta sección se ha ejecutado y su salida es reproducible.
 | Dependencias de producción | `yarn audit:dependencies` | ✅ 0 críticas, 0 altas |
 | Puerta completa | `yarn verify:ci` | ✅ |
 | Gobierno del contrato | `yarn docs:openapi:lint` | ✅ 0 errores |
-| Cobertura del contrato | `yarn docs:openapi:coverage` | ✅ 189/189 |
+| Cobertura del contrato | `yarn docs:openapi:coverage` | ✅ 189/189, 1 exclusión declarada |
 | Contrato asíncrono | `yarn docs:asyncapi:lint` | ✅ |
-| Enlaces de documentación | `yarn docs:links` | ✅ 478/478 |
+| Enlaces de documentación | `yarn docs:links` | ✅ 503/503 |
 | Portal | `mkdocs build --strict` | ✅ |
 
 ---
@@ -129,8 +129,8 @@ Todo lo de esta sección se ha ejecutado y su salida es reproducible.
 | Criterio | Estado |
 | --- | :---: |
 | Health checks documentados | ✅ |
-| Logs, métricas y trazas definidos | ⚠️ logs y trazas sí; **métricas no existen** |
-| Alertas y SLO definidos | ⚠️ propuestos, no medidos ni implantados |
+| Logs, métricas y trazas definidos | ✅ los tres. Métricas Prometheus en `GET /metrics` |
+| Alertas y SLO definidos | ⚠️ definidos y ya medibles; falta un Prometheus que los recoja |
 | Runbooks disponibles | ⚠️ 6 de los 10 que pide el plan |
 | Backup, restauración y rollback comprobados | ⚠️ **parcial — sigue bloqueando** |
 
@@ -139,7 +139,7 @@ Todo lo de esta sección se ha ejecutado y su salida es reproducible.
 | Criterio | Estado |
 | --- | :---: |
 | MkDocs compila en modo estricto | ✅ |
-| Sin enlaces rotos | ✅ 478 verificados, incluidos los que apuntan al código |
+| Sin enlaces rotos | ✅ 503 verificados, incluidos los que apuntan al código |
 | Sin marcadores TODO/FIXME | ✅ verificado en CI |
 | Sin páginas vacías | ✅ |
 | Sin contradicciones conocidas | ✅ |
@@ -158,7 +158,7 @@ Todo lo de esta sección se ha ejecutado y su salida es reproducible.
 | Módulos críticos documentados | 100 % | 100 % (19/19) | ✅ |
 | Entidades relevantes catalogadas | 100 % | 100 % (57/57) | ✅ |
 | Eventos relevantes documentados | 100 % | 100 % (5/5) | ✅ |
-| Enlaces internos válidos | 100 % | 100 % (478) | ✅ |
+| Enlaces internos válidos | 100 % | 100 % (503) | ✅ |
 | Reglas Redocly con error | 0 | 0 | ✅ |
 | Errores de compilación MkDocs | 0 | 0 | ✅ |
 | Marcadores TODO/TBD | 0 | 0 | ✅ |

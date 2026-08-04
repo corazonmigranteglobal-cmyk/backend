@@ -75,6 +75,12 @@ interface RouteAuthz {
   isPublic: boolean;
   roles: string[];
   permissions: string[];
+  /**
+   * La ruta está fuera del contrato a propósito (`@ApiExcludeController` o
+   * `@ApiExcludeEndpoint`). Se registra en la tabla para que la comprobación de
+   * paridad distinga una exclusión declarada de una brecha real.
+   */
+  excludedFromContract?: boolean;
 }
 
 /** Clave estable de una operación: `METHOD /ruta/openapi`. */
@@ -104,6 +110,12 @@ function indexControllerFiles(dir = join(ROOT, 'src')) {
 
 function sourceFileOf(controllerName: string) {
   return controllerFiles.get(controllerName) ?? '';
+}
+
+/** `@ApiExcludeController()` guarda `[true]`; `@ApiExcludeController(false)`, `[false]`. */
+function isExclusionEnabled(metadata: unknown): boolean {
+  if (Array.isArray(metadata)) return metadata[0] === true;
+  return metadata === true;
 }
 
 const HTTP_METHODS: Record<number, string> = {
@@ -187,6 +199,14 @@ function collectRouteAuthz(app: INestApplication, apiPrefix: string): Map<string
       // El controlador no puede "desmarcar" @Public en el handler ni al revés:
       // JwtAuthGuard consulta ambos niveles y basta con que uno lo declare.
       const isPublic = controllerPublic || Reflect.getMetadata(IS_PUBLIC_KEY, handler) === true;
+      // `@ApiExcludeController` / `@ApiExcludeEndpoint` marcan lo que no
+      // pertenece al contrato del producto, como el endpoint de métricas.
+      //
+      // Ojo con la forma del metadato: `@nestjs/swagger` lo guarda envuelto en
+      // un array (`[true]`), no como booleano suelto.
+      const excludedFromContract =
+        isExclusionEnabled(Reflect.getMetadata('swagger/apiExcludeController', metatype)) ||
+        isExclusionEnabled(Reflect.getMetadata('swagger/apiExcludeEndpoint', handler));
       const roles = [
         ...new Set([...controllerRoles, ...(Reflect.getMetadata(ROLES_KEY, handler) ?? [])]),
       ];
@@ -209,6 +229,7 @@ function collectRouteAuthz(app: INestApplication, apiPrefix: string): Map<string
           isPublic,
           roles,
           permissions,
+          ...(excludedFromContract ? { excludedFromContract: true } : {}),
         });
       }
     }

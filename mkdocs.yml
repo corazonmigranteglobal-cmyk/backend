@@ -114,6 +114,7 @@ nav:
       - Seguridad de dependencias: security/dependency-security.md
   - Observabilidad:
       - Logs: observability/logging.md
+      - Métricas: observability/metrics.md
       - Trazas: observability/tracing.md
       - Objetivos de servicio: observability/service-level-objectives.md
   - Pruebas:

@@ -77,6 +77,10 @@ export default () => {
       passwordResetExpiryMinutes: Number(process.env.PASSWORD_RESET_EXPIRY_MINUTES ?? 15),
       passwordResetMaxAttempts: Number(process.env.PASSWORD_RESET_MAX_ATTEMPTS ?? 5),
     },
+    metrics: {
+      token: process.env.METRICS_TOKEN,
+      pollIntervalMs: Number(process.env.METRICS_POLL_INTERVAL_MS ?? 15_000),
+    },
     throttler: {
       ttl: Number(process.env.THROTTLER_TTL_MS ?? 60_000),
       limit: Number(process.env.THROTTLER_LIMIT ?? 120),

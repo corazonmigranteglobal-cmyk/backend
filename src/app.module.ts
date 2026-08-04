@@ -13,6 +13,7 @@ import { DatabaseModule } from './database/database.module';
 import { DatabaseBootstrapModule } from './database/bootstrap/database-bootstrap.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { ObservabilityModule } from './observability/observability.module';
+import { MetricsModule } from './observability/metrics/metrics.module';
 import { AccountingModule } from './modules/accounting/accounting.module';
 import { AdvertisingModule } from './modules/advertising/advertising.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
@@ -51,6 +52,7 @@ import { UsersModule } from './modules/users/users.module';
       ],
     }),
     ObservabilityModule,
+    MetricsModule,
     DatabaseModule,
     DatabaseBootstrapModule,
     RedisModule,

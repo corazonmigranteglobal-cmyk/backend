@@ -51,8 +51,18 @@ for (const [path, item] of Object.entries(contract.paths ?? {})) {
   }
 }
 
+/**
+ * Las rutas marcadas con `@ApiExcludeController` o `@ApiExcludeEndpoint` están
+ * fuera del contrato a propósito: `/metrics` expone formato Prometheus, no la
+ * API del producto. Se excluyen de la comprobación de paridad, pero se publican
+ * en el informe para que la exclusión sea visible y no silenciosa.
+ */
+const excludedRoutes = routeTable.routes.filter((route) => route.excludedFromContract);
+
 const nestRoutes = new Map(
-  routeTable.routes.map((route) => [`${route.method} ${route.path}`, route]),
+  routeTable.routes
+    .filter((route) => !route.excludedFromContract)
+    .map((route) => [`${route.method} ${route.path}`, route]),
 );
 
 // ---------------------------------------------------------------- 1. Paridad
@@ -206,6 +216,13 @@ lines.push('');
 lines.push('| Métrica | Valor |');
 lines.push('| --- | ---: |');
 lines.push(`| Rutas registradas por NestJS | ${nestRoutes.size} |`);
+if (excludedRoutes.length) {
+  lines.push(
+    `| Rutas excluidas del contrato a propósito | ${excludedRoutes.length} (${excludedRoutes
+      .map((route) => `\`${route.method} ${route.path}\``)
+      .join(', ')}) |`,
+  );
+}
 lines.push(`| Operaciones en el contrato | ${total} |`);
 lines.push(`| Rutas sin operación en el contrato | ${missingInContract.length} |`);
 lines.push(`| Operaciones sin ruta en NestJS | ${missingInNest.length} |`);

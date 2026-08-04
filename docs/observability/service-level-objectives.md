@@ -1,8 +1,8 @@
 # Objetivos de nivel de servicio
 
 !!! warning "Objetivos propuestos, no medidos"
-    **Este backend no expone métricas todavía.** No hay endpoint de Prometheus ni exportador de
-    métricas: la observabilidad actual son trazas (OpenTelemetry) y logs estructurados.
+    **Las métricas ya se emiten** en `GET /metrics` (ver [métricas](metrics.md)), pero **nadie las
+    recoge todavía**: no hay Prometheus ni tablero configurados, y por tanto tampoco alertas.
 
     Los objetivos de esta página son la propuesta inicial, derivada de qué significa realmente
     "funcionar" para este producto. Se documentan ahora para que la instrumentación se construya
@@ -49,7 +49,7 @@ Con 99,5 %, el presupuesto mensual es del 0,5 %. La regla de uso propuesta:
 | 50–100 % | Prioridad a estabilidad sobre funcionalidad nueva |
 | Agotado | Sólo correcciones y trabajo de fiabilidad hasta que se reponga |
 
-## Métricas que habría que exponer
+## Métricas expuestas
 
 Agrupadas por el método RED, que es el que encaja con un servicio de peticiones:
 
@@ -85,9 +85,12 @@ responde, el servicio sigue siendo útil y no debe despertar a nadie de madrugad
 
 ## Cómo cerrar esta brecha
 
-1. Exponer métricas en un endpoint dedicado, **no bajo `/api/v1`** y sin acceso público.
-2. Instrumentar primero los cuatro recorridos críticos, no todo a la vez.
-3. Medir un mes antes de fijar los objetivos definitivos: los de esta página son una hipótesis
+1. ~~Exponer métricas en un endpoint dedicado~~ — **hecho**: `GET /metrics`, fuera de `/api/v1`,
+   protegido por `METRICS_TOKEN` y con fallo cerrado.
+2. ~~Instrumentar los recorridos críticos~~ — **hecho**: las cuatro rutas se miden por patrón, con
+   latencia y tasa de error.
+3. Desplegar un Prometheus que raspe el endpoint y conservar la serie.
+4. Medir un mes antes de fijar los objetivos definitivos: los de esta página son una hipótesis
    razonada, no una medición.
-4. Definir alertas sólo sobre lo que alguien vaya a atender. Una alerta que nadie mira enseña al
+5. Definir alertas sólo sobre lo que alguien vaya a atender. Una alerta que nadie mira enseña al
    equipo a ignorar las alertas.

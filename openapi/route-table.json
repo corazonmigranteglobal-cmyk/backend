@@ -1,7 +1,7 @@
 {
   "generatedFrom": "scripts/generate-openapi.ts",
   "apiPrefix": "api/v1",
-  "total": 189,
+  "total": 190,
   "routes": [
     {
       "method": "GET",
@@ -2350,6 +2350,17 @@
       "isPublic": true,
       "roles": [],
       "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/metrics",
+      "controller": "MetricsController",
+      "handler": "scrape",
+      "sourceFile": "src/observability/metrics/metrics.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": [],
+      "excludedFromContract": true
     }
   ]
 }

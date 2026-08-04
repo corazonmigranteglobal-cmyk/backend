@@ -9,8 +9,8 @@ una tarea verificable. Se clasifica según el plan: `BLOCKER`, `CRITICAL`, `HIGH
 | --- | ---: | ---: |
 | `BLOCKER` | 3 | 0 |
 | `CRITICAL` | 2 | 0 |
-| `HIGH` | 6 | 4 |
-| `MEDIUM` | 10 | 1 |
+| `HIGH` | 7 | 2 |
+| `MEDIUM` | 10 | 3 |
 | `LOW` | 0 | 3 |
 
 ## Brechas cerradas
@@ -38,16 +38,18 @@ una tarea verificable. Se clasifica según el plan: `BLOCKER`, `CRITICAL`, `HIGH
 | G-20b | API | `HIGH` — solo 1 de 189 operaciones tipaba `data` | 33 DTO de respuesta con columnas verificadas y `@ApiEnvelope` en 154 operaciones | `yarn docs:openapi:coverage` |
 | G-21 | Datos | `HIGH` — sin purga: `mensaje_outbox` crecia sin techo | `scripts/purge-retention.mjs` con 6 politicas y simulacion por defecto | `yarn db:retention:dry-run` contra el esquema real |
 | G-30 | Operación | `MEDIUM` — faltaban 7 runbooks | 6 runbooks: API caida, outbox, migracion fallida, integracion externa, rollback y recuperacion desde copia | Enlaces verificados |
+| G-24a | Observabilidad | `HIGH` — no se exponia ninguna metrica | Modulo de metricas Prometheus: RED de HTTP por patron de ruta, pool de base y outbox; token con fallo cerrado y comparacion en tiempo constante | 4 pruebas nuevas; verificado sirviendo en `/metrics` |
+| G-23a | Datos | `HIGH` — sin forma de detectar metadatos huerfanos de archivos | `scripts/backup-file-storage.mjs` con `--check` y `--replicate` | `yarn files:check` |
 | G-19 | Pruebas | `MEDIUM` — sin estrategia de pruebas documentada | [Estrategia de pruebas](../testing/strategy.md) | — |
 
 ## Brechas abiertas
 
 | ID | Clasificación | Área | Brecha | Acción concreta | Riesgo mientras tanto |
 | --- | --- | --- | --- | --- | --- |
-| G-20 | `HIGH` | API | 136 de 189 operaciones documentan el sobre pero no el esquema de `data`. Tipadas ya: auth, health, citas, agenda, catálogo, auditoría, analítica, notificaciones, mensajería y cuentas | Seguir con `@ApiEnvelope(Dto, …)` en contenido, publicidad, descargables, CMS, archivos y contabilidad | Quien integra esos dominios conoce la envoltura y los errores, no la forma de la carga útil |
+| G-20 | `MEDIUM` | API | 35 de 189 operaciones documentan el sobre pero no el esquema de `data` (81,5 % tipado). Lo que queda son sobre todo acciones sin carga útil propia y alias de compatibilidad | Completar con `@ApiEnvelope(Dto, …)` los handlers restantes de contenido admin, usuarios y descargables | Quien integra esas operaciones concretas conoce la envoltura y los errores, no la forma exacta de la carga |
 | G-22 | `HIGH` | Recuperación | El ensayo de restauración ya existe y pasa (`yarn db:verify-restore`), pero **no se ha ejecutado contra un volcado de producción** ni está programado | Ejecutarlo sobre una copia de Neon, medir el tiempo real y declarar RPO/RTO a partir de esa medición | El RTO real sigue siendo desconocido |
 | G-23 | `HIGH` | Recuperación | Los archivos subidos no entran en la copia de la base | Definir política de copia del bucket | Pérdida irrecuperable de documentación clínica adjunta |
-| G-24 | `HIGH` | Observabilidad | No se exponen métricas. Los objetivos de servicio ya están **propuestos y razonados** en [SLO](../observability/service-level-objectives.md), pero no medidos | Exponer métricas en un endpoint dedicado e instrumentar primero los cuatro recorridos críticos | Sin medición no hay criterio objetivo para saber si el servicio está sano |
+| G-24 | `MEDIUM` | Observabilidad | Las métricas **ya se emiten** (`GET /metrics`, protegido y con fallo cerrado), pero nadie las recoge: falta desplegar un Prometheus y definir alertas | Raspar el endpoint, conservar la serie y medir un mes antes de fijar los objetivos definitivos | Sin recolección no hay alertas: la detección sigue dependiendo de que alguien lo note |
 | G-27 | `MEDIUM` | Pruebas | `audit`, `homepage` y `notifications` sin suite propia | Añadir pruebas unitarias | Comportamiento sólo ejercitado de forma indirecta |
 | G-28 | `MEDIUM` | Pruebas | Las migraciones no se ejecutan en `verify:ci` | Job con PostgreSQL que aplique migraciones | Una migración rota se descubre al desplegar |
 | G-29 | `MEDIUM` | Seguridad | El `hottok` de Hotmart no liga la firma al contenido | Migrar a HMAC sobre el cuerpo | [A-1](../security/threat-model.md): un token filtrado permite notificaciones fabricadas |
@@ -59,11 +61,11 @@ una tarea verificable. Se clasifica según el plan: `BLOCKER`, `CRITICAL`, `HIGH
 
 - Cero brechas sin clasificación: **cumplido**.
 - Cero acciones vagas: cada fila indica archivo o comando concreto.
-- Cero `BLOCKER` y cero `CRITICAL` abiertos: **cumplido**. G-20 baja a `HIGH` al quedar tipado el
-  28 % de las cargas útiles, incluidos los dominios de mayor tráfico (autenticación, citas, agenda y
-  catálogo). Medido en [cobertura OpenAPI](openapi-coverage.md).
+- Cero `BLOCKER` y cero `CRITICAL` abiertos: **cumplido**. G-20 baja a `MEDIUM` al quedar tipado el
+  81,5 % de las cargas útiles (154 de 189), incluidos todos los dominios de mayor tráfico. Medido en
+  [cobertura OpenAPI](openapi-coverage.md).
 
 **Lo que impide declarar la aptitud para producción no está en esta tabla como brecha documental,
-sino como capacidad ausente:** la restauración de copia nunca se ha ensayado y los archivos subidos
-no entran en ninguna copia gestionada por este repositorio (G-22 y G-23). Documentarlo mejor no lo
-resuelve. Ver [preparación para producción](production-readiness.md).
+sino como capacidad ausente:** los archivos subidos no entran en ninguna copia gestionada (G-23).
+El ensayo de restauración de la base ya existe y pasa, pero recuperar la base no recupera los
+archivos. Documentarlo mejor no lo resuelve: es configuración del proveedor de almacenamiento. Ver [preparación para producción](production-readiness.md).

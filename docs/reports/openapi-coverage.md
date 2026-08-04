@@ -7,6 +7,7 @@ Informe generado por `scripts/check-openapi-coverage.mjs`. No se edita a mano: s
 | Métrica | Valor |
 | --- | ---: |
 | Rutas registradas por NestJS | 189 |
+| Rutas excluidas del contrato a propósito | 1 (`GET /metrics`) |
 | Operaciones en el contrato | 189 |
 | Rutas sin operación en el contrato | 0 |
 | Operaciones sin ruta en NestJS | 0 |

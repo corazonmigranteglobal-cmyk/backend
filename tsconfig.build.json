@@ -5,7 +5,13 @@
     // ejemplo `scripts/generate-openapi.ts`— ensancha el rootDir que TypeScript
     // infiere y la salida pasa de `dist/main.js` a `dist/src/main.js`, lo que
     // rompe `start:prod`, el worker de outbox y la imagen de Docker.
-    "rootDir": "./src"
+    "rootDir": "./src",
+    // El cache incremental vive dentro de `dist` a propósito. `nest-cli.json`
+    // tiene `deleteOutDir: true`: si el `.tsbuildinfo` quedara fuera,
+    // sobreviviría al borrado y TypeScript creería que ya emitió unos archivos
+    // que acaban de desaparecer, dejando un `dist` incompleto que sólo falla al
+    // arrancar («Cannot find module ./observability/telemetry.bootstrap.api»).
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
   "exclude": ["node_modules", "test", "dist", "scripts", "**/*spec.ts"]
 }
