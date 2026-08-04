@@ -12,7 +12,7 @@
 | Operaciones HTTP | 7 |
 | Controladores | 1 |
 | Servicios | 1 |
-| DTO | 1 |
+| DTO | 2 |
 | Políticas de dominio | 2 |
 | Adaptadores externos | 0 |
 | Suites de prueba | 2 |
@@ -73,6 +73,7 @@ de dominio del sistema.
 
 **DTO**
 
+- [`src/modules/appointments/dto/appointment-response.dto.ts`](../../src/modules/appointments/dto/appointment-response.dto.ts)
 - [`src/modules/appointments/dto/appointment.dto.ts`](../../src/modules/appointments/dto/appointment.dto.ts)
 
 ## Modelo de datos

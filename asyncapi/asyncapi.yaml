@@ -1,0 +1,207 @@
+asyncapi: 3.0.0
+
+info:
+  title: Corazón Migrante — mensajería asíncrona
+  version: 1.0.0
+  description: |
+    Contrato de la mensajería asíncrona del backend.
+
+    **No hay broker externo.** El canal es una tabla de PostgreSQL
+    (`mensajeria.mensaje_outbox`) que actúa como *outbox* transaccional: la
+    intención de enviar se persiste en la misma transacción que el cambio de
+    negocio que la origina, y un proceso aparte la consume después.
+
+    Este documento existe porque el contrato de esos mensajes es tan real como
+    el de la API HTTP: quien añada un tipo de mensaje nuevo, o cambie el
+    contenido de `payload`, rompe a los consumidores igual que rompería a un
+    cliente HTTP.
+
+    ## Garantías
+
+    | Propiedad | Valor |
+    | --- | --- |
+    | Entrega | Al menos una vez |
+    | Orden | No garantizado |
+    | Deduplicación | No implementada |
+    | Atomicidad con el cambio de negocio | Sí, misma transacción |
+
+    Detalle en `docs/events/delivery-semantics.md`.
+  contact:
+    name: Equipo Corazón Migrante
+    email: cpacentropreparacionacademica@gmail.com
+  license:
+    name: LicenseRef-Propietaria
+    url: https://corazonmigrante.com
+
+defaultContentType: application/json
+
+servers:
+  postgres:
+    host: 'localhost:5432'
+    protocol: postgres
+    description: |
+      El «broker» es la propia base de datos. Las credenciales son las mismas
+      que usa la API (`DATABASE_*`); no hay infraestructura de mensajería
+      aparte que aprovisionar.
+
+channels:
+  outbox:
+    address: mensajeria.mensaje_outbox
+    title: Outbox transaccional
+    description: |
+      Tabla que almacena los mensajes pendientes de envío. Los productores
+      insertan dentro de su transacción de negocio; el worker
+      (`src/workers/outbox.worker.ts`) toma lotes de `OUTBOX_BATCH_SIZE`,
+      los bloquea y los entrega al proveedor de correo.
+    messages:
+      OutboxMessage:
+        $ref: '#/components/messages/OutboxMessage'
+
+operations:
+  publishOutboxMessage:
+    action: send
+    channel:
+      $ref: '#/channels/outbox'
+    title: Encolar un mensaje
+    description: |
+      Lo ejecutan los módulos de dominio **dentro de la transacción** que
+      produce el cambio de negocio. Si la transacción falla, el mensaje no
+      existe: no se promete nada que no haya ocurrido.
+
+      Productores actuales:
+
+      | Módulo | Cuándo |
+      | --- | --- |
+      | `auth` | Restablecimiento de contraseña |
+      | `appointments` | Confirmación y cambios de estado de una cita |
+      | `content` | Alta de suscripción al boletín |
+      | `messaging` | Correo de prueba del panel administrativo |
+    messages:
+      - $ref: '#/channels/outbox/messages/OutboxMessage'
+
+  consumeOutboxMessage:
+    action: receive
+    channel:
+      $ref: '#/channels/outbox'
+    title: Procesar el lote pendiente
+    description: |
+      Lo ejecuta el worker de outbox, un **proceso separado** de la API. Toma
+      los mensajes cuyo `scheduledAt` ya venció, los bloquea con
+      `lockedAt`/`lockedBy` y los entrega al proveedor.
+
+      Si el worker muere, el bloqueo caduca a los `OUTBOX_STALE_LOCK_MS` y otro
+      worker puede reclamar el lote. Ese es el mecanismo que produce la entrega
+      duplicada: si el worker murió *después* de que el proveedor aceptara el
+      mensaje, el reintento lo enviará otra vez.
+    messages:
+      - $ref: '#/channels/outbox/messages/OutboxMessage'
+
+components:
+  messages:
+    OutboxMessage:
+      name: OutboxMessage
+      title: Mensaje del outbox
+      summary: Una intención de envío persistida junto al cambio de negocio que la origina.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/OutboxMessage'
+
+  schemas:
+    OutboxMessage:
+      type: object
+      required:
+        - id
+        - channel
+        - recipient
+        - templateCode
+        - payload
+        - status
+        - priority
+        - attempts
+        - maxAttempts
+        - scheduledAt
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: >-
+            Identificador secuencial (`BIGINT`). Puede exceder el entero seguro
+            de JavaScript.
+        channel:
+          type: string
+          enum: [EMAIL]
+          description: >-
+            Canal de entrega. Hoy sólo existe el correo; el campo está aquí para
+            que añadir SMS o notificación push no exija migrar la tabla.
+        recipient:
+          type: string
+          description: Destinatario. Para `EMAIL`, una dirección de correo.
+        templateCode:
+          type: string
+          description: >-
+            Tipo de mensaje. Es el discriminador que decide qué plantilla se
+            usa y qué forma tiene `payload`.
+            Los valores están verificados contra el código:
+            `scripts/validate-asyncapi.mjs` falla si aparece uno nuevo que este
+            contrato no declare.
+          examples:
+            - WELCOME_PATIENT
+            - PASSWORD_RESET_PIN
+            - APPOINTMENT_REQUESTED
+            - APPOINTMENT_STATUS_CHANGED
+            - SMOKE_TEST_EMAIL
+        templateKey:
+          type: [string, 'null']
+          description: Variante de la plantilla, cuando el tipo admite más de una.
+        payload:
+          type: object
+          additionalProperties: true
+          description: >-
+            Variables de la plantilla. **Su forma depende de `templateCode`.**
+            Puede contener datos personales, así que se redacta antes de
+            aparecer en logs o trazas.
+        status:
+          type: string
+          enum: [PENDIENTE, PROCESANDO, ENVIADO, FALLIDO, CANCELADO]
+          description: >-
+            Estado del envío **tal y como se almacena**. Los valores están en
+            español porque la tabla es anterior a la normalización del resto del
+            esquema. La API HTTP los traduce al inglés antes de devolverlos
+            (`MESSAGE_API_STATUS` en `src/modules/messaging/messaging.types.ts`),
+            así que quien consume la API ve `PENDING`/`PROCESSING`/`SENT`/
+            `FAILED`/`CANCELLED` y quien lee la tabla ve estos.
+        priority:
+          type: integer
+          default: 5
+          description: Menor se procesa antes.
+        attempts:
+          type: integer
+          description: Intentos consumidos.
+        maxAttempts:
+          type: integer
+          default: 6
+          description: Al alcanzarlo, el mensaje pasa a `FALLIDO` y deja de reintentarse.
+        scheduledAt:
+          type: string
+          format: date-time
+          description: >-
+            Momento a partir del cual el worker puede tomarlo. El retroceso
+            exponencial lo desplaza en cada fallo.
+        lockedAt:
+          type: [string, 'null']
+          format: date-time
+          description: Cuándo lo bloqueó un worker. Caduca a los `OUTBOX_STALE_LOCK_MS`.
+        lockedBy:
+          type: [string, 'null']
+          description: Identificador del worker que lo tomó.
+        lastError:
+          type: [string, 'null']
+          description: Último error devuelto por el proveedor.
+        createdAt:
+          type: string
+          format: date-time
+        sentAt:
+          type: [string, 'null']
+          format: date-time
+          description: Momento en que el proveedor aceptó el mensaje.

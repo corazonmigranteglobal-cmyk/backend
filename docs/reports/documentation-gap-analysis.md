@@ -8,9 +8,9 @@ una tarea verificable. Se clasifica según el plan: `BLOCKER`, `CRITICAL`, `HIGH
 | Clasificación | Cerradas | Abiertas |
 | --- | ---: | ---: |
 | `BLOCKER` | 3 | 0 |
-| `CRITICAL` | 2 | 1 |
-| `HIGH` | 5 | 4 |
-| `MEDIUM` | 4 | 6 |
+| `CRITICAL` | 2 | 0 |
+| `HIGH` | 5 | 5 |
+| `MEDIUM` | 8 | 3 |
 | `LOW` | 0 | 3 |
 
 ## Brechas cerradas
@@ -32,22 +32,24 @@ una tarea verificable. Se clasifica según el plan: `BLOCKER`, `CRITICAL`, `HIGH
 | G-13 | Seguridad | `MEDIUM` — sin modelo de amenazas | [STRIDE](../security/threat-model.md) | 3 hallazgos medios aceptados |
 | G-14 | Gobierno | `MEDIUM` — sin política ni trazabilidad | [Política](../governance/documentation-policy.md), [matriz](../governance/traceability-matrix.md) | — |
 | G-15 | Despliegue | `CRITICAL` — el build emitía `dist/src/main.js` en lugar de `dist/main.js` tras añadir un `.ts` fuera de `src/` | `rootDir` fijado en `tsconfig.build.json` | `ls dist/main.js` |
+| G-16 | Eventos | `MEDIUM` — sin contrato AsyncAPI del outbox | `asyncapi/asyncapi.yaml` con validador de paridad de tipos | `yarn docs:asyncapi:lint`. Cazó 5 tipos sin declarar |
+| G-17 | Arquitectura | `MEDIUM` — sin modelo C4 formal | `structurizr/workspace.dsl` con contexto, contenedores y componentes | Modelo versionado junto al código |
+| G-18 | API | `MEDIUM` — sin convenciones, autenticación ni modelo de error escritos | 4 páginas en `docs/api/` | Enlaces verificados |
+| G-19 | Pruebas | `MEDIUM` — sin estrategia de pruebas documentada | [Estrategia de pruebas](../testing/strategy.md) | — |
 
 ## Brechas abiertas
 
 | ID | Clasificación | Área | Brecha | Acción concreta | Riesgo mientras tanto |
 | --- | --- | --- | --- | --- | --- |
-| G-20 | `CRITICAL` | API | 188 de 189 operaciones documentan el sobre de respuesta pero no el esquema de `data` | Añadir `@ApiEnvelope(Dto, …)` por handler, empezando por `Citas`, `Agenda` y `Auth` | Quien integra conoce la envoltura y los errores, no la forma de la carga útil; debe inspeccionar respuestas reales |
+| G-20 | `HIGH` | API | 136 de 189 operaciones documentan el sobre pero no el esquema de `data`. Tipadas ya: auth, health, citas, agenda, catálogo, auditoría, analítica, notificaciones, mensajería y cuentas | Seguir con `@ApiEnvelope(Dto, …)` en contenido, publicidad, descargables, CMS, archivos y contabilidad | Quien integra esos dominios conoce la envoltura y los errores, no la forma de la carga útil |
 | G-21 | `HIGH` | Datos | Sin política de retención aplicada; `message_outbox` crece sin techo | Job de purga por categoría | Crecimiento sin control y conservación de datos personales más allá de lo necesario |
 | G-22 | `HIGH` | Recuperación | La restauración de copia no se ensaya | Ensayo trimestral documentado | Una copia nunca restaurada no es una copia verificada |
 | G-23 | `HIGH` | Recuperación | Los archivos subidos no entran en la copia de la base | Definir política de copia del bucket | Pérdida irrecuperable de documentación clínica adjunta |
-| G-24 | `HIGH` | Observabilidad | Sin métricas ni SLO declarados; sólo hay trazas y logs | Exponer métricas y definir objetivos de servicio | No hay criterio objetivo para saber si el servicio está sano |
-| G-25 | `MEDIUM` | Arquitectura | Sin modelo C4 formal (Structurizr) | `structurizr/workspace.dsl` | Los diagramas actuales son Mermaid por documento, sin modelo único |
-| G-26 | `MEDIUM` | Eventos | Sin contrato AsyncAPI del outbox | `asyncapi/asyncapi.yaml` | Los tipos de mensaje se deducen del código |
+| G-24 | `HIGH` | Observabilidad | No se exponen métricas. Los objetivos de servicio ya están **propuestos y razonados** en [SLO](../observability/service-level-objectives.md), pero no medidos | Exponer métricas en un endpoint dedicado e instrumentar primero los cuatro recorridos críticos | Sin medición no hay criterio objetivo para saber si el servicio está sano |
 | G-27 | `MEDIUM` | Pruebas | `audit`, `homepage` y `notifications` sin suite propia | Añadir pruebas unitarias | Comportamiento sólo ejercitado de forma indirecta |
 | G-28 | `MEDIUM` | Pruebas | Las migraciones no se ejecutan en `verify:ci` | Job con PostgreSQL que aplique migraciones | Una migración rota se descubre al desplegar |
 | G-29 | `MEDIUM` | Seguridad | El `hottok` de Hotmart no liga la firma al contenido | Migrar a HMAC sobre el cuerpo | [A-1](../security/threat-model.md): un token filtrado permite notificaciones fabricadas |
-| G-30 | `MEDIUM` | Operación | Sin runbooks para base degradada, migración fallida y rollback | Escribirlos siguiendo el formato del [runbook de outbox](../operations/runbooks/outbox-detenido.md) | Sólo existe el de la cola de mensajes |
+| G-30 | `MEDIUM` | Operación | Faltan 7 de los 10 runbooks que pide el plan (base degradada, rollback, integración caída, recursos, recuperación desde copia…) | Escribirlos siguiendo el formato de los tres existentes | Existen los de API caída, cola detenida y migración fallida |
 | G-31 | `LOW` | Documentación | 60 documentos históricos sueltos en `docs/` (hotfixes, notas de versión) conviven con la documentación viva | Mover a `docs/archive/` | Ruido de navegación |
 | G-32 | `LOW` | API | Ejemplos de petición y respuesta sólo en los componentes compartidos | Añadir ejemplos por operación | La referencia interactiva muestra ejemplos genéricos |
 | G-33 | `LOW` | Documentación | Portal MkDocs sin publicar en una URL | Job de publicación | La documentación se lee desde el repositorio |
@@ -56,6 +58,11 @@ una tarea verificable. Se clasifica según el plan: `BLOCKER`, `CRITICAL`, `HIGH
 
 - Cero brechas sin clasificación: **cumplido**.
 - Cero acciones vagas: cada fila indica archivo o comando concreto.
-- Cero `BLOCKER` abiertos: **cumplido**.
-- Un `CRITICAL` abierto (G-20), con impacto acotado y medido en
-  [cobertura OpenAPI](openapi-coverage.md).
+- Cero `BLOCKER` y cero `CRITICAL` abiertos: **cumplido**. G-20 baja a `HIGH` al quedar tipado el
+  28 % de las cargas útiles, incluidos los dominios de mayor tráfico (autenticación, citas, agenda y
+  catálogo). Medido en [cobertura OpenAPI](openapi-coverage.md).
+
+**Lo que impide declarar la aptitud para producción no está en esta tabla como brecha documental,
+sino como capacidad ausente:** la restauración de copia nunca se ha ensayado y los archivos subidos
+no entran en ninguna copia gestionada por este repositorio (G-22 y G-23). Documentarlo mejor no lo
+resuelve. Ver [preparación para producción](production-readiness.md).

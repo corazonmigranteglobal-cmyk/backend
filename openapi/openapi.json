@@ -194,11 +194,30 @@
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Entradas del registro de auditoria, de la mas reciente a la mas antigua. Los estados before/after llegan redactados.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AuditLogDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -442,11 +461,30 @@
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Mensajes del outbox con su estado, intentos y ultimo error.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OutboxMessageDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -690,11 +728,30 @@
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Mensajes del outbox con su estado, intentos y ultimo error.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OutboxMessageDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -751,11 +808,32 @@
         "parameters": [],
         "responses": {
           "201": {
-            "description": "",
+            "description": "Numero de mensajes procesados en este lote.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "processed": {
+                          "type": "integer",
+                          "example": 12
+                        }
+                      },
+                      "required": [
+                        "processed"
+                      ]
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -812,11 +890,32 @@
         "parameters": [],
         "responses": {
           "201": {
-            "description": "",
+            "description": "Numero de mensajes procesados en este lote.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "processed": {
+                          "type": "integer",
+                          "example": 12
+                        }
+                      },
+                      "required": [
+                        "processed"
+                      ]
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -882,11 +981,23 @@
         ],
         "responses": {
           "201": {
-            "description": "",
+            "description": "Mensaje tras el intento de reenvio, con su estado actualizado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/OutboxMessageDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -958,11 +1069,23 @@
         ],
         "responses": {
           "201": {
-            "description": "",
+            "description": "Mensaje tras el intento de reenvio, con su estado actualizado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/OutboxMessageDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -1035,11 +1158,23 @@
         },
         "responses": {
           "201": {
-            "description": "",
+            "description": "Mensaje de prueba encolado. Se envia cuando el worker tome el siguiente lote.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/OutboxMessageDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -1112,11 +1247,23 @@
         },
         "responses": {
           "201": {
-            "description": "",
+            "description": "Mensaje de prueba encolado. Se envia cuando el worker tome el siguiente lote.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/OutboxMessageDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -1189,11 +1336,23 @@
         },
         "responses": {
           "201": {
-            "description": "Paciente registrado. Devuelve id, email y status; no emite tokens.",
+            "description": "Paciente registrado en estado ACTIVE. No se emiten tokens.\n\nPaciente registrado. Devuelve id, email y status; no emite tokens.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/RegisteredUserDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -1256,11 +1415,23 @@
         },
         "responses": {
           "201": {
-            "description": "Terapeuta registrado en estado PENDING_APPROVAL. No emite tokens hasta la aprobación.",
+            "description": "Terapeuta registrado en estado PENDING_APPROVAL. No puede operar hasta que se le apruebe.\n\nTerapeuta registrado en estado PENDING_APPROVAL. No emite tokens hasta la aprobación.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/RegisteredUserDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -1356,11 +1527,23 @@
         },
         "responses": {
           "201": {
-            "description": "Devuelve accessToken y refreshToken.",
+            "description": "Par de tokens y la identidad efectiva, con sus roles y permisos ya resueltos.\n\nDevuelve accessToken y refreshToken.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TokenPairDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -1435,11 +1618,23 @@
         },
         "responses": {
           "201": {
-            "description": "Devuelve nuevos accessToken y refreshToken (rotación).",
+            "description": "Par de tokens nuevo. El token de refresco anterior queda invalidado.\n\nDevuelve nuevos accessToken y refreshToken (rotación).",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TokenPairDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -1505,11 +1700,23 @@
         },
         "responses": {
           "201": {
-            "description": "Sesión cerrada correctamente.",
+            "description": "Sesion cerrada: el token de refresco queda revocado.\n\nSesión cerrada correctamente.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/OperationSuccessDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -1572,11 +1779,23 @@
         },
         "responses": {
           "201": {
-            "description": "Email enviado si la dirección existe (respuesta genérica).",
+            "description": "Respuesta identica exista o no la cuenta, para no revelar que direcciones estan registradas.\n\nEmail enviado si la dirección existe (respuesta genérica).",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/OperationSuccessDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -1639,11 +1858,23 @@
         },
         "responses": {
           "201": {
-            "description": "Contraseña actualizada.",
+            "description": "Contrasena actualizada. Las sesiones anteriores quedan revocadas.\n\nContraseña actualizada.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/OperationSuccessDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -2166,11 +2397,30 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista paginada de pacientes.",
+            "description": "Cuentas con perfil de paciente.\n\nLista paginada de pacientes.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserAccountDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -2414,11 +2664,30 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista paginada de usuarios.",
+            "description": "Todas las cuentas del sistema.\n\nLista paginada de usuarios.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserAccountDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -2672,11 +2941,23 @@
         },
         "responses": {
           "200": {
-            "description": "Estado actualizado.",
+            "description": "Cuenta con el estado actualizado. Aprobar a una terapeuta la habilita para recibir citas.\n\nEstado actualizado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UserAccountDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -2929,11 +3210,30 @@
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Enfoques terapeuticos publicados. El catalogo publico solo devuelve los ACTIVE.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TherapyApproachDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -3167,11 +3467,30 @@
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Productos terapeuticos publicados. El catalogo publico solo devuelve los ACTIVE.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TherapyProductDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -3405,11 +3724,30 @@
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Todos los enfoques, en cualquier estado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TherapyApproachDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -3474,11 +3812,23 @@
         },
         "responses": {
           "201": {
-            "description": "",
+            "description": "Enfoque creado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TherapyApproachDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -3560,11 +3910,23 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "Enfoque actualizado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TherapyApproachDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -3817,11 +4179,30 @@
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Todos los productos, en cualquier estado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TherapyProductDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -3886,11 +4267,23 @@
         },
         "responses": {
           "201": {
-            "description": "",
+            "description": "Producto creado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TherapyProductDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -3972,11 +4365,23 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "Producto actualizado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TherapyProductDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -4049,11 +4454,32 @@
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Producto eliminado. El borrado es logico: la fila conserva deletedAt.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      },
+                      "required": [
+                        "success"
+                      ]
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -4113,11 +4539,26 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Lista de bloques horarios.",
+            "description": "Horarios recurrentes de la terapeuta autenticada.\n\nLista de bloques horarios.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TherapistScheduleDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -4179,11 +4620,23 @@
         },
         "responses": {
           "201": {
-            "description": "Bloque horario creado.",
+            "description": "Horario recurrente creado.\n\nBloque horario creado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TherapistScheduleDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -4265,11 +4718,23 @@
         },
         "responses": {
           "200": {
-            "description": "Bloque actualizado.",
+            "description": "Horario actualizado. Se crea una version nueva en vez de sobrescribir la anterior.\n\nBloque actualizado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TherapistScheduleDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -4342,11 +4807,32 @@
         ],
         "responses": {
           "200": {
-            "description": "Bloque desactivado.",
+            "description": "Horario retirado.\n\nBloque desactivado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      },
+                      "required": [
+                        "success"
+                      ]
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -4416,11 +4902,23 @@
         },
         "responses": {
           "201": {
-            "description": "Tiempo bloqueado.",
+            "description": "Bloqueo creado. Resta del horario recurrente al calcular huecos.\n\nTiempo bloqueado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TherapistBlockedTimeDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -4492,11 +4990,26 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de bloques horarios.",
+            "description": "Horarios recurrentes de la terapeuta indicada.\n\nLista de bloques horarios.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TherapistScheduleDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -4573,11 +5086,23 @@
         },
         "responses": {
           "201": {
-            "description": "Bloque creado.",
+            "description": "Horario creado para la terapeuta indicada.\n\nBloque creado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TherapistScheduleDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -4670,11 +5195,23 @@
         },
         "responses": {
           "200": {
-            "description": "Bloque actualizado.",
+            "description": "Horario actualizado.\n\nBloque actualizado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TherapistScheduleDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -4755,11 +5292,32 @@
         ],
         "responses": {
           "200": {
-            "description": "Bloque desactivado.",
+            "description": "Horario retirado.\n\nBloque desactivado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      },
+                      "required": [
+                        "success"
+                      ]
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -4925,11 +5483,23 @@
         },
         "responses": {
           "201": {
-            "description": "Cita creada.",
+            "description": "Cita reservada. Se comprueba la disponibilidad real antes de confirmar.\n\nCita creada.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AppointmentDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -5002,11 +5572,23 @@
         },
         "responses": {
           "201": {
-            "description": "Cita creada.",
+            "description": "Cita creada en nombre de una persona paciente.\n\nCita creada.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AppointmentDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -5256,11 +5838,30 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista paginada de citas propias.",
+            "description": "Citas de la identidad autenticada. Una terapeuta ve las que atiende; una persona paciente, las suyas.\n\nLista paginada de citas propias.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AppointmentDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -5333,11 +5934,23 @@
         },
         "responses": {
           "200": {
-            "description": "Estado actualizado.",
+            "description": "Cita con el estado nuevo. Una transicion no permitida devuelve 400 con el codigo de dominio.\n\nEstado actualizado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AppointmentDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -5590,11 +6203,30 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista paginada de citas.",
+            "description": "Todas las citas del sistema.\n\nLista paginada de citas.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AppointmentDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -5670,11 +6302,23 @@
         },
         "responses": {
           "200": {
-            "description": "Cita actualizada.",
+            "description": "Cita actualizada.\n\nCita actualizada.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AppointmentDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -5759,11 +6403,23 @@
         },
         "responses": {
           "200": {
-            "description": "Pago registrado.",
+            "description": "Cita con el pago registrado.\n\nPago registrado.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AppointmentDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -6082,11 +6738,30 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista paginada de notificaciones.",
+            "description": "Notificaciones dirigidas al panel administrativo.\n\nLista paginada de notificaciones.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AdminNotificationDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -6143,11 +6818,32 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Conteo de no leídas.",
+            "description": "Numero de notificaciones sin leer.\n\nConteo de no leídas.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "unread": {
+                          "type": "integer",
+                          "example": 3
+                        }
+                      },
+                      "required": [
+                        "unread"
+                      ]
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -6210,11 +6906,23 @@
         ],
         "responses": {
           "200": {
-            "description": "Marcada como leída.",
+            "description": "Notificacion marcada como leida.\n\nMarcada como leída.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AdminNotificationDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -6277,11 +6985,32 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Todas marcadas como leídas.",
+            "description": "Numero de notificaciones marcadas como leidas.\n\nTodas marcadas como leídas.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "updated": {
+                          "type": "integer",
+                          "example": 5
+                        }
+                      },
+                      "required": [
+                        "updated"
+                      ]
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -9907,11 +10636,23 @@
         },
         "responses": {
           "201": {
-            "description": "",
+            "description": "Evento registrado. El endpoint es publico y esta limitado a 60 peticiones por minuto.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UiEventDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -10151,11 +10892,30 @@
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Eventos de interfaz registrados. No identifican a personas.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UiEventDto"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/PaginationMetaDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "pagination",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -15917,11 +16677,23 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Estado del proceso y de sus dependencias. Devuelve 200 tambien cuando el estado es `degraded`: el servicio sigue atendiendo.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/HealthStatusDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -15965,11 +16737,23 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Version, commit y fecha de construccion del despliegue en curso.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccessResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/VersionDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ]
                 }
               }
             },
@@ -19052,9 +19836,256 @@
       }
     },
     "schemas": {
+      "ResponseMetaDto": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "3f1c8a52-9d47-4a0b-8f21-6d5c0f1e2b7a",
+            "description": "Identificador de la petición. Se toma de la cabecera `X-Request-Id` cuando el cliente la envía y, si no, lo genera el servidor. Se devuelve también en la cabecera `X-Request-Id`."
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-03T19:45:12.345Z",
+            "description": "Instante UTC en que el servidor serializó la respuesta."
+          }
+        },
+        "required": [
+          "requestId",
+          "timestamp"
+        ]
+      },
+      "PaginationMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "example": 1,
+            "description": "Página devuelta. La numeración empieza en 1."
+          },
+          "limit": {
+            "type": "number",
+            "example": 20,
+            "description": "Número máximo de elementos por página."
+          },
+          "total": {
+            "type": "number",
+            "example": 137,
+            "description": "Total de elementos que cumplen el filtro."
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 7,
+            "description": "Total de páginas disponibles con el `limit` actual."
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "AuditLogDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Cuenta que ejecutó la acción. Vacío en acciones del sistema."
+          },
+          "action": {
+            "type": "string",
+            "example": "appointment.status_changed",
+            "maxLength": 100
+          },
+          "entityType": {
+            "type": "string",
+            "example": "Appointment",
+            "maxLength": 100
+          },
+          "entityId": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "before": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Estado anterior, **redactado**: los campos sensibles se eliminan antes de persistir."
+          },
+          "after": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Estado posterior, redactado."
+          },
+          "ipAddress": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "userAgent": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "entityType",
+          "createdAt"
+        ]
+      },
+      "OutboxMessageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1042,
+            "description": "Identificador secuencial. Es `BIGINT`, así que puede exceder el entero seguro de JavaScript."
+          },
+          "channel": {
+            "type": "string",
+            "example": "EMAIL"
+          },
+          "recipient": {
+            "type": "string",
+            "example": "persona@example.com",
+            "description": "Destinatario del mensaje."
+          },
+          "templateCode": {
+            "type": "string",
+            "enum": [
+              "WELCOME_PATIENT",
+              "PASSWORD_RESET_PIN",
+              "APPOINTMENT_REQUESTED",
+              "APPOINTMENT_STATUS_CHANGED",
+              "SMOKE_TEST_EMAIL"
+            ],
+            "example": "APPOINTMENT_REQUESTED",
+            "description": "Tipo de mensaje. Decide la plantilla y la forma de `payload`. El contrato AsyncAPI (`asyncapi/asyncapi.yaml`) es la referencia y `yarn docs:asyncapi:lint` falla si aparece un tipo nuevo sin declarar."
+          },
+          "templateKey": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Variables de la plantilla."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PROCESSING",
+              "SENT",
+              "FAILED",
+              "CANCELLED"
+            ],
+            "example": "PENDING",
+            "description": "Estado del envío. La API lo traduce desde el valor almacenado, que está en español por motivos históricos. Los mensajes agotados se quedan en este mismo almacén con estado `FAILED`: no hay cola de fallidos aparte."
+          },
+          "priority": {
+            "type": "number",
+            "example": 5,
+            "description": "Prioridad. Menor se procesa antes."
+          },
+          "attempts": {
+            "type": "number",
+            "example": 0
+          },
+          "maxAttempts": {
+            "type": "number",
+            "example": 6,
+            "description": "Intentos máximos antes de darlo por fallido."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Momento a partir del cual el worker puede tomarlo. Lo desplaza el retroceso exponencial."
+          },
+          "lockedAt": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Cuándo lo bloqueó un worker. Caduca a los `OUTBOX_STALE_LOCK_MS`."
+          },
+          "lockedBy": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "lastError": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Último error devuelto por el proveedor."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sentAt": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "channel",
+          "recipient",
+          "templateCode",
+          "payload",
+          "status",
+          "priority",
+          "attempts",
+          "maxAttempts",
+          "scheduledAt",
+          "createdAt"
+        ]
+      },
       "SendTestEmailDto": {
         "type": "object",
         "properties": {}
+      },
+      "RegisteredUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "persona@example.com"
+          },
+          "status": {
+            "type": "string",
+            "example": "ACTIVE",
+            "description": "Un paciente nace `ACTIVE`; un terapeuta nace `PENDING_APPROVAL` y no puede operar hasta que se le apruebe."
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "status"
+        ]
       },
       "RegisterPatientDto": {
         "type": "object",
@@ -19169,6 +20200,88 @@
           "mainSpecialty"
         ]
       },
+      "AuthenticatedUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "9a1c4e70-3b2f-4f6a-9a1e-2c8d5f0b7e13"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "persona@example.com"
+          },
+          "roles": {
+            "example": [
+              "PATIENT"
+            ],
+            "description": "Roles efectivos en el momento de emitir el token.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "permissions": {
+            "example": [
+              "appointments:read"
+            ],
+            "description": "Permisos efectivos, resueltos a partir de los roles. Son los que evalúa `PermissionsGuard`.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "example": "ACTIVE",
+            "description": "Estado de la cuenta. Un terapeuta recién registrado está en `PENDING_APPROVAL` y no puede operar."
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "roles",
+          "permissions",
+          "status"
+        ]
+      },
+      "TokenPairDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Token de acceso JWT. Se envía en `Authorization: Bearer <token>`.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Token de refresco, para obtener un par nuevo sin volver a pedir la contraseña.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "refreshTokenId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identificador del token de refresco emitido. Sirve para revocarlo de forma selectiva."
+          },
+          "expiresIn": {
+            "type": "number",
+            "example": 900,
+            "description": "Vida útil del token de acceso, en segundos. Por defecto 15 minutos."
+          },
+          "user": {
+            "$ref": "#/components/schemas/AuthenticatedUserDto"
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "refreshTokenId",
+          "expiresIn",
+          "user"
+        ]
+      },
       "LoginDto": {
         "type": "object",
         "properties": {
@@ -19195,6 +20308,18 @@
         },
         "required": [
           "refreshToken"
+        ]
+      },
+      "OperationSuccessDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "success"
         ]
       },
       "RequestPasswordResetDto": {
@@ -19308,6 +20433,38 @@
           "avatarFileId"
         ]
       },
+      "UserAccountDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 180
+          },
+          "status": {
+            "type": "string",
+            "example": "ACTIVE",
+            "description": "Un terapeuta permanece en `PENDING_APPROVAL` hasta que se le aprueba."
+          },
+          "emailVerifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "status"
+        ]
+      },
       "UpdateUserStatusDto": {
         "type": "object",
         "properties": {
@@ -19321,6 +20478,118 @@
             ]
           }
         }
+      },
+      "TherapyApproachDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Terapia cognitivo-conductual",
+            "maxLength": 180
+          },
+          "slug": {
+            "type": "string",
+            "example": "terapia-cognitivo-conductual",
+            "maxLength": 200,
+            "description": "Identificador estable y legible. Es único en todo el catálogo."
+          },
+          "description": {
+            "type": "string",
+            "description": "Descripción larga para el sitio público."
+          },
+          "status": {
+            "type": "string",
+            "example": "ACTIVE",
+            "description": "El catálogo público sólo devuelve los enfoques en `ACTIVE`."
+          },
+          "imageFileId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Archivo de imagen asociado. Se resuelve con el módulo de archivos."
+          },
+          "sortOrder": {
+            "type": "number",
+            "example": 0,
+            "description": "Orden de presentación. Menor va primero."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "status",
+          "sortOrder"
+        ]
+      },
+      "TherapyProductDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "approachId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Enfoque terapéutico al que pertenece."
+          },
+          "name": {
+            "type": "string",
+            "example": "Sesión individual de 60 minutos",
+            "maxLength": 180
+          },
+          "slug": {
+            "type": "string",
+            "example": "sesion-individual-60",
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string"
+          },
+          "durationMinutes": {
+            "type": "number",
+            "example": 60,
+            "description": "Duración en minutos. Es el dato que usa `scheduling` para calcular si un hueco da cabida a este producto."
+          },
+          "price": {
+            "type": "string",
+            "example": "150.00",
+            "description": "Precio con dos decimales. Sequelize serializa `DECIMAL` como cadena para no perder precisión: **no lo trates como número en el cliente sin convertirlo**."
+          },
+          "currency": {
+            "type": "string",
+            "example": "BOB",
+            "maxLength": 3,
+            "description": "Código ISO 4217."
+          },
+          "status": {
+            "type": "string",
+            "example": "ACTIVE"
+          },
+          "imageFileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sortOrder": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "id",
+          "approachId",
+          "name",
+          "slug",
+          "durationMinutes",
+          "price",
+          "currency",
+          "status",
+          "sortOrder"
+        ]
       },
       "CreateApproachDto": {
         "type": "object",
@@ -19470,6 +20739,69 @@
           "price"
         ]
       },
+      "TherapistScheduleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "therapistUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "weekday": {
+            "type": "number",
+            "example": 1,
+            "minimum": 0,
+            "maximum": 6,
+            "description": "Día de la semana. Define el horario **recurrente** que se ofrece."
+          },
+          "startTime": {
+            "type": "string",
+            "example": "09:00:00",
+            "description": "Hora local de inicio, en la zona de `timezone`."
+          },
+          "endTime": {
+            "type": "string",
+            "example": "13:00:00"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "America/La_Paz"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Fecha desde la que rige este horario."
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "description": "Vacío si sigue vigente."
+          },
+          "version": {
+            "type": "number",
+            "example": 1,
+            "description": "Versión del horario. Cambiarlo crea una versión nueva en vez de sobrescribir."
+          },
+          "status": {
+            "type": "string",
+            "example": "ACTIVE"
+          }
+        },
+        "required": [
+          "id",
+          "therapistUserId",
+          "weekday",
+          "startTime",
+          "endTime",
+          "timezone",
+          "effectiveFrom",
+          "version",
+          "status"
+        ]
+      },
       "CreateScheduleDto": {
         "type": "object",
         "properties": {
@@ -19540,6 +20872,45 @@
           }
         }
       },
+      "TherapistBlockedTimeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "therapistUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Inicio del bloqueo, en UTC."
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fin del bloqueo, en UTC."
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Motivo, para uso interno."
+          },
+          "status": {
+            "type": "string",
+            "example": "ACTIVE"
+          }
+        },
+        "required": [
+          "id",
+          "therapistUserId",
+          "startAt",
+          "endAt",
+          "status"
+        ]
+      },
       "CreateBlockedTimeDto": {
         "type": "object",
         "properties": {
@@ -19556,6 +20927,94 @@
         "required": [
           "startAt",
           "endAt"
+        ]
+      },
+      "AppointmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patientUserId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Cuenta de la persona paciente."
+          },
+          "therapistUserId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Cuenta de la terapeuta que atiende."
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Producto terapéutico reservado."
+          },
+          "scheduledStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Inicio programado, en UTC. La zona horaria de presentación va en `timezone`."
+          },
+          "scheduledEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fin programado, en UTC."
+          },
+          "timezone": {
+            "type": "string",
+            "example": "America/La_Paz",
+            "description": "Zona horaria en la que se acordó la cita. Se persiste porque el centro atiende a personas en husos distintos y una hora sin huso es ambigua."
+          },
+          "status": {
+            "type": "string",
+            "example": "REQUESTED",
+            "description": "Estado actual. Las transiciones válidas las decide `policies/status-transition.policy.ts` y cada cambio queda en `appointment_status_history`."
+          },
+          "price": {
+            "type": "string",
+            "example": "150.00",
+            "description": "Precio acordado, congelado en el momento de reservar. Sequelize serializa `DECIMAL` como cadena."
+          },
+          "currency": {
+            "type": "string",
+            "example": "BOB",
+            "maxLength": 3
+          },
+          "notesForTherapist": {
+            "type": "string",
+            "description": "Notas que la persona paciente dirige a la terapeuta. **Dato clínico sensible.**"
+          },
+          "adminNotes": {
+            "type": "string",
+            "description": "Notas internas de administración. No se muestran a la persona paciente."
+          },
+          "isPaid": {
+            "type": "boolean",
+            "example": false
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "saleTransactionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Transacción contable generada al facturar la cita atendida."
+          }
+        },
+        "required": [
+          "id",
+          "patientUserId",
+          "therapistUserId",
+          "productId",
+          "scheduledStartAt",
+          "scheduledEndAt",
+          "timezone",
+          "status",
+          "price",
+          "currency",
+          "isPaid"
         ]
       },
       "CreateAppointmentDto": {
@@ -19681,6 +21140,62 @@
         },
         "required": [
           "isPaid"
+        ]
+      },
+      "AdminNotificationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "example": "appointment.created",
+            "maxLength": 100
+          },
+          "entityType": {
+            "type": "string",
+            "example": "Appointment",
+            "maxLength": 100
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "isRead": {
+            "type": "boolean",
+            "example": false
+          },
+          "readAt": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "recipientRole": {
+            "type": "string",
+            "example": "ADMIN",
+            "maxLength": 50,
+            "description": "Rol al que va dirigida. Las notificaciones nunca son visibles para pacientes."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "payload",
+          "isRead",
+          "recipientRole",
+          "createdAt"
         ]
       },
       "CloudinaryUploadSignatureDto": {
@@ -20061,6 +21576,40 @@
         "required": [
           "debitAccountId",
           "creditAccountId"
+        ]
+      },
+      "UiEventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sessionId": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "Sesión anónima del navegador. **No identifica a una persona**: los eventos sirven para agregados, no para seguimiento individual."
+          },
+          "eventName": {
+            "type": "string",
+            "example": "homepage.cta_clicked",
+            "maxLength": 120
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Datos del evento."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "eventName",
+          "payload",
+          "createdAt"
         ]
       },
       "CreateUiEventDto": {
@@ -21014,6 +22563,112 @@
           "sections"
         ]
       },
+      "HealthChecksDto": {
+        "type": "object",
+        "properties": {
+          "database": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "down"
+            ],
+            "example": "ok",
+            "description": "Resultado de un `SELECT 1` contra PostgreSQL."
+          },
+          "redis": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "down"
+            ],
+            "example": "ok",
+            "description": "Resultado del `PING` a Redis. Devuelve `down` si Redis está desactivado."
+          }
+        },
+        "required": [
+          "database",
+          "redis"
+        ]
+      },
+      "HealthStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "example": "ok",
+            "description": "Es `ok` sólo si todas las comprobaciones pasan. Si Redis está caído pero PostgreSQL responde, el servicio sigue siendo útil y devuelve `degraded`, no un fallo: la caché es prescindible, la base de datos no."
+          },
+          "checks": {
+            "$ref": "#/components/schemas/HealthChecksDto"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0",
+            "description": "Versión del paquete. `unknown` si no está fijada."
+          },
+          "commit": {
+            "type": "string",
+            "example": "4b50289",
+            "description": "Commit desplegado, tomado de `GIT_COMMIT`. `unknown` si no se inyectó al construir."
+          },
+          "env": {
+            "type": "string",
+            "example": "production"
+          },
+          "uptime": {
+            "type": "number",
+            "example": 3672,
+            "description": "Segundos que lleva el proceso en marcha."
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-03T22:45:12.345Z"
+          }
+        },
+        "required": [
+          "status",
+          "checks",
+          "version",
+          "commit",
+          "env",
+          "uptime",
+          "timestamp"
+        ]
+      },
+      "VersionDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "commit": {
+            "type": "string",
+            "example": "4b50289",
+            "description": "Tomado de `GIT_COMMIT`."
+          },
+          "buildAt": {
+            "type": "string",
+            "example": "2026-08-03T22:00:00Z",
+            "description": "Tomado de `BUILD_AT`. `unknown` si no se inyectó al construir la imagen."
+          },
+          "env": {
+            "type": "string",
+            "example": "production"
+          }
+        },
+        "required": [
+          "version",
+          "commit",
+          "buildAt",
+          "env"
+        ]
+      },
       "CreateDownloadableDto": {
         "type": "object",
         "properties": {
@@ -21265,27 +22920,6 @@
           "details"
         ]
       },
-      "ResponseMetaDto": {
-        "type": "object",
-        "properties": {
-          "requestId": {
-            "type": "string",
-            "format": "uuid",
-            "example": "3f1c8a52-9d47-4a0b-8f21-6d5c0f1e2b7a",
-            "description": "Identificador de la petición. Se toma de la cabecera `X-Request-Id` cuando el cliente la envía y, si no, lo genera el servidor. Se devuelve también en la cabecera `X-Request-Id`."
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-08-03T19:45:12.345Z",
-            "description": "Instante UTC en que el servidor serializó la respuesta."
-          }
-        },
-        "required": [
-          "requestId",
-          "timestamp"
-        ]
-      },
       "ApiErrorResponseDto": {
         "type": "object",
         "properties": {
@@ -21299,37 +22933,6 @@
         "required": [
           "error",
           "meta"
-        ]
-      },
-      "PaginationMetaDto": {
-        "type": "object",
-        "properties": {
-          "page": {
-            "type": "number",
-            "example": 1,
-            "description": "Página devuelta. La numeración empieza en 1."
-          },
-          "limit": {
-            "type": "number",
-            "example": 20,
-            "description": "Número máximo de elementos por página."
-          },
-          "total": {
-            "type": "number",
-            "example": 137,
-            "description": "Total de elementos que cumplen el filtro."
-          },
-          "totalPages": {
-            "type": "number",
-            "example": 7,
-            "description": "Total de páginas disponibles con el `limit` actual."
-          }
-        },
-        "required": [
-          "page",
-          "limit",
-          "total",
-          "totalPages"
         ]
       },
       "ApiSuccessResponseDto": {

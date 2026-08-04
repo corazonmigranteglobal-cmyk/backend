@@ -68,6 +68,7 @@ propiedad conviene conservarla al añadir integraciones. Detalle en el
 | Saber qué datos se guardan | [Catálogo de entidades](data/entity-catalog.md) |
 | Responder a un incidente | [Runbooks](operations/runbooks/outbox-detenido.md) |
 | Saber qué falta por hacer | [Análisis de brechas](reports/documentation-gap-analysis.md) |
+| Saber si esto puede ir a producción | [Preparación para producción](reports/production-readiness.md) |
 
 ## Consumir la API
 

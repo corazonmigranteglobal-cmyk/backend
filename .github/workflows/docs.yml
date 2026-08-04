@@ -55,6 +55,9 @@ jobs:
       - name: Cobertura de operaciones y paridad de rutas
         run: yarn docs:openapi:coverage
 
+      - name: Contrato AsyncAPI y paridad de tipos de mensaje
+        run: yarn docs:asyncapi:lint
+
       - name: Enlaces de la documentación
         run: yarn docs:links
 

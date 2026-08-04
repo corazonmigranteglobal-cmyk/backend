@@ -12,7 +12,7 @@
 | Operaciones HTTP | 8 |
 | Controladores | 1 |
 | Servicios | 3 |
-| DTO | 5 |
+| DTO | 6 |
 | Políticas de dominio | 0 |
 | Adaptadores externos | 0 |
 | Suites de prueba | 1 |
@@ -73,6 +73,7 @@ Consulta `roles-permissions` para resolver los roles efectivos al emitir el toke
 
 **DTO**
 
+- [`src/modules/auth/dto/auth-response.dto.ts`](../../src/modules/auth/dto/auth-response.dto.ts)
 - [`src/modules/auth/dto/login.dto.ts`](../../src/modules/auth/dto/login.dto.ts)
 - [`src/modules/auth/dto/password-reset.dto.ts`](../../src/modules/auth/dto/password-reset.dto.ts)
 - [`src/modules/auth/dto/refresh-token.dto.ts`](../../src/modules/auth/dto/refresh-token.dto.ts)

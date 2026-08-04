@@ -489,6 +489,43 @@ function assertEveryControllerContributed(authz: Map<string, RouteAuthz>) {
   }
 }
 
+/**
+ * Traduce `nullable: true` (OpenAPI 3.0) a la forma de 3.1.
+ *
+ * `@nestjs/swagger` emite `nullable: true` porque su modelo interno es 3.0. En
+ * 3.1 esa palabra clave ya no existe: la nulabilidad se expresa añadiendo
+ * `'null'` al tipo. Sin esta conversión, Redocly rechaza el documento con la
+ * regla `struct`.
+ */
+function normalizeNullableForOpenApi31(node: unknown): void {
+  if (Array.isArray(node)) {
+    for (const item of node) normalizeNullableForOpenApi31(item);
+    return;
+  }
+  if (!node || typeof node !== 'object') return;
+
+  const schema = node as Record<string, unknown>;
+  if (schema.nullable === true) {
+    delete schema.nullable;
+    if (typeof schema.type === 'string') {
+      schema.type = [schema.type, 'null'];
+    } else if (Array.isArray(schema.type)) {
+      if (!schema.type.includes('null')) schema.type.push('null');
+    } else if (schema.$ref) {
+      // Un `$ref` no admite hermanos con significado en 3.1: se envuelve.
+      const ref = schema.$ref;
+      delete schema.$ref;
+      schema.oneOf = [{ $ref: ref }, { type: 'null' }];
+    } else {
+      schema.type = 'null';
+    }
+  } else if (schema.nullable === false) {
+    delete schema.nullable;
+  }
+
+  for (const value of Object.values(schema)) normalizeNullableForOpenApi31(value);
+}
+
 function countOperations(document: OpenAPIObject) {
   let total = 0;
   for (const item of Object.values(document.paths)) {
@@ -515,6 +552,8 @@ function enrich(document: OpenAPIObject, authz: Map<string, RouteAuthz>) {
       }),
     ),
   } as NonNullable<typeof components.responses>;
+
+  normalizeNullableForOpenApi31(components.schemas);
 
   const statusByName = Object.fromEntries(
     Object.entries(SHARED_RESPONSES).map(([name, value]) => [name, value['x-status'] as number]),
