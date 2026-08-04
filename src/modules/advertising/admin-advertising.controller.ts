@@ -1,5 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  AdsCampaignDto,
+  AdsCompanyDto,
+  AdsCreativeDto,
+  AdsPlacementDto,
+} from '@/common/openapi/domain-response.dto';
+import { ApiEnvelope } from '@/common/openapi/api-envelope.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
@@ -31,18 +38,21 @@ export class AdminAdvertisingController {
 
   @Get('companies')
   @ApiOperation({ summary: 'Listar empresas anunciantes' })
+  @ApiEnvelope(AdsCompanyDto, { paginated: true, description: 'Empresas anunciantes registradas.' })
   listCompanies() {
     return this.companies.list();
   }
 
   @Post('companies')
   @ApiOperation({ summary: 'Registrar una empresa anunciante' })
+  @ApiEnvelope(AdsCompanyDto, { status: 201, description: 'Empresa anunciante registrada.' })
   createCompany(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAdsCompanyDto) {
     return this.companies.create(user.sub, dto);
   }
 
   @Patch('companies/:id')
   @ApiOperation({ summary: 'Actualizar una empresa anunciante' })
+  @ApiEnvelope(AdsCompanyDto, { description: 'Empresa actualizada.' })
   updateCompany(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -53,24 +63,38 @@ export class AdminAdvertisingController {
 
   @Delete('companies/:id')
   @ApiOperation({ summary: 'Dar de baja una empresa anunciante' })
+  @ApiEnvelope(
+    {
+      type: 'object',
+      properties: { success: { type: 'boolean', example: true } },
+      required: ['success'],
+    },
+    { description: 'Empresa dada de baja.' },
+  )
   removeCompany(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.companies.remove(user.sub, id);
   }
 
   @Get('placements')
   @ApiOperation({ summary: 'Listar emplazamientos publicitarios disponibles' })
+  @ApiEnvelope(AdsPlacementDto, {
+    paginated: true,
+    description: 'Emplazamientos publicitarios disponibles.',
+  })
   listPlacements() {
     return this.placements.list();
   }
 
   @Post('placements')
   @ApiOperation({ summary: 'Crear un emplazamiento publicitario' })
+  @ApiEnvelope(AdsPlacementDto, { status: 201, description: 'Emplazamiento creado.' })
   createPlacement(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAdsPlacementDto) {
     return this.placements.create(user.sub, dto);
   }
 
   @Patch('placements/:id')
   @ApiOperation({ summary: 'Actualizar un emplazamiento publicitario' })
+  @ApiEnvelope(AdsPlacementDto, { description: 'Emplazamiento actualizado.' })
   updatePlacement(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -81,12 +105,14 @@ export class AdminAdvertisingController {
 
   @Get('ads')
   @ApiOperation({ summary: 'Listar creatividades del catálogo' })
+  @ApiEnvelope(AdsCreativeDto, { paginated: true, description: 'Creatividades del catalogo.' })
   listAds() {
     return this.creatives.listAll();
   }
 
   @Post('ads')
   @ApiOperation({ summary: 'Crear una creatividad' })
+  @ApiEnvelope(AdsCreativeDto, { status: 201, description: 'Creatividad creada.' })
   async createAd(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAdsAdDto) {
     const {
       campaignId,
@@ -126,6 +152,7 @@ export class AdminAdvertisingController {
 
   @Patch('ads/:id')
   @ApiOperation({ summary: 'Actualizar una creatividad' })
+  @ApiEnvelope(AdsCreativeDto, { description: 'Creatividad actualizada.' })
   updateAd(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -136,30 +163,45 @@ export class AdminAdvertisingController {
 
   @Delete('ads/:id')
   @ApiOperation({ summary: 'Eliminar una creatividad' })
+  @ApiEnvelope(
+    {
+      type: 'object',
+      properties: { success: { type: 'boolean', example: true } },
+      required: ['success'],
+    },
+    { description: 'Creatividad eliminada.' },
+  )
   removeAd(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.creatives.remove(user.sub, id);
   }
 
   @Get('campaigns')
   @ApiOperation({ summary: 'Listar campañas publicitarias' })
+  @ApiEnvelope(AdsCampaignDto, { paginated: true, description: 'Campanas publicitarias.' })
   listCampaigns(@Query() query: AdvertisingQueryDto) {
     return this.campaigns.list(query);
   }
 
   @Post('campaigns')
   @ApiOperation({ summary: 'Crear una campaña publicitaria' })
+  @ApiEnvelope(AdsCampaignDto, {
+    status: 201,
+    description: 'Campana creada. Las fechas se validan: no puede terminar antes de empezar.',
+  })
   createCampaign(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAdsCampaignDto) {
     return this.campaigns.create(user.sub, dto);
   }
 
   @Get('campaigns/:id')
   @ApiOperation({ summary: 'Consultar el detalle de una campaña' })
+  @ApiEnvelope(AdsCampaignDto, { description: 'Detalle de la campana.' })
   getCampaign(@Param('id') id: string) {
     return this.campaigns.get(id);
   }
 
   @Patch('campaigns/:id')
   @ApiOperation({ summary: 'Actualizar una campaña publicitaria' })
+  @ApiEnvelope(AdsCampaignDto, { description: 'Campana actualizada.' })
   updateCampaign(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -170,12 +212,21 @@ export class AdminAdvertisingController {
 
   @Delete('campaigns/:id')
   @ApiOperation({ summary: 'Eliminar una campaña publicitaria' })
+  @ApiEnvelope(
+    {
+      type: 'object',
+      properties: { success: { type: 'boolean', example: true } },
+      required: ['success'],
+    },
+    { description: 'Campana eliminada.' },
+  )
   removeCampaign(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.campaigns.remove(user.sub, id);
   }
 
   @Post('campaigns/:id/status')
   @ApiOperation({ summary: 'Cambiar el estado de una campaña' })
+  @ApiEnvelope(AdsCampaignDto, { status: 201, description: 'Campana con el estado nuevo.' })
   setCampaignStatus(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -186,12 +237,17 @@ export class AdminAdvertisingController {
 
   @Get('campaigns/:campaignId/creatives')
   @ApiOperation({ summary: 'Listar las creatividades asociadas a una campaña' })
+  @ApiEnvelope(AdsCreativeDto, {
+    isArray: true,
+    description: 'Creatividades asociadas a la campana.',
+  })
   listCreatives(@Param('campaignId') campaignId: string) {
     return this.creatives.list(campaignId);
   }
 
   @Post('campaigns/:campaignId/creatives')
   @ApiOperation({ summary: 'Asociar una creatividad a una campaña' })
+  @ApiEnvelope(AdsCreativeDto, { status: 201, description: 'Creatividad asociada a la campana.' })
   createCreative(
     @CurrentUser() user: AuthenticatedUser,
     @Param('campaignId') campaignId: string,
@@ -202,6 +258,7 @@ export class AdminAdvertisingController {
 
   @Patch('creatives/:id')
   @ApiOperation({ summary: 'Actualizar una creatividad de campaña' })
+  @ApiEnvelope(AdsCreativeDto, { description: 'Creatividad de campana actualizada.' })
   updateCreative(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,

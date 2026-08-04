@@ -12,7 +12,7 @@
 | Operaciones HTTP | 36 |
 | Controladores | 3 |
 | Servicios | 6 |
-| DTO | 5 |
+| DTO | 6 |
 | Políticas de dominio | 2 |
 | Adaptadores externos | 0 |
 | Suites de prueba | 2 |
@@ -104,6 +104,7 @@ columnas de opinión, su taxonomía, las personas suscriptoras y el acceso premi
 
 - [`src/modules/content/dto/author.dto.ts`](../../src/modules/content/dto/author.dto.ts)
 - [`src/modules/content/dto/content-query.dto.ts`](../../src/modules/content/dto/content-query.dto.ts)
+- [`src/modules/content/dto/content-response.dto.ts`](../../src/modules/content/dto/content-response.dto.ts)
 - [`src/modules/content/dto/publication.dto.ts`](../../src/modules/content/dto/publication.dto.ts)
 - [`src/modules/content/dto/subscriber.dto.ts`](../../src/modules/content/dto/subscriber.dto.ts)
 - [`src/modules/content/dto/taxonomy.dto.ts`](../../src/modules/content/dto/taxonomy.dto.ts)

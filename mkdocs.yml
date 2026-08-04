@@ -122,6 +122,9 @@ nav:
       - Runbook · API caída o con 5xx: operations/runbooks/api-caida.md
       - Runbook · Cola de mensajes detenida: operations/runbooks/outbox-detenido.md
       - Runbook · Migración fallida: operations/runbooks/migracion-fallida.md
+      - Runbook · Integración externa caída: operations/runbooks/integracion-externa-caida.md
+      - Runbook · Revertir un despliegue: operations/runbooks/rollback-de-despliegue.md
+      - Runbook · Recuperar desde copia: operations/runbooks/recuperacion-desde-copia.md
   - Gobierno:
       - Política de documentación: governance/documentation-policy.md
       - Matriz de trazabilidad: governance/traceability-matrix.md

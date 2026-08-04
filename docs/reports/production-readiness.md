@@ -15,26 +15,33 @@ motivo es acotado y concreto:
 > **Requisito que bloquea el cierre:** *«Backup, restauración y rollback comprobados»* (sección 21,
 > bloque Operación).
 >
-> La copia a Neon está automatizada y programada, pero **su restauración nunca se ha ensayado**, y
-> **los archivos subidos no entran en ninguna copia gestionada por este repositorio**. Restaurar la
-> base de datos no recupera los archivos: los metadatos quedarían apuntando a objetos inexistentes.
+> **Los archivos subidos no entran en ninguna copia gestionada.** Viven en Google Cloud Storage o
+> Cloudinary, y ninguno de los dos tiene versionado ni replicación configurados. Restaurar la base
+> de datos **no** los recupera: las filas de `files` quedarían apuntando a objetos inexistentes.
 >
-> Una copia que nunca se ha restaurado no es una copia verificada. Y en un sistema que custodia
-> documentación clínica, la pérdida irrecuperable de esos archivos es un daño que no se puede
+> En un sistema que custodia documentación clínica, esa pérdida es irreversible y no se puede
 > compensar después.
 
-No es un problema de documentación: es una capacidad operativa que no existe. Documentarla mejor no
-la crea.
+### Lo que sí se resolvió
 
-### Qué haría falta para revertir esta declaración
+La restauración de la base de datos **ya está ensayada y automatizada**:
+[`scripts/verify-restore.mjs`](../../scripts/verify-restore.mjs) crea una base desechable, restaura
+el volcado y verifica esquema, migraciones, datos de arranque e integridad referencial. Ejecutado el
+4 de agosto de 2026 con resultado correcto (13/13 tablas, 0 claves foráneas sin validar).
 
-| # | Acción | Brecha |
-| --- | --- | --- |
-| 1 | Definir y aplicar una política de copia de los buckets de archivos | [G-23](documentation-gap-analysis.md) |
-| 2 | Ensayar una restauración completa —base y archivos— sobre un entorno limpio y dejar constancia | [G-22](documentation-gap-analysis.md) |
-| 3 | Declarar RPO y RTO, y comprobar que el ensayo los cumple | [G-22](documentation-gap-analysis.md) |
+El primer intento **falló** por una comprobación que asumía el nombre de tabla `file_assets` cuando
+el real es `files`. Un procedimiento en prosa habría arrastrado ese error hasta el día de la
+recuperación real.
 
-Ninguna de las tres exige escribir código de aplicación. Son trabajo de operación.
+### Qué falta para revertir esta declaración
+
+| # | Acción | Brecha | Naturaleza |
+| --- | --- | --- | --- |
+| 1 | Configurar versionado o replicación de los buckets de archivos | [G-23](documentation-gap-analysis.md) | Configuración del proveedor |
+| 2 | Ejecutar el ensayo contra un volcado de producción y medir el tiempo real | [G-22](documentation-gap-analysis.md) | Operación |
+| 3 | Declarar RPO y RTO a partir de esa medición | [G-22](documentation-gap-analysis.md) | Decisión de negocio |
+
+Ninguna exige escribir código de aplicación: la herramienta ya existe y funciona.
 
 ---
 
@@ -82,7 +89,7 @@ Todo lo de esta sección se ha ejecutado y su salida es reproducible.
 | `operationId` en todas | ✅ |
 | Seguridad declarada en todas | ✅ derivada de los decoradores |
 | Solicitudes con esquema | ✅ desde los DTO |
-| Respuestas con esquema | ✅ el sobre en todas; ⚠️ `data` tipado en 53 de 189 |
+| Respuestas con esquema | ✅ el sobre en todas; ⚠️ `data` tipado en 154 de 189 |
 | Errores relevantes documentados | ✅ derivados de la firma de cada operación |
 | Ejemplos válidos | ✅ `no-invalid-schema-examples` en `error` |
 | Redocly sin errores | ✅ |
@@ -106,7 +113,7 @@ Todo lo de esta sección se ha ejecutado y su salida es reproducible.
 | Relaciones comprobadas | ✅ asociaciones y claves foráneas |
 | Índices documentados | ❌ el catálogo remite a las migraciones |
 | Migraciones y *seeds* explicados | ✅ |
-| Retención y sensibilidad definidas | ⚠️ definidas, **no aplicadas** |
+| Retención y sensibilidad definidas | ✅ definidas y aplicables con `yarn db:retention:apply` |
 
 ### Seguridad
 
@@ -124,8 +131,8 @@ Todo lo de esta sección se ha ejecutado y su salida es reproducible.
 | Health checks documentados | ✅ |
 | Logs, métricas y trazas definidos | ⚠️ logs y trazas sí; **métricas no existen** |
 | Alertas y SLO definidos | ⚠️ propuestos, no medidos ni implantados |
-| Runbooks disponibles | ⚠️ 3 de los 10 que pide el plan |
-| Backup, restauración y rollback comprobados | ❌ **bloqueante** |
+| Runbooks disponibles | ⚠️ 6 de los 10 que pide el plan |
+| Backup, restauración y rollback comprobados | ⚠️ **parcial — sigue bloqueando** |
 
 ### Calidad
 
@@ -156,8 +163,8 @@ Todo lo de esta sección se ha ejecutado y su salida es reproducible.
 | Errores de compilación MkDocs | 0 | 0 | ✅ |
 | Marcadores TODO/TBD | 0 | 0 | ✅ |
 | Riesgos críticos abiertos | 0 | 0 | ✅ |
-| Esquemas con descripción | 100 % de los públicos | 28 % con `data` tipado | ❌ |
-| Runbooks críticos disponibles | 100 % | 30 % (3/10) | ❌ |
+| Esquemas con descripción | 100 % de los públicos | 81,5 % con `data` tipado (154/189) | ⚠️ |
+| Runbooks críticos disponibles | 100 % | 60 % (6/10) | ⚠️ |
 
 ---
 

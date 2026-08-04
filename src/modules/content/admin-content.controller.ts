@@ -1,5 +1,12 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ContentAuthorDto,
+  ContentCategoryDto,
+  ContentPublicationDto,
+  ContentTagDto,
+} from './dto/content-response.dto';
+import { ApiEnvelope } from '@/common/openapi/api-envelope.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Permissions } from '@/common/decorators/permissions.decorator';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
@@ -36,6 +43,10 @@ export class AdminContentController {
   @Get('publications')
   @ApiOperation({ summary: 'Listar publicaciones editoriales' })
   @Permissions('content:read')
+  @ApiEnvelope(ContentPublicationDto, {
+    paginated: true,
+    description: 'Publicaciones editoriales en cualquier estado.',
+  })
   listPublications(@Query() query: ContentPublicationQueryDto) {
     return this.publications.listAdmin(query);
   }
@@ -43,6 +54,10 @@ export class AdminContentController {
   @Post('publications')
   @ApiOperation({ summary: 'Crear una publicación editorial' })
   @Permissions('content:write')
+  @ApiEnvelope(ContentPublicationDto, {
+    status: 201,
+    description: 'Publicacion creada en estado DRAFT.',
+  })
   createPublication(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateContentPublicationDto,
@@ -53,6 +68,7 @@ export class AdminContentController {
   @Get('publications/:id')
   @ApiOperation({ summary: 'Consultar el detalle de una publicación' })
   @Permissions('content:read')
+  @ApiEnvelope(ContentPublicationDto, { description: 'Detalle completo de la publicacion.' })
   getPublication(@Param('id') id: string) {
     return this.publications.getAdmin(id);
   }
@@ -60,6 +76,7 @@ export class AdminContentController {
   @Patch('publications/:id')
   @ApiOperation({ summary: 'Actualizar una publicación editorial' })
   @Permissions('content:write')
+  @ApiEnvelope(ContentPublicationDto, { description: 'Publicacion actualizada.' })
   updatePublication(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -71,6 +88,11 @@ export class AdminContentController {
   @Post('publications/:id/publish')
   @ApiOperation({ summary: 'Publicar una publicación' })
   @Permissions('content:write')
+  @ApiEnvelope(ContentPublicationDto, {
+    status: 201,
+    description:
+      'Publicacion en estado PUBLISHED. Una transicion invalida devuelve error de dominio, no 500.',
+  })
   publishPublication(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.publications.publish(user.sub, id);
   }
@@ -78,6 +100,10 @@ export class AdminContentController {
   @Post('publications/:id/schedule')
   @ApiOperation({ summary: 'Programar la publicación para una fecha futura' })
   @Permissions('content:write')
+  @ApiEnvelope(ContentPublicationDto, {
+    status: 201,
+    description: 'Publicacion en estado SCHEDULED, con su fecha de publicacion futura.',
+  })
   schedulePublication(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -89,6 +115,10 @@ export class AdminContentController {
   @Post('publications/:id/archive')
   @ApiOperation({ summary: 'Archivar una publicación' })
   @Permissions('content:write')
+  @ApiEnvelope(ContentPublicationDto, {
+    status: 201,
+    description: 'Publicacion archivada. Deja de aparecer en el sitio publico.',
+  })
   archivePublication(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.publications.archive(user.sub, id);
   }
@@ -96,6 +126,7 @@ export class AdminContentController {
   @Get('categories')
   @ApiOperation({ summary: 'Listar categorías de contenido' })
   @Permissions('content:read')
+  @ApiEnvelope(ContentCategoryDto, { paginated: true, description: 'Categorias de contenido.' })
   listCategories() {
     return this.taxonomy.listCategories();
   }
@@ -103,6 +134,7 @@ export class AdminContentController {
   @Post('categories')
   @ApiOperation({ summary: 'Crear una categoría de contenido' })
   @Permissions('content:write')
+  @ApiEnvelope(ContentCategoryDto, { status: 201, description: 'Categoria creada.' })
   createCategory(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateContentCategoryDto) {
     return this.taxonomy.createCategory(user.sub, dto);
   }
@@ -110,6 +142,7 @@ export class AdminContentController {
   @Patch('categories/:id')
   @ApiOperation({ summary: 'Actualizar una categoría de contenido' })
   @Permissions('content:write')
+  @ApiEnvelope(ContentCategoryDto, { description: 'Categoria actualizada.' })
   updateCategory(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -121,6 +154,7 @@ export class AdminContentController {
   @Get('tags')
   @ApiOperation({ summary: 'Listar etiquetas de contenido' })
   @Permissions('content:read')
+  @ApiEnvelope(ContentTagDto, { paginated: true, description: 'Etiquetas de contenido.' })
   listTags() {
     return this.taxonomy.listTags();
   }
@@ -128,6 +162,7 @@ export class AdminContentController {
   @Post('tags')
   @ApiOperation({ summary: 'Crear una etiqueta de contenido' })
   @Permissions('content:write')
+  @ApiEnvelope(ContentTagDto, { status: 201, description: 'Etiqueta creada.' })
   createTag(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateContentTagDto) {
     return this.taxonomy.createTag(user.sub, dto);
   }
@@ -135,6 +170,7 @@ export class AdminContentController {
   @Get('authors')
   @ApiOperation({ summary: 'Listar autores editoriales' })
   @Permissions('content:read')
+  @ApiEnvelope(ContentAuthorDto, { paginated: true, description: 'Autores editoriales.' })
   listAuthors() {
     return this.authors.list();
   }
@@ -142,6 +178,7 @@ export class AdminContentController {
   @Post('authors')
   @ApiOperation({ summary: 'Registrar un autor editorial' })
   @Permissions('content:write')
+  @ApiEnvelope(ContentAuthorDto, { status: 201, description: 'Autor registrado.' })
   createAuthor(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateContentAuthorDto) {
     return this.authors.create(user.sub, dto);
   }
@@ -149,6 +186,7 @@ export class AdminContentController {
   @Patch('authors/:id')
   @ApiOperation({ summary: 'Actualizar un autor editorial' })
   @Permissions('content:write')
+  @ApiEnvelope(ContentAuthorDto, { description: 'Autor actualizado.' })
   updateAuthor(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,

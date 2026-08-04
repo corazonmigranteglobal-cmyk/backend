@@ -24,6 +24,7 @@ export class UsersController {
   @Get('me')
   @ApiOperation({ summary: 'Obtener perfil del usuario autenticado' })
   @ApiResponse({ status: 200, description: 'Perfil completo del usuario.' })
+  @ApiEnvelope(UserAccountDto, { description: 'Cuenta y perfil de la identidad autenticada.' })
   me(@CurrentUser() user: AuthenticatedUser) {
     return this.usersService.me(user.sub);
   }

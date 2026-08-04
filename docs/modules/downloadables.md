@@ -12,7 +12,7 @@
 | Operaciones HTTP | 28 |
 | Controladores | 1 |
 | Servicios | 1 |
-| DTO | 1 |
+| DTO | 2 |
 | Políticas de dominio | 0 |
 | Adaptadores externos | 1 |
 | Suites de prueba | 1 |
@@ -89,6 +89,7 @@ integración del sistema en la que un tercero —Hotmart— llama al backend.
 
 **DTO**
 
+- [`src/modules/downloadables/dto/downloadable-response.dto.ts`](../../src/modules/downloadables/dto/downloadable-response.dto.ts)
 - [`src/modules/downloadables/dto/downloadable.dto.ts`](../../src/modules/downloadables/dto/downloadable.dto.ts)
 
 ## Modelo de datos

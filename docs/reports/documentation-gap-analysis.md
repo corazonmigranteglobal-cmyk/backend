@@ -9,8 +9,8 @@ una tarea verificable. Se clasifica según el plan: `BLOCKER`, `CRITICAL`, `HIGH
 | --- | ---: | ---: |
 | `BLOCKER` | 3 | 0 |
 | `CRITICAL` | 2 | 0 |
-| `HIGH` | 5 | 5 |
-| `MEDIUM` | 8 | 3 |
+| `HIGH` | 6 | 4 |
+| `MEDIUM` | 10 | 1 |
 | `LOW` | 0 | 3 |
 
 ## Brechas cerradas
@@ -35,6 +35,9 @@ una tarea verificable. Se clasifica según el plan: `BLOCKER`, `CRITICAL`, `HIGH
 | G-16 | Eventos | `MEDIUM` — sin contrato AsyncAPI del outbox | `asyncapi/asyncapi.yaml` con validador de paridad de tipos | `yarn docs:asyncapi:lint`. Cazó 5 tipos sin declarar |
 | G-17 | Arquitectura | `MEDIUM` — sin modelo C4 formal | `structurizr/workspace.dsl` con contexto, contenedores y componentes | Modelo versionado junto al código |
 | G-18 | API | `MEDIUM` — sin convenciones, autenticación ni modelo de error escritos | 4 páginas en `docs/api/` | Enlaces verificados |
+| G-20b | API | `HIGH` — solo 1 de 189 operaciones tipaba `data` | 33 DTO de respuesta con columnas verificadas y `@ApiEnvelope` en 154 operaciones | `yarn docs:openapi:coverage` |
+| G-21 | Datos | `HIGH` — sin purga: `mensaje_outbox` crecia sin techo | `scripts/purge-retention.mjs` con 6 politicas y simulacion por defecto | `yarn db:retention:dry-run` contra el esquema real |
+| G-30 | Operación | `MEDIUM` — faltaban 7 runbooks | 6 runbooks: API caida, outbox, migracion fallida, integracion externa, rollback y recuperacion desde copia | Enlaces verificados |
 | G-19 | Pruebas | `MEDIUM` — sin estrategia de pruebas documentada | [Estrategia de pruebas](../testing/strategy.md) | — |
 
 ## Brechas abiertas
@@ -42,14 +45,12 @@ una tarea verificable. Se clasifica según el plan: `BLOCKER`, `CRITICAL`, `HIGH
 | ID | Clasificación | Área | Brecha | Acción concreta | Riesgo mientras tanto |
 | --- | --- | --- | --- | --- | --- |
 | G-20 | `HIGH` | API | 136 de 189 operaciones documentan el sobre pero no el esquema de `data`. Tipadas ya: auth, health, citas, agenda, catálogo, auditoría, analítica, notificaciones, mensajería y cuentas | Seguir con `@ApiEnvelope(Dto, …)` en contenido, publicidad, descargables, CMS, archivos y contabilidad | Quien integra esos dominios conoce la envoltura y los errores, no la forma de la carga útil |
-| G-21 | `HIGH` | Datos | Sin política de retención aplicada; `message_outbox` crece sin techo | Job de purga por categoría | Crecimiento sin control y conservación de datos personales más allá de lo necesario |
-| G-22 | `HIGH` | Recuperación | La restauración de copia no se ensaya | Ensayo trimestral documentado | Una copia nunca restaurada no es una copia verificada |
+| G-22 | `HIGH` | Recuperación | El ensayo de restauración ya existe y pasa (`yarn db:verify-restore`), pero **no se ha ejecutado contra un volcado de producción** ni está programado | Ejecutarlo sobre una copia de Neon, medir el tiempo real y declarar RPO/RTO a partir de esa medición | El RTO real sigue siendo desconocido |
 | G-23 | `HIGH` | Recuperación | Los archivos subidos no entran en la copia de la base | Definir política de copia del bucket | Pérdida irrecuperable de documentación clínica adjunta |
 | G-24 | `HIGH` | Observabilidad | No se exponen métricas. Los objetivos de servicio ya están **propuestos y razonados** en [SLO](../observability/service-level-objectives.md), pero no medidos | Exponer métricas en un endpoint dedicado e instrumentar primero los cuatro recorridos críticos | Sin medición no hay criterio objetivo para saber si el servicio está sano |
 | G-27 | `MEDIUM` | Pruebas | `audit`, `homepage` y `notifications` sin suite propia | Añadir pruebas unitarias | Comportamiento sólo ejercitado de forma indirecta |
 | G-28 | `MEDIUM` | Pruebas | Las migraciones no se ejecutan en `verify:ci` | Job con PostgreSQL que aplique migraciones | Una migración rota se descubre al desplegar |
 | G-29 | `MEDIUM` | Seguridad | El `hottok` de Hotmart no liga la firma al contenido | Migrar a HMAC sobre el cuerpo | [A-1](../security/threat-model.md): un token filtrado permite notificaciones fabricadas |
-| G-30 | `MEDIUM` | Operación | Faltan 7 de los 10 runbooks que pide el plan (base degradada, rollback, integración caída, recursos, recuperación desde copia…) | Escribirlos siguiendo el formato de los tres existentes | Existen los de API caída, cola detenida y migración fallida |
 | G-31 | `LOW` | Documentación | 60 documentos históricos sueltos en `docs/` (hotfixes, notas de versión) conviven con la documentación viva | Mover a `docs/archive/` | Ruido de navegación |
 | G-32 | `LOW` | API | Ejemplos de petición y respuesta sólo en los componentes compartidos | Añadir ejemplos por operación | La referencia interactiva muestra ejemplos genéricos |
 | G-33 | `LOW` | Documentación | Portal MkDocs sin publicar en una URL | Job de publicación | La documentación se lee desde el repositorio |

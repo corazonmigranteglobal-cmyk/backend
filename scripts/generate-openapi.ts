@@ -516,9 +516,13 @@ function normalizeNullableForOpenApi31(node: unknown): void {
       const ref = schema.$ref;
       delete schema.$ref;
       schema.oneOf = [{ $ref: ref }, { type: 'null' }];
-    } else {
-      schema.type = 'null';
     }
+    // Si no hay `type` ni `$ref` no se añade ninguno: en 3.1, un esquema sin
+    // `type` admite cualquier valor, `null` incluido. Forzar `type: 'null'`
+    // aquí invalidaría el `example` de la propiedad, que es justo lo que
+    // ocurre con `@ApiPropertyOptional({ nullable: true, example: 'pdf' })`
+    // sobre un `string | null`: TypeScript no emite metadato de tipo para las
+    // uniones, así que el esquema llega sin `type`.
   } else if (schema.nullable === false) {
     delete schema.nullable;
   }

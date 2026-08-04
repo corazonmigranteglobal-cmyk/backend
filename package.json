@@ -70,7 +70,10 @@
     "docs:modules": "node scripts/generate-module-docs.mjs",
     "docs:entities": "node scripts/generate-entity-catalog.mjs",
     "docs:generate": "yarn docs:openapi:generate && yarn docs:modules && yarn docs:entities",
-    "docs:asyncapi:lint": "node scripts/validate-asyncapi.mjs"
+    "docs:asyncapi:lint": "node scripts/validate-asyncapi.mjs",
+    "db:retention:dry-run": "node scripts/purge-retention.mjs",
+    "db:retention:apply": "node scripts/purge-retention.mjs --apply",
+    "db:verify-restore": "node scripts/verify-restore.mjs"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.21.0",

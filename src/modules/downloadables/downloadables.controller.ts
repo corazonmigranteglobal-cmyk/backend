@@ -13,6 +13,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  DownloadableAccessDto,
+  DownloadableEntitlementDto,
+  DownloadableResourceDto,
+} from './dto/downloadable-response.dto';
+import { ApiEnvelope } from '@/common/openapi/api-envelope.decorator';
 import { Throttle } from '@nestjs/throttler';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { Public } from '@/common/decorators/public.decorator';
@@ -41,12 +47,20 @@ export class AdminDownloadablesController {
 
   @Post()
   @ApiOperation({ summary: '[Admin] Crear descargable (borrador)' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    status: 201,
+    description: 'Recurso descargable creado en borrador.',
+  })
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateDownloadableDto) {
     return this.service.create(dto, user.sub);
   }
 
   @Get()
   @ApiOperation({ summary: '[Admin] Listar descargables' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    paginated: true,
+    description: 'Recursos descargables en cualquier estado.',
+  })
   list(@Query() query: PaginationQueryDto) {
     return this.service.adminList(
       Number(query.page ?? 1),
@@ -63,12 +77,16 @@ export class AdminDownloadablesController {
 
   @Get(':id')
   @ApiOperation({ summary: '[Admin] Detalle' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    description: 'Detalle completo del recurso, incluida su integracion comercial.',
+  })
   detail(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getByIdOrFail(id);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: '[Admin] Actualizar (solo borrador)' })
+  @ApiEnvelope(DownloadableResourceDto, { description: 'Recurso actualizado.' })
   update(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -79,18 +97,35 @@ export class AdminDownloadablesController {
 
   @Post(':id/archive')
   @ApiOperation({ summary: '[Admin] Archivar' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    status: 201,
+    description:
+      'Recurso archivado. Deja de ofrecerse, pero los derechos ya concedidos siguen vigentes.',
+  })
   archive(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.archive(id);
   }
 
   @Put(':id/hotmart')
   @ApiOperation({ summary: '[Admin] Configurar integracion Hotmart' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    status: 201,
+    description: 'Recurso vinculado a un producto de Hotmart.',
+  })
   setHotmart(@Param('id', ParseUUIDPipe) id: string, @Body() dto: HotmartConfigDto) {
     return this.service.setHotmart(id, dto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: '[Admin] Eliminar (soft delete)' })
+  @ApiEnvelope(
+    {
+      type: 'object',
+      properties: { success: { type: 'boolean', example: true } },
+      required: ['success'],
+    },
+    { description: 'Recurso eliminado.' },
+  )
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     await this.service.remove(id);
     return { ok: true };
@@ -114,6 +149,7 @@ export class AdminDownloadablesController {
 
   @Post(':id/versions/:versionId/submit-review')
   @ApiOperation({ summary: '[Admin] Enviar version a revision' })
+  @ApiEnvelope(DownloadableResourceDto, { status: 201, description: 'Recurso enviado a revision.' })
   submit(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -124,6 +160,10 @@ export class AdminDownloadablesController {
 
   @Post(':id/versions/:versionId/approve')
   @ApiOperation({ summary: '[Admin] Aprobar version' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    status: 201,
+    description: 'Recurso aprobado. Queda listo para publicarse.',
+  })
   approve(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -134,6 +174,10 @@ export class AdminDownloadablesController {
 
   @Post(':id/versions/:versionId/reject')
   @ApiOperation({ summary: '[Admin] Rechazar version' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    status: 201,
+    description: 'Recurso rechazado, con el motivo registrado.',
+  })
   reject(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -145,6 +189,10 @@ export class AdminDownloadablesController {
 
   @Post(':id/versions/:versionId/request-changes')
   @ApiOperation({ summary: '[Admin] Solicitar cambios' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    status: 201,
+    description: 'Recurso devuelto a quien lo redacto, con los cambios solicitados.',
+  })
   requestChanges(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -156,6 +204,10 @@ export class AdminDownloadablesController {
 
   @Post(':id/versions/:versionId/publish')
   @ApiOperation({ summary: '[Admin] Publicar version (inmutable)' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    status: 201,
+    description: 'Recurso publicado y disponible segun sus condiciones de acceso.',
+  })
   publish(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -166,6 +218,10 @@ export class AdminDownloadablesController {
 
   @Post(':id/versions/:versionId/restore')
   @ApiOperation({ summary: '[Admin] Restaurar version (crea nueva)' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    status: 201,
+    description: 'Recurso restaurado desde el archivo.',
+  })
   restore(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -176,6 +232,10 @@ export class AdminDownloadablesController {
 
   @Post(':id/entitlements')
   @ApiOperation({ summary: '[Admin] Conceder acceso a un usuario' })
+  @ApiEnvelope(DownloadableEntitlementDto, {
+    status: 201,
+    description: 'Derecho de acceso concedido a mano, sin pasar por la pasarela.',
+  })
   grant(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -192,6 +252,10 @@ export class AdminDownloadablesController {
 
   @Delete(':id/entitlements/:userId')
   @ApiOperation({ summary: '[Admin] Revocar acceso' })
+  @ApiEnvelope(DownloadableEntitlementDto, {
+    status: 201,
+    description: 'Derecho de acceso revocado.',
+  })
   revoke(@Param('id', ParseUUIDPipe) id: string, @Param('userId', ParseUUIDPipe) userId: string) {
     return this.service.revokeEntitlement(id, userId);
   }
@@ -234,6 +298,11 @@ export class PublicationDownloadablesController {
   @Public()
   @Get('publications/:publicationId/downloadables')
   @ApiOperation({ summary: 'Descargables de una publicacion (con estado de acceso)' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    isArray: true,
+    description:
+      'Recursos asociados a la publicacion. La URL del archivo solo llega si hay derecho de acceso.',
+  })
   listForPublication(
     @Param('publicationId', ParseUUIDPipe) publicationId: string,
     @CurrentUser() user: AuthenticatedUser,
@@ -251,12 +320,20 @@ export class DownloadablesController {
   @Public()
   @Get()
   @ApiOperation({ summary: 'Listar descargables publicados' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    paginated: true,
+    description: 'Recursos publicados que la identidad puede ver.',
+  })
   list(@Query() query: PaginationQueryDto) {
     return this.service.publicList(Number(query.page ?? 1), Number(query.pageSize ?? 20));
   }
 
   @Get('me/library')
   @ApiOperation({ summary: 'Mi contenido premium (con estado de acceso)' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    paginated: true,
+    description: 'Recursos sobre los que la identidad tiene un derecho de acceso vigente.',
+  })
   myLibrary(@CurrentUser() user: AuthenticatedUser, @Query() query: PaginationQueryDto) {
     return this.service.myLibrary(user, Number(query.page ?? 1), Number(query.pageSize ?? 24));
   }
@@ -274,6 +351,9 @@ export class DownloadablesController {
   @Public()
   @Get(':slug')
   @ApiOperation({ summary: 'Detalle publico (sin URL privada)' })
+  @ApiEnvelope(DownloadableResourceDto, {
+    description: 'Detalle del recurso. La URL del archivo solo llega con derecho de acceso.',
+  })
   async detail(@Param('slug') slug: string) {
     const resource = await this.service.getPublicBySlugOrFail(slug);
     return this.service.toPublicCard(resource);
@@ -281,6 +361,9 @@ export class DownloadablesController {
 
   @Get(':id/access')
   @ApiOperation({ summary: 'Estado de acceso del usuario a un recurso' })
+  @ApiEnvelope(DownloadableAccessDto, {
+    description: 'Si la identidad puede descargar el recurso y, si no, por que y donde comprarlo.',
+  })
   async access(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
     const resource = await this.service.getByIdOrFail(id);
     return this.service.evaluateAccess(resource, user);

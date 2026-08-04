@@ -12,8 +12,8 @@ Informe generado por `scripts/check-openapi-coverage.mjs`. No se edita a mano: s
 | Operaciones sin ruta en NestJS | 0 |
 | Operaciones sin ninguna incidencia bloqueante | 189 (100.0 %) |
 | Operaciones con incidencias bloqueantes | 0 (0.0 %) |
-| Operaciones con `data` tipado | 53 (28.0 %) |
-| Operaciones con sobre genérico | 136 (72.0 %) |
+| Operaciones con `data` tipado | 154 (81.5 %) |
+| Operaciones con sobre genérico | 35 (18.5 %) |
 
 ## Incidencias por tipo
 
@@ -25,26 +25,19 @@ Estas operaciones documentan el sobre real (`data` + `meta`), pero `data` todav�
 
 | Controlador | Operaciones |
 | --- | ---: |
-| `AdminContentController` | 21 |
-| `AdminAdvertisingController` | 20 |
-| `AdminDownloadablesController` | 18 |
-| `AccountingController` | 9 |
-| `AdminFilesController` | 7 |
-| `AdminPublicPagesController` | 7 |
-| `PublicContentController` | 7 |
-| `UsersController` | 6 |
-| `AdminCmsController` | 6 |
-| `DownloadablesController` | 6 |
-| `FilesController` | 5 |
-| `PremiumContentController` | 5 |
-| `PublicContentAliasController` | 3 |
-| `PublicationDownloadablesController` | 3 |
+| `AdminContentController` | 6 |
+| `UsersController` | 5 |
+| `PremiumContentController` | 3 |
+| `AdminDownloadablesController` | 3 |
 | `BookingController` | 2 |
-| `CmsController` | 2 |
+| `FilesController` | 2 |
+| `AdminPublicPagesController` | 2 |
 | `PublicAdvertisingController` | 2 |
-| `AdminHomepageController` | 2 |
+| `DownloadablesController` | 2 |
+| `PublicationDownloadablesController` | 2 |
 | `NotificationsController` | 1 |
+| `AdminFilesController` | 1 |
+| `PublicContentController` | 1 |
 | `PublicAdvertisingAliasController` | 1 |
-| `PublicHomepageController` | 1 |
 | `LegacyCompatibilityController` | 1 |
 | `DownloadablesWebhookController` | 1 |

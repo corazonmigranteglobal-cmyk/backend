@@ -10,6 +10,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileAssetDto, SignedUrlDto } from '@/common/openapi/domain-response.dto';
+import { ApiEnvelope } from '@/common/openapi/api-envelope.decorator';
 import { Response } from 'express';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Public } from '@/common/decorators/public.decorator';
@@ -39,6 +41,10 @@ export class FilesController {
 
   @Post('cloudinary/complete')
   @ApiOperation({ summary: 'Registrar en el sistema un archivo ya subido a Cloudinary' })
+  @ApiEnvelope(FileAssetDto, {
+    status: 201,
+    description: 'Archivo ya subido a Cloudinary, ahora registrado en el sistema.',
+  })
   completeCloudinaryUpload(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CompleteCloudinaryUploadDto,
@@ -50,6 +56,10 @@ export class FilesController {
   @ApiOperation({ summary: 'Subir un archivo a través de la API' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file', buildMulterOptions()))
+  @ApiEnvelope(FileAssetDto, {
+    status: 201,
+    description: 'Archivo subido a traves de la API y registrado.',
+  })
   upload(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UploadFileDto,
@@ -61,6 +71,10 @@ export class FilesController {
   @Get(':id/signed-url')
   @ApiOperation({ summary: 'Obtener una URL firmada temporal de un archivo' })
   @Public()
+  @ApiEnvelope(SignedUrlDto, {
+    description:
+      'URL firmada temporal. Lo que autoriza es el enlace, no la sesion: es transferible durante su vigencia.',
+  })
   signedUrl(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.service.getDownloadInfo(user, id);
   }

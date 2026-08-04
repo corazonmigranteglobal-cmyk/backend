@@ -96,7 +96,7 @@ export class AdminNotificationDto {
   @ApiProperty({ example: false })
   isRead!: boolean;
 
-  @ApiPropertyOptional({ format: 'date-time', nullable: true })
+  @ApiPropertyOptional({ type: String, format: 'date-time', nullable: true })
   readAt?: string | null;
 
   @ApiProperty({
@@ -174,22 +174,27 @@ export class OutboxMessageDto {
   scheduledAt!: string;
 
   @ApiPropertyOptional({
+    type: String,
     format: 'date-time',
     nullable: true,
     description: 'Cuándo lo bloqueó un worker. Caduca a los `OUTBOX_STALE_LOCK_MS`.',
   })
   lockedAt?: string | null;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiPropertyOptional({ type: String, nullable: true })
   lockedBy?: string | null;
 
-  @ApiPropertyOptional({ nullable: true, description: 'Último error devuelto por el proveedor.' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    description: 'Último error devuelto por el proveedor.',
+  })
   lastError?: string | null;
 
   @ApiProperty({ format: 'date-time' })
   createdAt!: string;
 
-  @ApiPropertyOptional({ format: 'date-time', nullable: true })
+  @ApiPropertyOptional({ type: String, format: 'date-time', nullable: true })
   sentAt?: string | null;
 }
 

@@ -1286,11 +1286,22 @@ paths:
       parameters: []
       responses:
         "200":
-          description: Perfil completo del usuario.
+          description: |-
+            Cuenta y perfil de la identidad autenticada.
+
+            Perfil completo del usuario.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/UserAccountDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -4766,11 +4777,19 @@ paths:
               $ref: "#/components/schemas/CompleteCloudinaryUploadDto"
       responses:
         "201":
-          description: ""
+          description: Archivo ya subido a Cloudinary, ahora registrado en el sistema.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FileAssetDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -4812,11 +4831,19 @@ paths:
               $ref: "#/components/schemas/UploadFileDto"
       responses:
         "201":
-          description: ""
+          description: Archivo subido a traves de la API y registrado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FileAssetDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -4857,11 +4884,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: "URL firmada temporal. Lo que autoriza es el enlace, no la sesion: es transferible durante su vigencia."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SignedUrlDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5062,11 +5097,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Archivos registrados en el sistema.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FileAssetDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5106,11 +5154,19 @@ paths:
               $ref: "#/components/schemas/UploadFileDto"
       responses:
         "201":
-          description: ""
+          description: Archivo subido a traves de la API y registrado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FileAssetDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5153,11 +5209,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Metadatos del archivo. No devuelve el contenido.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FileAssetDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5203,11 +5267,19 @@ paths:
               $ref: "#/components/schemas/UpdateFileDto"
       responses:
         "200":
-          description: ""
+          description: Metadatos actualizados.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FileAssetDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5251,11 +5323,25 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Archivo eliminado. El borrado queda registrado en file_access_log.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                    required:
+                      - success
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5345,11 +5431,19 @@ paths:
               $ref: "#/components/schemas/CompleteCloudinaryUploadDto"
       responses:
         "201":
-          description: ""
+          description: Archivo ya subido a Cloudinary, ahora registrado en el sistema.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FileAssetDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5387,11 +5481,24 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: Paginas publicadas del sitio. El listado publico solo devuelve las publicadas.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CmsPageDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5424,11 +5531,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Pagina publicada, con sus elementos ordenados.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CmsPageDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5464,11 +5579,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Todas las paginas del CMS, en cualquier estado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CmsPageDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5508,11 +5636,19 @@ paths:
               $ref: "#/components/schemas/CreatePageDto"
       responses:
         "201":
-          description: ""
+          description: Pagina creada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CmsPageDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5555,11 +5691,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Pagina con sus elementos.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CmsPageDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5605,11 +5749,19 @@ paths:
               $ref: "#/components/schemas/UpdatePageDto"
       responses:
         "200":
-          description: ""
+          description: Pagina actualizada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CmsPageDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5653,11 +5805,25 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Pagina eliminada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                    required:
+                      - success
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5704,11 +5870,19 @@ paths:
               $ref: "#/components/schemas/CreateElementDto"
       responses:
         "201":
-          description: ""
+          description: Elemento anadido a la pagina.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CmsElementDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5753,11 +5927,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Paginas publicas administrables.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CmsPageDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5797,11 +5984,19 @@ paths:
               $ref: "#/components/schemas/CreatePageDto"
       responses:
         "201":
-          description: ""
+          description: Pagina publica creada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CmsPageDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5844,11 +6039,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Pagina publica con sus entradas.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CmsPageDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5894,11 +6097,19 @@ paths:
               $ref: "#/components/schemas/UpdatePageDto"
       responses:
         "200":
-          description: ""
+          description: Pagina publica actualizada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CmsPageDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -5942,11 +6153,25 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Pagina publica eliminada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                    required:
+                      - success
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -6217,11 +6442,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Grupos del plan de cuentas.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AccountGroupDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -6261,11 +6499,19 @@ paths:
               $ref: "#/components/schemas/CreateAccountGroupDto"
       responses:
         "201":
-          description: ""
+          description: Grupo creado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AccountGroupDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -6433,11 +6679,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Cuentas del plan contable.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AccountDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -6476,11 +6735,19 @@ paths:
               $ref: "#/components/schemas/CreateAccountDto"
       responses:
         "201":
-          description: ""
+          description: Cuenta creada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AccountDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -6648,11 +6915,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Centros de coste.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CostCenterDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -6691,11 +6971,19 @@ paths:
               $ref: "#/components/schemas/CreateCostCenterDto"
       responses:
         "201":
-          description: ""
+          description: Centro de coste creado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CostCenterDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -6863,11 +7151,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Transacciones contables.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AccountingTransactionDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -6906,11 +7207,19 @@ paths:
               $ref: "#/components/schemas/CreateTransactionDto"
       responses:
         "201":
-          description: ""
+          description: Transaccion registrada con sus asientos. Una transaccion descuadrada no se persiste.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AccountingTransactionDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -6959,11 +7268,19 @@ paths:
               $ref: "#/components/schemas/CreateSaleFromAppointmentDto"
       responses:
         "201":
-          description: ""
+          description: Asiento generado desde la cita atendida. Facturar una cita no prestada seria un error contable, por eso la operacion es explicita y posterior.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AccountingTransactionDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -7383,11 +7700,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Noticias publicadas. El contenido premium llega sin el cuerpo completo si no hay suscripcion activa.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ContentPublicationDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -7563,11 +7893,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Columnas de opinion publicadas.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ContentPublicationDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -7601,11 +7944,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Noticia publicada, localizada por su slug.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentPublicationDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -7641,11 +7992,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Columna publicada, localizada por su slug.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentPublicationDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -7676,11 +8035,24 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: Categorias que tienen contenido publicado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ContentCategoryDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -7707,11 +8079,24 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: Etiquetas que tienen contenido publicado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ContentTagDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -7927,11 +8312,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: "Publicaciones. Alias de compatibilidad: no recibe funcionalidad nueva."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ContentPublicationDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -7961,11 +8359,24 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: Categorias. Alias de compatibilidad.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ContentCategoryDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -7992,11 +8403,22 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: Tipos de publicacion disponibles.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: string
+                      example: NEWS
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8201,11 +8623,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Publicaciones editoriales en cualquier estado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ContentPublicationDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8245,11 +8680,19 @@ paths:
               $ref: "#/components/schemas/CreateContentPublicationDto"
       responses:
         "201":
-          description: ""
+          description: Publicacion creada en estado DRAFT.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentPublicationDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8292,11 +8735,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Detalle completo de la publicacion.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentPublicationDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8342,11 +8793,19 @@ paths:
               $ref: "#/components/schemas/UpdateContentPublicationDto"
       responses:
         "200":
-          description: ""
+          description: Publicacion actualizada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentPublicationDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8391,11 +8850,19 @@ paths:
             type: string
       responses:
         "201":
-          description: ""
+          description: Publicacion en estado PUBLISHED. Una transicion invalida devuelve error de dominio, no 500.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentPublicationDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8444,11 +8911,19 @@ paths:
               $ref: "#/components/schemas/SchedulePublicationDto"
       responses:
         "201":
-          description: ""
+          description: Publicacion en estado SCHEDULED, con su fecha de publicacion futura.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentPublicationDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8493,11 +8968,19 @@ paths:
             type: string
       responses:
         "201":
-          description: ""
+          description: Publicacion archivada. Deja de aparecer en el sitio publico.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentPublicationDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8535,11 +9018,24 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: Categorias de contenido.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ContentCategoryDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8576,11 +9072,19 @@ paths:
               $ref: "#/components/schemas/CreateContentCategoryDto"
       responses:
         "201":
-          description: ""
+          description: Categoria creada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentCategoryDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8629,11 +9133,19 @@ paths:
               $ref: "#/components/schemas/UpdateContentCategoryDto"
       responses:
         "200":
-          description: ""
+          description: Categoria actualizada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentCategoryDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8673,11 +9185,24 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: Etiquetas de contenido.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ContentTagDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8714,11 +9239,19 @@ paths:
               $ref: "#/components/schemas/CreateContentTagDto"
       responses:
         "201":
-          description: ""
+          description: Etiqueta creada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentTagDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8756,11 +9289,24 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: Autores editoriales.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ContentAuthorDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8797,11 +9343,19 @@ paths:
               $ref: "#/components/schemas/CreateContentAuthorDto"
       responses:
         "201":
-          description: ""
+          description: Autor registrado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentAuthorDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -8850,11 +9404,19 @@ paths:
               $ref: "#/components/schemas/UpdateContentAuthorDto"
       responses:
         "200":
-          description: ""
+          description: Autor actualizado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentAuthorDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -9429,11 +9991,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Noticia premium completa. Exige suscripcion activa.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentPublicationDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -9474,11 +10044,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Columna premium completa. Exige suscripcion activa.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContentPublicationDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -9673,11 +10251,24 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: Empresas anunciantes registradas.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdsCompanyDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -9715,11 +10306,19 @@ paths:
               $ref: "#/components/schemas/CreateAdsCompanyDto"
       responses:
         "201":
-          description: ""
+          description: Empresa anunciante registrada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdsCompanyDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -9768,11 +10367,19 @@ paths:
               $ref: "#/components/schemas/UpdateAdsCompanyDto"
       responses:
         "200":
-          description: ""
+          description: Empresa actualizada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdsCompanyDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -9816,11 +10423,25 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Empresa dada de baja.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                    required:
+                      - success
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -9856,11 +10477,24 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: Emplazamientos publicitarios disponibles.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdsPlacementDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -9897,11 +10531,19 @@ paths:
               $ref: "#/components/schemas/CreateAdsPlacementDto"
       responses:
         "201":
-          description: ""
+          description: Emplazamiento creado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdsPlacementDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -9950,11 +10592,19 @@ paths:
               $ref: "#/components/schemas/UpdateAdsPlacementDto"
       responses:
         "200":
-          description: ""
+          description: Emplazamiento actualizado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdsPlacementDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -9994,11 +10644,24 @@ paths:
       parameters: []
       responses:
         "200":
-          description: ""
+          description: Creatividades del catalogo.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdsCreativeDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10035,11 +10698,19 @@ paths:
               $ref: "#/components/schemas/CreateAdsAdDto"
       responses:
         "201":
-          description: ""
+          description: Creatividad creada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdsCreativeDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10088,11 +10759,19 @@ paths:
               $ref: "#/components/schemas/UpdateAdsCreativeDto"
       responses:
         "200":
-          description: ""
+          description: Creatividad actualizada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdsCreativeDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10136,11 +10815,25 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Creatividad eliminada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                    required:
+                      - success
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10318,11 +11011,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Campanas publicitarias.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdsCampaignDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10361,11 +11067,19 @@ paths:
               $ref: "#/components/schemas/CreateAdsCampaignDto"
       responses:
         "201":
-          description: ""
+          description: "Campana creada. Las fechas se validan: no puede terminar antes de empezar."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdsCampaignDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10408,11 +11122,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Detalle de la campana.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdsCampaignDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10458,11 +11180,19 @@ paths:
               $ref: "#/components/schemas/UpdateAdsCampaignDto"
       responses:
         "200":
-          description: ""
+          description: Campana actualizada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdsCampaignDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10506,11 +11236,25 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Campana eliminada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                    required:
+                      - success
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10557,11 +11301,19 @@ paths:
               $ref: "#/components/schemas/SetAdsCampaignStatusDto"
       responses:
         "201":
-          description: ""
+          description: Campana con el estado nuevo.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdsCampaignDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10606,11 +11358,21 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Creatividades asociadas a la campana.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdsCreativeDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10656,11 +11418,19 @@ paths:
               $ref: "#/components/schemas/CreateAdsCreativeDto"
       responses:
         "201":
-          description: ""
+          description: Creatividad asociada a la campana.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdsCreativeDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10711,11 +11481,19 @@ paths:
               $ref: "#/components/schemas/UpdateAdsCreativeDto"
       responses:
         "200":
-          description: ""
+          description: Creatividad de campana actualizada.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdsCreativeDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10767,11 +11545,21 @@ paths:
             type: number
       responses:
         "200":
-          description: ""
+          description: Secciones de la portada con sus destacados ya resueltos desde contenido y publicidad.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HomepageSectionDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10813,11 +11601,21 @@ paths:
             type: number
       responses:
         "200":
-          description: ""
+          description: Portada con los cambios sin publicar, para revisarla antes de que la vea el publico.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HomepageSectionDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -10858,11 +11656,21 @@ paths:
               $ref: "#/components/schemas/UpdateHomepageLayoutDto"
       responses:
         "200":
-          description: ""
+          description: Composicion de la portada tras aplicar los cambios.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HomepageSectionDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11017,11 +11825,19 @@ paths:
               $ref: "#/components/schemas/CreateDownloadableDto"
       responses:
         "201":
-          description: ""
+          description: Recurso descargable creado en borrador.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11189,11 +12005,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Recursos descargables en cualquier estado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DownloadableResourceDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11268,11 +12097,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Detalle completo del recurso, incluida su integracion comercial.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11318,11 +12155,19 @@ paths:
               $ref: "#/components/schemas/UpdateDownloadableDto"
       responses:
         "200":
-          description: ""
+          description: Recurso actualizado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11366,11 +12211,25 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Recurso eliminado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                    required:
+                      - success
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11411,11 +12270,19 @@ paths:
             type: string
       responses:
         "201":
-          description: ""
+          description: Recurso archivado. Deja de ofrecerse, pero los derechos ya concedidos siguen vigentes.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11463,12 +12330,20 @@ paths:
             schema:
               $ref: "#/components/schemas/HotmartConfigDto"
       responses:
-        "200":
-          description: ""
+        "201":
+          description: Recurso vinculado a un producto de Hotmart.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11617,11 +12492,19 @@ paths:
             type: string
       responses:
         "201":
-          description: ""
+          description: Recurso enviado a revision.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11669,11 +12552,19 @@ paths:
             type: string
       responses:
         "201":
-          description: ""
+          description: Recurso aprobado. Queda listo para publicarse.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11727,11 +12618,19 @@ paths:
               $ref: "#/components/schemas/ReviewCommentDto"
       responses:
         "201":
-          description: ""
+          description: Recurso rechazado, con el motivo registrado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11787,11 +12686,19 @@ paths:
               $ref: "#/components/schemas/ReviewCommentDto"
       responses:
         "201":
-          description: ""
+          description: Recurso devuelto a quien lo redacto, con los cambios solicitados.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11841,11 +12748,19 @@ paths:
             type: string
       responses:
         "201":
-          description: ""
+          description: Recurso publicado y disponible segun sus condiciones de acceso.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11893,11 +12808,19 @@ paths:
             type: string
       responses:
         "201":
-          description: ""
+          description: Recurso restaurado desde el archivo.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11946,11 +12869,19 @@ paths:
               $ref: "#/components/schemas/GrantEntitlementDto"
       responses:
         "201":
-          description: ""
+          description: Derecho de acceso concedido a mano, sin pasar por la pasarela.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableEntitlementDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -11999,12 +12930,20 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: ""
+        "201":
+          description: Derecho de acceso revocado.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableEntitlementDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -12170,11 +13109,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Recursos publicados que la identidad puede ver.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DownloadableResourceDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -12334,11 +13286,24 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Recursos sobre los que la identidad tiene un derecho de acceso vigente.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DownloadableResourceDto"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMetaDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - pagination
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -12541,11 +13506,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Detalle del recurso. La URL del archivo solo llega con derecho de acceso.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -12581,11 +13554,19 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Si la identidad puede descargar el recurso y, si no, por que y donde comprarlo.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DownloadableAccessDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -12780,11 +13761,21 @@ paths:
             type: string
       responses:
         "200":
-          description: ""
+          description: Recursos asociados a la publicacion. La URL del archivo solo llega si hay derecho de acceso.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiSuccessResponseDto"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DownloadableResourceDto"
+                  meta:
+                    $ref: "#/components/schemas/ResponseMetaDto"
+                required:
+                  - data
+                  - meta
           headers:
             X-Request-Id:
               description: Identificador de la petición, espejo de `meta.requestId`.
@@ -13084,17 +14075,17 @@ components:
           description: Momento a partir del cual el worker puede tomarlo. Lo desplaza el retroceso exponencial.
         lockedAt:
           type:
-            - object
+            - string
             - "null"
           format: date-time
           description: Cuándo lo bloqueó un worker. Caduca a los `OUTBOX_STALE_LOCK_MS`.
         lockedBy:
           type:
-            - object
+            - string
             - "null"
         lastError:
           type:
-            - object
+            - string
             - "null"
           description: Último error devuelto por el proveedor.
         createdAt:
@@ -13102,7 +14093,7 @@ components:
           format: date-time
         sentAt:
           type:
-            - object
+            - string
             - "null"
           format: date-time
       required:
@@ -13333,6 +14324,30 @@ components:
         - email
         - pin
         - newPassword
+    UserAccountDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+          maxLength: 180
+        status:
+          type: string
+          example: ACTIVE
+          description: Un terapeuta permanece en `PENDING_APPROVAL` hasta que se le aprueba.
+        emailVerifiedAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - email
+        - status
     UpdatePatientProfileDto:
       type: object
       properties:
@@ -13385,30 +14400,6 @@ components:
           description: Id del archivo creado por POST /api/v1/files.
       required:
         - avatarFileId
-    UserAccountDto:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        email:
-          type: string
-          format: email
-          maxLength: 180
-        status:
-          type: string
-          example: ACTIVE
-          description: Un terapeuta permanece en `PENDING_APPROVAL` hasta que se le aprueba.
-        emailVerifiedAt:
-          type: string
-          format: date-time
-        lastLoginAt:
-          type: string
-          format: date-time
-      required:
-        - id
-        - email
-        - status
     UpdateUserStatusDto:
       type: object
       properties:
@@ -13934,7 +14925,7 @@ components:
           example: false
         readAt:
           type:
-            - object
+            - string
             - "null"
           format: date-time
         recipientRole:
@@ -13986,6 +14977,79 @@ components:
         - originalName
         - mimeType
         - sizeBytes
+    FileAssetDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerUserId:
+          type: string
+          format: uuid
+        module:
+          type: string
+          example: content
+          maxLength: 60
+          description: Módulo que posee el archivo.
+        entityType:
+          type: string
+          maxLength: 80
+        entityId:
+          type: string
+          format: uuid
+        storageProvider:
+          type: string
+          enum:
+            - LOCAL
+            - GCS
+            - CLOUDINARY
+          example: CLOUDINARY
+          description: Proveedor donde reside el objeto. Lo decide `STORAGE_PROVIDER` al subirlo.
+        bucket:
+          type: string
+          maxLength: 120
+        objectKey:
+          type: string
+          maxLength: 500
+          description: Clave del objeto dentro del proveedor.
+        originalName:
+          type: string
+          maxLength: 255
+        mimeType:
+          type: string
+          example: application/pdf
+          maxLength: 120
+        sizeBytes:
+          type: number
+          example: 184320
+        checksum:
+          type: string
+          maxLength: 128
+        visibility:
+          type: string
+          enum:
+            - PRIVATE
+            - PUBLIC
+          example: PRIVATE
+          description: Los privados sólo se sirven mediante URL firmada temporal. Todo acceso queda en `file_access_log`.
+        status:
+          type: string
+          example: ACTIVE
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+        - id
+        - ownerUserId
+        - module
+        - storageProvider
+        - objectKey
+        - originalName
+        - mimeType
+        - sizeBytes
+        - visibility
+        - status
+        - metadata
     CompleteCloudinaryUploadDto:
       type: object
       properties:
@@ -14038,6 +15102,20 @@ components:
             - PUBLIC
       required:
         - module
+    SignedUrlDto:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: URL temporal de descarga directa desde el proveedor.
+        expiresIn:
+          type: number
+          example: 900
+          description: "Segundos de validez (`FILE_SIGNED_URL_EXPIRES_SECONDS`). La URL es transferible durante ese plazo: lo que autoriza es el enlace, no la sesión."
+      required:
+        - url
+        - expiresIn
     UpdateFileDto:
       type: object
       properties:
@@ -14066,6 +15144,33 @@ components:
           type: string
         metadata:
           type: object
+    CmsPageDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+          example: quienes-somos
+        title:
+          type: string
+        status:
+          type: string
+          example: PUBLISHED
+          description: El listado público sólo devuelve las publicadas.
+        seoMetadata:
+          type: object
+          additionalProperties: true
+        publishedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - slug
+        - title
+        - status
+        - seoMetadata
     UpdatePageDto:
       type: object
       properties:
@@ -14095,6 +15200,26 @@ components:
       required:
         - slug
         - title
+    CmsElementDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pageId:
+          type: string
+          format: uuid
+        fileId:
+          type: string
+          format: uuid
+        sortOrder:
+          type: number
+          example: 0
+          description: "Orden dentro de la página. Una página es un contenedor de elementos ordenados, no un bloque de HTML: así el frontend decide cómo renderizar cada tipo."
+      required:
+        - id
+        - pageId
+        - sortOrder
     CreateElementDto:
       type: object
       properties:
@@ -14117,6 +15242,31 @@ components:
           type: string
       required:
         - publicationId
+    AccountGroupDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: "1"
+          description: Código dentro del plan de cuentas.
+        name:
+          type: string
+          example: Activo
+        type:
+          type: string
+          example: ASSET
+        status:
+          type: string
+          example: ACTIVE
+      required:
+        - id
+        - code
+        - name
+        - type
+        - status
     CreateAccountGroupDto:
       type: object
       properties:
@@ -14136,6 +15286,39 @@ components:
         - code
         - name
         - type
+    AccountDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+          description: Grupo del plan de cuentas al que pertenece.
+        code:
+          type: string
+          example: "1101"
+        name:
+          type: string
+          example: Caja
+        normalBalance:
+          type: string
+          enum:
+            - DEBIT
+            - CREDIT
+          example: DEBIT
+          description: Saldo natural de la cuenta.
+        status:
+          type: string
+          example: ACTIVE
+      required:
+        - id
+        - groupId
+        - code
+        - name
+        - normalBalance
+        - status
     CreateAccountDto:
       type: object
       properties:
@@ -14155,6 +15338,26 @@ components:
         - code
         - name
         - normalBalance
+    CostCenterDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: CC-01
+        name:
+          type: string
+          example: Consulta terapéutica
+        status:
+          type: string
+          example: ACTIVE
+      required:
+        - id
+        - code
+        - name
+        - status
     CreateCostCenterDto:
       type: object
       properties:
@@ -14165,6 +15368,67 @@ components:
       required:
         - code
         - name
+    AccountingEntryDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        transactionId:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        costCenterId:
+          type: string
+          format: uuid
+        debit:
+          type: string
+          example: "150.00"
+          description: Importe al debe.
+        credit:
+          type: string
+          example: "0.00"
+          description: Importe al haber.
+      required:
+        - id
+        - transactionId
+        - accountId
+        - debit
+        - credit
+    AccountingTransactionDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+          description: Fecha contable, no la de registro.
+        description:
+          type: string
+        reference:
+          type: string
+          description: "Referencia externa: número de factura o recibo."
+        status:
+          type: string
+          example: POSTED
+        createdByUserId:
+          type: string
+          format: uuid
+        entries:
+          description: "Asientos que la componen, cuando la operación los incluye. Una transacción descuadrada no se persiste: la partida doble es real."
+          type: array
+          items:
+            $ref: "#/components/schemas/AccountingEntryDto"
+      required:
+        - id
+        - date
+        - description
+        - status
+        - createdByUserId
     EntryDto:
       type: object
       properties:
@@ -14252,6 +15516,139 @@ components:
           type: object
       required:
         - eventName
+    ContentPublicationDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        authorId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+        coverFileId:
+          type: string
+          format: uuid
+          description: Imagen de portada, resuelta vía archivos.
+        slug:
+          type: string
+          example: nuevas-rutas-de-acompanamiento
+          description: Identificador estable en la URL pública. Es único.
+        title:
+          type: string
+        summary:
+          type: string
+          description: Entradilla que se muestra en listados.
+        body:
+          type: string
+          description: Cuerpo completo. En contenido premium sólo llega si hay acceso.
+        audioTranscript:
+          type: string
+          description: Transcripción del audio, cuando la publicación lo incluye.
+        publicationType:
+          type: string
+          enum:
+            - NEWS
+            - COLUMN
+            - OPINION
+            - INTERVIEW
+            - REPORT
+            - ANALYSIS
+          example: NEWS
+        accessType:
+          type: string
+          enum:
+            - PUBLIC
+            - PREMIUM
+            - INTERNAL_ONLY
+          example: PUBLIC
+          description: "Dimensión **independiente** del estado: una publicación puede estar `PUBLISHED` y ser `PREMIUM`, es decir publicada pero legible sólo con suscripción activa."
+        status:
+          type: string
+          enum:
+            - DRAFT
+            - IN_REVIEW
+            - SCHEDULED
+            - PUBLISHED
+            - ARCHIVED
+          example: PUBLISHED
+          description: Las transiciones válidas las decide `policies/publication-status.policy.ts`.
+        commentsEnabled:
+          type: boolean
+          example: true
+        reactionsEnabled:
+          type: boolean
+          example: true
+        publishedAt:
+          type: string
+          format: date-time
+        scheduledAt:
+          type: string
+          format: date-time
+          description: Fecha de publicación programada, cuando el estado es `SCHEDULED`.
+        seoMetadata:
+          type: object
+          additionalProperties: true
+          description: "Metadatos de posicionamiento: título, descripción y etiquetas sociales."
+      required:
+        - id
+        - authorId
+        - categoryId
+        - slug
+        - title
+        - summary
+        - body
+        - publicationType
+        - accessType
+        - status
+        - commentsEnabled
+        - reactionsEnabled
+        - seoMetadata
+    ContentCategoryDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+          example: salud-mental
+        name:
+          type: string
+          example: Salud mental
+        description:
+          type: string
+        isActive:
+          type: boolean
+          example: true
+        sortOrder:
+          type: number
+          example: 0
+          description: Orden de presentación. Menor va primero.
+      required:
+        - id
+        - slug
+        - name
+        - isActive
+        - sortOrder
+    ContentTagDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+          example: migracion
+        name:
+          type: string
+          example: Migración
+      required:
+        - id
+        - slug
+        - name
     UpsertContentSubscriberDto:
       type: object
       properties:
@@ -14436,6 +15833,38 @@ components:
           example: historias
       required:
         - name
+    ContentAuthorDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+          description: Cuenta asociada, si quien firma tiene acceso a la plataforma.
+        displayName:
+          type: string
+          example: Lucía Fernández
+        headline:
+          type: string
+          description: Titular corto que acompaña a la firma.
+        bio:
+          type: string
+        avatarFileId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          example: ACTIVE
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+        - id
+        - displayName
+        - status
+        - metadata
     CreateContentAuthorDto:
       type: object
       properties:
@@ -14505,6 +15934,42 @@ components:
           type: object
         metadata:
           type: object
+    AdsCompanyDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        businessName:
+          type: string
+          example: Migrantes Unidos S.R.L.
+          description: Razón social.
+        commercialName:
+          type: string
+          example: Migrantes Unidos
+          description: Nombre comercial.
+        taxId:
+          type: string
+          description: Identificación fiscal.
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+          format: email
+        contactPhone:
+          type: string
+        status:
+          type: string
+          example: ACTIVE
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+        - id
+        - businessName
+        - commercialName
+        - status
+        - metadata
     CreateAdsCompanyDto:
       type: object
       properties:
@@ -14551,6 +16016,38 @@ components:
           enum: *a34
         metadata:
           type: object
+    AdsPlacementDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: HOME_SIDEBAR_TOP
+          description: Código estable con el que el frontend pide el anuncio de este hueco.
+        name:
+          type: string
+        description:
+          type: string
+        context:
+          type: string
+          example: HOMEPAGE
+          description: Zona del sitio en la que aparece.
+        isActive:
+          type: boolean
+          example: true
+        dimensions:
+          type: object
+          additionalProperties: true
+          description: Medidas esperadas de la creatividad, para validar lo que se sube.
+      required:
+        - id
+        - code
+        - name
+        - context
+        - isActive
+        - dimensions
     CreateAdsPlacementDto:
       type: object
       properties:
@@ -14591,6 +16088,64 @@ components:
           type: boolean
         dimensions:
           type: object
+    AdsCreativeDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        campaignId:
+          type: string
+          format: uuid
+        fileId:
+          type: string
+          format: uuid
+          description: Archivo asociado, si se subió por la API.
+        title:
+          type: string
+        mediaType:
+          type: string
+          example: IMAGE
+        assetUrl:
+          type: string
+          format: uri
+          description: URL desde la que se sirve la pieza.
+        destinationUrl:
+          type: string
+          format: uri
+          description: Destino al que lleva el clic.
+        altText:
+          type: string
+          description: "Texto alternativo. Es obligatorio: sin él la pieza no es accesible."
+        mimeType:
+          type: string
+        width:
+          type: number
+          example: 300
+        height:
+          type: number
+          example: 250
+        sizeBytes:
+          type: number
+          example: 48213
+        approvalStatus:
+          type: string
+          example: APPROVED
+        isPrimary:
+          type: boolean
+          example: false
+          description: La pieza principal de la campaña.
+      required:
+        - id
+        - campaignId
+        - title
+        - mediaType
+        - assetUrl
+        - destinationUrl
+        - altText
+        - sizeBytes
+        - approvalStatus
+        - isPrimary
     CreateAdsAdDto:
       type: object
       properties:
@@ -14687,6 +16242,63 @@ components:
           type: number
         isPrimary:
           type: boolean
+    AdsCampaignDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        companyId:
+          type: string
+          format: uuid
+        createdByUserId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        objective:
+          type: string
+          example: BRAND_AWARENESS
+        status:
+          type: string
+          example: ACTIVE
+        startsAt:
+          type: string
+          format: date-time
+          description: "Una campaña no puede terminar antes de empezar: lo valida `campaign-date.policy.ts`."
+        endsAt:
+          type: string
+          format: date-time
+        budgetAmount:
+          type: string
+          example: "5000.00"
+          description: Presupuesto. Sequelize serializa `DECIMAL` como cadena para no perder precisión.
+        currency:
+          type: string
+          example: BOB
+          maxLength: 3
+        priority:
+          type: number
+          example: 5
+          description: Prioridad frente a otras campañas del mismo emplazamiento.
+        pacing:
+          type: string
+          example: EVEN
+          description: Ritmo de reparto del presupuesto.
+        notes:
+          type: string
+      required:
+        - id
+        - companyId
+        - name
+        - objective
+        - status
+        - startsAt
+        - endsAt
+        - budgetAmount
+        - currency
+        - priority
+        - pacing
     CreateAdsCampaignDto:
       type: object
       properties:
@@ -14826,53 +16438,39 @@ components:
         - assetUrl
         - destinationUrl
         - altText
-    HomepageFeaturedItemDto:
-      type: object
-      properties:
-        itemType:
-          type: string
-          enum:
-            - CONTENT_PUBLICATION
-            - ADS_CAMPAIGN
-            - ADS_CREATIVE
-        itemId:
-          type: string
-        sortOrder:
-          type: number
-          default: 0
-        metadata:
-          type: object
-      required:
-        - itemType
-        - itemId
     HomepageSectionDto:
       type: object
       properties:
+        id:
+          type: string
+          format: uuid
         code:
           type: string
+          example: DESTACADOS
+          description: Código estable de la sección.
         title:
           type: string
         type:
           type: string
-          enum:
-            - HEADLINES
-            - COLUMNS
-            - ADS
-            - CUSTOM
+          example: PUBLICATIONS
+          description: Qué tipo de elementos agrupa.
         sortOrder:
           type: number
+          example: 0
         isActive:
           type: boolean
+          example: true
         metadata:
           type: object
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/HomepageFeaturedItemDto"
+          additionalProperties: true
       required:
+        - id
         - code
         - title
         - type
+        - sortOrder
+        - isActive
+        - metadata
     UpdateHomepageLayoutDto:
       type: object
       properties:
@@ -14963,6 +16561,172 @@ components:
         - commit
         - buildAt
         - env
+    DownloadableResourceDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        publicId:
+          type: string
+          description: Identificador público del recurso, estable frente a cambios internos.
+        slug:
+          type: string
+          example: guia-de-derechos-migratorios
+        title:
+          type: string
+        shortDescription:
+          type:
+            - string
+            - "null"
+        description:
+          type:
+            - string
+            - "null"
+        resourceType:
+          type: string
+          example: PDF
+        category:
+          type:
+            - string
+            - "null"
+        tags:
+          example:
+            - derechos
+            - migracion
+          type: array
+          items:
+            type: string
+        coverUrl:
+          type:
+            - string
+            - "null"
+          format: uri
+        fileUrl:
+          type:
+            - string
+            - "null"
+          format: uri
+          description: URL del archivo. **Sólo llega cuando la identidad tiene un derecho de acceso vigente**; en caso contrario viaja vacía.
+        originalName:
+          type:
+            - string
+            - "null"
+        mimeType:
+          type:
+            - string
+            - "null"
+          example: application/pdf
+        extension:
+          type:
+            - string
+            - "null"
+          example: pdf
+        sizeBytes:
+          type:
+            - number
+            - "null"
+          example: 2483712
+        checksum:
+          type:
+            - string
+            - "null"
+          description: Suma de verificación del archivo.
+        storageProvider:
+          type: string
+          enum:
+            - LOCAL
+            - GCS
+            - CLOUDINARY
+          example: GCS
+        requiresPremium:
+          type: boolean
+          example: false
+          description: Exige suscripción premium activa.
+        requiresPurchase:
+          type: boolean
+          example: true
+          description: Exige una compra confirmada. La confirma Hotmart, no este backend.
+        commercialProvider:
+          type:
+            - string
+            - "null"
+          example: HOTMART
+        hotmartProductId:
+          type:
+            - string
+            - "null"
+        hotmartOfferId:
+          type:
+            - string
+            - "null"
+        hotmartCheckoutUrl:
+          type:
+            - string
+            - "null"
+          format: uri
+        externalReference:
+          type:
+            - string
+            - "null"
+        integrationStatus:
+          type: string
+          example: OK
+          description: Estado de la integración comercial.
+        integrationLastError:
+          type:
+            - string
+            - "null"
+        publishedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        expiresAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        version:
+          type: number
+          example: 3
+          description: Versión vigente. Una descarga apunta a una versión concreta, para que actualizar el material no invalide lo que alguien ya compró.
+        downloadCount:
+          type: number
+          example: 128
+        createdBy:
+          type:
+            - string
+            - "null"
+          format: uuid
+        updatedBy:
+          type:
+            - string
+            - "null"
+          format: uuid
+        approvedBy:
+          type:
+            - string
+            - "null"
+          format: uuid
+        approvedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+      required:
+        - id
+        - publicId
+        - slug
+        - title
+        - resourceType
+        - tags
+        - storageProvider
+        - requiresPremium
+        - requiresPurchase
+        - integrationStatus
+        - version
+        - downloadCount
     CreateDownloadableDto:
       type: object
       properties:
@@ -15065,6 +16829,60 @@ components:
       properties:
         comment:
           type: string
+    DownloadableEntitlementDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        resourceId:
+          type: string
+          format: uuid
+        userId:
+          type:
+            - string
+            - "null"
+          format: uuid
+          description: Cuenta beneficiaria. Vacío si el derecho se concedió sólo por correo.
+        subjectEmail:
+          type:
+            - string
+            - "null"
+          format: email
+          description: Correo al que se concedió, cuando la compra llegó antes de existir la cuenta.
+        externalReference:
+          type:
+            - string
+            - "null"
+          description: Referencia del proveedor externo que originó la concesión.
+        externalTransaction:
+          type:
+            - string
+            - "null"
+        grantedBy:
+          type:
+            - string
+            - "null"
+          format: uuid
+          description: Quién lo concedió a mano.
+        grantedAt:
+          type: string
+          format: date-time
+        revokedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Fecha de revocación, típicamente tras un reembolso notificado por Hotmart.
+        expiresAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+      required:
+        - id
+        - resourceId
+        - grantedAt
     GrantEntitlementDto:
       type: object
       properties:
@@ -15072,6 +16890,23 @@ components:
           type: string
         subjectEmail:
           type: string
+    DownloadableAccessDto:
+      type: object
+      properties:
+        granted:
+          type: boolean
+          example: true
+          description: Si la identidad tiene derecho de acceso vigente sobre el recurso.
+        reason:
+          type: string
+          example: REQUIRES_PURCHASE
+          description: Motivo del rechazo cuando `granted` es falso.
+        checkoutUrl:
+          type: string
+          format: uri
+          description: Enlace de compra al que dirigir a la persona cuando falta el derecho.
+      required:
+        - granted
     AttachPublicationDto:
       type: object
       properties:

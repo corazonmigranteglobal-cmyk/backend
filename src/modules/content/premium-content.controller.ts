@@ -1,5 +1,7 @@
 import { Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ContentPublicationDto } from './dto/content-response.dto';
+import { ApiEnvelope } from '@/common/openapi/api-envelope.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
@@ -43,6 +45,9 @@ export class PremiumContentController {
   @Get('premium/publications/news/:slug')
   @ApiOperation({ summary: 'Leer una noticia premium por su slug' })
   @Roles('PATIENT')
+  @ApiEnvelope(ContentPublicationDto, {
+    description: 'Noticia premium completa. Exige suscripcion activa.',
+  })
   async getPremiumNews(@CurrentUser() user: AuthenticatedUser, @Param('slug') slug: string) {
     await this.subscribers.assertPremiumAccess(user.sub);
     return this.publications.getPremiumBySlug(slug, ['NEWS', 'REPORT', 'ANALYSIS', 'INTERVIEW']);
@@ -51,6 +56,9 @@ export class PremiumContentController {
   @Get('premium/publications/columns/:slug')
   @ApiOperation({ summary: 'Leer una columna premium por su slug' })
   @Roles('PATIENT')
+  @ApiEnvelope(ContentPublicationDto, {
+    description: 'Columna premium completa. Exige suscripcion activa.',
+  })
   async getPremiumColumn(@CurrentUser() user: AuthenticatedUser, @Param('slug') slug: string) {
     await this.subscribers.assertPremiumAccess(user.sub);
     return this.publications.getPremiumBySlug(slug, ['COLUMN', 'OPINION']);
