@@ -66,10 +66,11 @@
     "docs:links": "node scripts/check-doc-links.mjs",
     "docs:serve": "python -m mkdocs serve",
     "docs:build": "python -m mkdocs build --strict",
-    "docs:validate": "yarn docs:openapi:lint && yarn docs:openapi:coverage && yarn docs:links",
+    "docs:validate": "yarn docs:openapi:lint && yarn docs:openapi:coverage && yarn docs:asyncapi:lint && yarn docs:links",
     "docs:modules": "node scripts/generate-module-docs.mjs",
     "docs:entities": "node scripts/generate-entity-catalog.mjs",
-    "docs:generate": "yarn docs:openapi:generate && yarn docs:modules && yarn docs:entities"
+    "docs:generate": "yarn docs:openapi:generate && yarn docs:modules && yarn docs:entities",
+    "docs:asyncapi:lint": "node scripts/validate-asyncapi.mjs"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.21.0",

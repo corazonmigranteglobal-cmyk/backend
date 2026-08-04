@@ -95,7 +95,10 @@ nav:
       - therapy-catalog: modules/therapy-catalog.md
       - users: modules/users.md
   - API:
+      - Convenciones: api/conventions.md
+      - Autenticación: api/authentication.md
       - Autorización: api/authorization.md
+      - Modelo de error: api/error-model.md
       - Política de deprecación: api/deprecation-policy.md
   - Datos:
       - Catálogo de entidades: data/entity-catalog.md
@@ -110,9 +113,15 @@ nav:
       - Auditabilidad: security/auditability.md
       - Seguridad de dependencias: security/dependency-security.md
   - Observabilidad:
+      - Logs: observability/logging.md
       - Trazas: observability/tracing.md
+      - Objetivos de servicio: observability/service-level-objectives.md
+  - Pruebas:
+      - Estrategia: testing/strategy.md
   - Operación:
+      - Runbook · API caída o con 5xx: operations/runbooks/api-caida.md
       - Runbook · Cola de mensajes detenida: operations/runbooks/outbox-detenido.md
+      - Runbook · Migración fallida: operations/runbooks/migracion-fallida.md
   - Gobierno:
       - Política de documentación: governance/documentation-policy.md
       - Matriz de trazabilidad: governance/traceability-matrix.md
@@ -120,4 +129,5 @@ nav:
       - Línea base: reports/baseline.md
       - Auditoría del grafo: reports/graphify-audit.md
       - Análisis de brechas: reports/documentation-gap-analysis.md
+      - Preparación para producción: reports/production-readiness.md
       - Cobertura OpenAPI: reports/openapi-coverage.md

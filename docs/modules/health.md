@@ -12,7 +12,7 @@
 | Operaciones HTTP | 2 |
 | Controladores | 1 |
 | Servicios | 1 |
-| DTO | 0 |
+| DTO | 1 |
 | Políticas de dominio | 0 |
 | Adaptadores externos | 0 |
 | Suites de prueba | 1 |
@@ -47,6 +47,10 @@ Da a orquestadores y balanceadores una respuesta fiable sobre si el proceso pued
 **Servicios**
 
 - [`src/modules/health/health.service.ts`](../../src/modules/health/health.service.ts)
+
+**DTO**
+
+- [`src/modules/health/dto/health-response.dto.ts`](../../src/modules/health/dto/health-response.dto.ts)
 
 ## Modelo de datos
 

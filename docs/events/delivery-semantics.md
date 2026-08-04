@@ -39,6 +39,20 @@ stateDiagram-v2
     FAILED --> PROCESSING: reproceso manual desde el panel
 ```
 
+!!! warning "Dos vocabularios para el mismo estado"
+    El diagrama usa los nombres que **devuelve la API**. La tabla los almacena **en español**
+    (`PENDIENTE`, `PROCESANDO`, `ENVIADO`, `FALLIDO`, `CANCELADO`), porque es anterior a la
+    normalización del resto del esquema, y la API los traduce antes de responder
+    (`MESSAGE_API_STATUS` en [`messaging.types.ts`](../../src/modules/messaging/messaging.types.ts)).
+
+    Consecuencia práctica: si consultas la tabla directamente verás los valores en español; si
+    consumes `GET /api/v1/admin/messaging/outbox`, los verás en inglés. El contrato
+    [AsyncAPI](../../asyncapi/asyncapi.yaml) describe el canal, así que declara los almacenados; el
+    contrato OpenAPI describe la API, así que declara los traducidos.
+
+    Existe además un quinto estado, `CANCELLED` (`CANCELADO`), que el diagrama no dibuja porque
+    ningún flujo actual lo produce de forma automática.
+
 ## El worker
 
 Es un **proceso independiente** (`src/workers/outbox.worker.ts`, `yarn worker:outbox`), no un

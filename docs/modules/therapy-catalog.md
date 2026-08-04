@@ -12,7 +12,7 @@
 | Operaciones HTTP | 9 |
 | Controladores | 1 |
 | Servicios | 1 |
-| DTO | 1 |
+| DTO | 2 |
 | Políticas de dominio | 0 |
 | Adaptadores externos | 0 |
 | Suites de prueba | 1 |
@@ -56,6 +56,7 @@ las terapeutas. Es lo que una persona paciente consulta antes de reservar.
 
 **DTO**
 
+- [`src/modules/therapy-catalog/dto/therapy-response.dto.ts`](../../src/modules/therapy-catalog/dto/therapy-response.dto.ts)
 - [`src/modules/therapy-catalog/dto/therapy.dto.ts`](../../src/modules/therapy-catalog/dto/therapy.dto.ts)
 
 ## Modelo de datos

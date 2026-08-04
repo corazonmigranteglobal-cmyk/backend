@@ -8,6 +8,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiEnvelope } from '@/common/openapi/api-envelope.decorator';
+import { OperationSuccessDto, RegisteredUserDto, TokenPairDto } from './dto/auth-response.dto';
 import { Throttle } from '@nestjs/throttler';
 import { Public } from '@/common/decorators/public.decorator';
 import { AuthService } from './auth.service';
@@ -35,6 +37,10 @@ export class AuthController {
     description: 'Paciente registrado. Devuelve id, email y status; no emite tokens.',
   })
   @ApiResponse({ status: 400, description: 'El email ya está registrado.' })
+  @ApiEnvelope(RegisteredUserDto, {
+    status: 201,
+    description: 'Paciente registrado en estado ACTIVE. No se emiten tokens.',
+  })
   registerPatient(@Body() dto: RegisterPatientDto) {
     return this.authService.registerPatient(dto);
   }
@@ -48,6 +54,11 @@ export class AuthController {
       'Terapeuta registrado en estado PENDING_APPROVAL. No emite tokens hasta la aprobación.',
   })
   @ApiResponse({ status: 400, description: 'El email ya está registrado.' })
+  @ApiEnvelope(RegisteredUserDto, {
+    status: 201,
+    description:
+      'Terapeuta registrado en estado PENDING_APPROVAL. No puede operar hasta que se le apruebe.',
+  })
   registerTherapist(@Body() dto: RegisterTherapistDto) {
     return this.authService.registerTherapist(dto);
   }
@@ -67,6 +78,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Iniciar sesión con email y contraseña' })
   @ApiResponse({ status: 201, description: 'Devuelve accessToken y refreshToken.' })
   @ApiResponse({ status: 401, description: 'Credenciales inválidas.' })
+  @ApiEnvelope(TokenPairDto, {
+    status: 201,
+    description: 'Par de tokens y la identidad efectiva, con sus roles y permisos ya resueltos.',
+  })
   login(@Body() dto: LoginDto, @Ip() ipAddress: string, @Headers('user-agent') userAgent?: string) {
     return this.authService.login(dto, { ipAddress, userAgent });
   }
@@ -83,6 +98,10 @@ export class AuthController {
     description:
       'Refresh token inválido o expirado. Si el token ya había sido rotado se revocan todas las sesiones del usuario.',
   })
+  @ApiEnvelope(TokenPairDto, {
+    status: 201,
+    description: 'Par de tokens nuevo. El token de refresco anterior queda invalidado.',
+  })
   refresh(
     @Body() dto: RefreshTokenDto,
     @Ip() ipAddress: string,
@@ -94,6 +113,10 @@ export class AuthController {
   @Post('logout')
   @ApiOperation({ summary: 'Cerrar sesión e invalidar el refresh token' })
   @ApiResponse({ status: 201, description: 'Sesión cerrada correctamente.' })
+  @ApiEnvelope(OperationSuccessDto, {
+    status: 201,
+    description: 'Sesion cerrada: el token de refresco queda revocado.',
+  })
   logout(@Body() dto: RefreshTokenDto) {
     return this.authService.logout(dto.refreshToken);
   }
@@ -104,6 +127,11 @@ export class AuthController {
   @ApiResponse({
     status: 201,
     description: 'Email enviado si la dirección existe (respuesta genérica).',
+  })
+  @ApiEnvelope(OperationSuccessDto, {
+    status: 201,
+    description:
+      'Respuesta identica exista o no la cuenta, para no revelar que direcciones estan registradas.',
   })
   requestPasswordReset(@Body() dto: RequestPasswordResetDto) {
     return this.passwordResetService.request(dto.email);
@@ -116,6 +144,10 @@ export class AuthController {
   })
   @ApiResponse({ status: 201, description: 'Contraseña actualizada.' })
   @ApiResponse({ status: 400, description: 'Token inválido o expirado.' })
+  @ApiEnvelope(OperationSuccessDto, {
+    status: 201,
+    description: 'Contrasena actualizada. Las sesiones anteriores quedan revocadas.',
+  })
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.passwordResetService.reset(dto);
   }

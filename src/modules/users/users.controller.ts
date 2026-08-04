@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UserAccountDto } from '@/common/openapi/catalog-response.dto';
+import { ApiEnvelope } from '@/common/openapi/api-envelope.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { Permissions } from '@/common/decorators/permissions.decorator';
@@ -54,6 +56,7 @@ export class UsersController {
   @Permissions('users:read')
   @ApiOperation({ summary: '[Admin] Listar pacientes con paginación' })
   @ApiResponse({ status: 200, description: 'Lista paginada de pacientes.' })
+  @ApiEnvelope(UserAccountDto, { paginated: true, description: 'Cuentas con perfil de paciente.' })
   listPatients(@Query() query: PaginationQueryDto) {
     return this.usersService.listPatients(query);
   }
@@ -63,6 +66,7 @@ export class UsersController {
   @Permissions('users:read')
   @ApiOperation({ summary: '[Admin] Listar todos los usuarios con paginación' })
   @ApiResponse({ status: 200, description: 'Lista paginada de usuarios.' })
+  @ApiEnvelope(UserAccountDto, { paginated: true, description: 'Todas las cuentas del sistema.' })
   list(@Query() query: PaginationQueryDto) {
     return this.usersService.list(query);
   }
@@ -95,6 +99,10 @@ export class UsersController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiOperation({ summary: '[Admin] Cambiar estado de usuario (ACTIVE/INACTIVE/BLOCKED/PENDING)' })
   @ApiResponse({ status: 200, description: 'Estado actualizado.' })
+  @ApiEnvelope(UserAccountDto, {
+    description:
+      'Cuenta con el estado actualizado. Aprobar a una terapeuta la habilita para recibir citas.',
+  })
   updateUserStatus(
     @CurrentUser() user: AuthenticatedUser,
     @Param('userId') userId: string,
