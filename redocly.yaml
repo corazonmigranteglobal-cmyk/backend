@@ -1,0 +1,84 @@
+# Gobierno del contrato OpenAPI.
+#
+# El contrato se genera desde el código (`yarn docs:openapi:generate`), así que
+# este archivo no corrige documentación: **impide que el código degrade el
+# contrato**. Una regla en `error` significa que ese defecto rompe CI.
+#
+# Ejecutar con: yarn docs:openapi:lint
+
+apis:
+  corazon-migrante:
+    root: openapi/openapi.yaml
+
+extends:
+  - recommended
+
+rules:
+  # --- Identidad y descubribilidad de cada operación -----------------------
+  # Sin operationId estable no hay generación de clientes reproducible ni
+  # diffs legibles del contrato.
+  operation-operationId: error
+  operation-operationId-unique: error
+  operation-operationId-url-safe: error
+  operation-summary: error
+  operation-description: error
+
+  # --- Taxonomía ------------------------------------------------------------
+  # Toda operación etiquetada, y sólo con etiquetas declaradas en `info.tags`
+  # (la taxonomía canónica vive en `scripts/generate-openapi.ts`).
+  operation-tag-defined: error
+  tags-alphabetical: off # El orden lo fija la taxonomía, no el alfabeto.
+  tag-description: error
+
+  # --- Respuestas -----------------------------------------------------------
+  # Ninguna respuesta sin descripción ni cuerpo sin esquema: el consumidor debe
+  # poder generar tipos sin leer el código del backend.
+  operation-4xx-response: error
+  no-invalid-media-type-examples: error
+  no-invalid-schema-examples: error
+  struct: error
+
+  # `GET /api/v1/auth/login` existe sólo para responder 405 y orientar a quien
+  # usa el verbo equivocado. No puede tener un 2xx.
+  operation-2xx-response: warn
+
+  # --- Parámetros -----------------------------------------------------------
+  path-parameters-defined: error
+  path-declaration-must-exist: error
+  no-unresolved-refs: error
+  spec-strict-refs: off # `$ref` a respuestas compartidas es deliberado.
+
+  # --- Seguridad ------------------------------------------------------------
+  # Cada operación declara su seguridad explícitamente: las públicas con
+  # `security: []` y el resto con `bearerAuth`. Lo inyecta el generador
+  # leyendo `@Public()`, así que un fallo aquí significa deriva real.
+  security-defined: error
+
+  # Desactivada: da falso positivo con el sustantivo «posts»
+  # (`/admin/public-pages/{pageId}/posts`, `/public/content/posts`), que designa
+  # entradas de contenido y no el verbo HTTP POST. Ninguna ruta real del backend
+  # lleva un verbo HTTP en el camino.
+  no-http-verbs-in-paths: off
+
+  # --- Servidores y metadatos ----------------------------------------------
+  # Degradada a aviso a propósito: el primer servidor es el de producción real,
+  # y `http://localhost:3000` se publica como segundo servidor para que Scalar
+  # pueda probar contra una instancia local. La regla rechaza cualquier
+  # `localhost`, incluso cuando está etiquetado como entorno de desarrollo.
+  no-server-example.com: warn
+  no-server-trailing-slash: error
+  info-contact: error
+  info-license: error
+  info-license-strict: warn # Licencia propietaria: no hay identificador SPDX.
+
+  # --- Higiene --------------------------------------------------------------
+  no-unused-components: error
+  no-identical-paths: error
+  no-empty-servers: error
+
+  # Rutas ambiguas conocidas y aceptadas: conviven un segmento literal y uno
+  # paramétrico en la misma posición (`/appointments/admin/{id}` frente a
+  # `/appointments/{id}/status`). Express resuelve por orden de registro y el
+  # comportamiento está cubierto por pruebas. Documentado en
+  # docs/api/conventions.md; se degrada a aviso para no ocultar casos nuevos.
+  no-ambiguous-paths: warn

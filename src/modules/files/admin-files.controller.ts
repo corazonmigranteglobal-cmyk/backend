@@ -11,7 +11,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { AuthenticatedUser } from '@/common/types/authenticated-user';
@@ -25,7 +25,7 @@ import {
   UploadFileDto,
 } from './dto/file.dto';
 
-@ApiTags('Admin files')
+@ApiTags('Archivos')
 @ApiBearerAuth()
 @Roles('ADMIN', 'SUPER_ADMIN')
 @Controller('admin/files')
@@ -33,16 +33,19 @@ export class AdminFilesController {
   constructor(private readonly service: FilesService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Listar los archivos del sistema' })
   list(@Query() query: PaginationQueryDto) {
     return this.service.listAdmin(query);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Consultar los metadatos de un archivo' })
   get(@Param('id') id: string) {
     return this.service.getAdmin(id);
   }
 
   @Post('cloudinary/signature')
+  @ApiOperation({ summary: 'Emitir una firma para subir un archivo directamente a Cloudinary' })
   createCloudinarySignature(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CloudinaryUploadSignatureDto,
@@ -51,6 +54,7 @@ export class AdminFilesController {
   }
 
   @Post('cloudinary/complete')
+  @ApiOperation({ summary: 'Registrar en el sistema un archivo ya subido a Cloudinary' })
   completeCloudinaryUpload(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CompleteCloudinaryUploadDto,
@@ -59,6 +63,7 @@ export class AdminFilesController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Subir un archivo a través de la API' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file', buildMulterOptions()))
   upload(
@@ -70,6 +75,7 @@ export class AdminFilesController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar los metadatos de un archivo' })
   update(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
@@ -79,6 +85,7 @@ export class AdminFilesController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar un archivo' })
   remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.service.deleteAdmin(user.sub, id);
   }

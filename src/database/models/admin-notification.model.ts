@@ -37,7 +37,12 @@ export class AdminNotification extends Model<AdminNotification> {
   readAt?: Date | null;
 
   /** Which admin role should receive this notification */
-  @Column({ type: DataType.STRING(50), allowNull: false, defaultValue: 'ADMIN', field: 'recipient_role' })
+  @Column({
+    type: DataType.STRING(50),
+    allowNull: false,
+    defaultValue: 'ADMIN',
+    field: 'recipient_role',
+  })
   recipientRole: string;
 
   @Column({

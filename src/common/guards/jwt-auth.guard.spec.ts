@@ -40,8 +40,27 @@ describe('JwtAuthGuard', () => {
 
   it('passes through public routes without checking token', () => {
     reflector.getAllAndOverride.mockReturnValue(true);
-    const [ctx] = makeContext(undefined);
+    const [ctx, req] = makeContext(undefined);
     expect(guard.canActivate(ctx)).toBe(true);
+    expect(req.user).toBeUndefined();
+  });
+
+  it('resolves the user on public routes when a valid Bearer is sent', () => {
+    reflector.getAllAndOverride.mockReturnValue(true);
+    jwtService.verify.mockReturnValue(validPayload);
+    const [ctx, req] = makeContext('Bearer validtoken');
+    expect(guard.canActivate(ctx)).toBe(true);
+    expect(req.user).toMatchObject({ sub: 'user-1', email: 'user@test.com' });
+  });
+
+  it('still allows public routes when the Bearer sent is invalid', () => {
+    reflector.getAllAndOverride.mockReturnValue(true);
+    jwtService.verify.mockImplementation(() => {
+      throw new Error('expired');
+    });
+    const [ctx, req] = makeContext('Bearer badtoken');
+    expect(guard.canActivate(ctx)).toBe(true);
+    expect(req.user).toBeUndefined();
   });
 
   it('throws AUTH_MISSING_TOKEN when no Authorization header', () => {

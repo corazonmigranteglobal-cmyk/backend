@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { Span, SpanStatusCode } from '@opentelemetry/api';
 import { randomInt } from 'node:crypto';
 import { hostname } from 'node:os';
 import { Op, Sequelize, Transaction } from 'sequelize';
@@ -17,6 +18,14 @@ import {
   toLimitOffset,
 } from '@/common/pagination/pagination.dto';
 import { MessageOutbox, MessageSendLog } from '@/database/models';
+import { MessagingTraceService } from '@/observability/messaging-trace.service';
+import {
+  APP_ATTR,
+  MESSAGING_ATTR,
+  MESSAGING_DESTINATION,
+  MESSAGING_SYSTEM,
+  TRACE_CARRIER_KEY,
+} from '@/observability/telemetry.constants';
 import { SendTestEmailDto } from './dto/test-email.dto';
 import { MessagingProviderService } from './messaging-provider.service';
 import {
@@ -37,6 +46,7 @@ export class MessagingService {
     @InjectConnection() private readonly sequelize: Sequelize,
     private readonly config: ConfigService,
     private readonly provider: MessagingProviderService,
+    private readonly messagingTrace: MessagingTraceService,
   ) {
     this.workerId = process.env.OUTBOX_WORKER_ID?.trim() || `${hostname()}-${process.pid}`;
   }
@@ -51,19 +61,44 @@ export class MessagingService {
     },
     options: { transaction?: Transaction } = {},
   ) {
-    return this.outboxModel.create(
+    return this.messagingTrace.runAsProducer(
+      'outbox.enqueue',
       {
-        channel: input.channel,
-        recipient: input.recipient,
-        templateCode: input.templateCode,
-        payload: input.payload,
-        scheduledAt: input.scheduledAt ?? new Date(),
-        status: MESSAGE_STATUS.pending,
-        priority: 5,
-        attempts: 0,
-        maxAttempts: 6,
-      } as never,
-      { transaction: options.transaction },
+        [APP_ATTR.module]: 'messaging',
+        [APP_ATTR.operation]: 'enqueue',
+        [APP_ATTR.entityType]: 'outbox-message',
+        [APP_ATTR.eventType]: input.templateCode,
+        [MESSAGING_ATTR.system]: MESSAGING_SYSTEM,
+        [MESSAGING_ATTR.destinationName]: MESSAGING_DESTINATION,
+        [MESSAGING_ATTR.operationType]: 'send',
+      },
+      async (span) => {
+        // El contexto W3C viaja dentro del propio payload JSONB: la cola vive en
+        // PostgreSQL y no tiene cabeceras de mensaje. Sin esto, el worker que
+        // entrega el correo generaría una traza sin relación con la petición
+        // que lo originó.
+        const carrier = this.messagingTrace.inject();
+        const message = await this.outboxModel.create(
+          {
+            channel: input.channel,
+            recipient: input.recipient,
+            templateCode: input.templateCode,
+            payload: carrier ? { ...input.payload, [TRACE_CARRIER_KEY]: carrier } : input.payload,
+            scheduledAt: input.scheduledAt ?? new Date(),
+            status: MESSAGE_STATUS.pending,
+            priority: 5,
+            attempts: 0,
+            maxAttempts: 6,
+          } as never,
+          { transaction: options.transaction },
+        );
+
+        if (message?.id !== undefined) {
+          span.setAttribute(MESSAGING_ATTR.messageId, String(message.id));
+          span.setAttribute(APP_ATTR.entityId, String(message.id));
+        }
+        return message;
+      },
     );
   }
 
@@ -208,34 +243,73 @@ export class MessagingService {
     const results: Array<Record<string, unknown>> = [];
 
     for (const message of messages) {
-      try {
-        const providerResult = await this.provider.send(message);
-        await this.markSent(message, providerResult);
-        sent += 1;
-        results.push({
+      // Un span CONSUMER por mensaje, enlazado con el productor mediante el
+      // carrier persistido. Los mensajes anteriores al despliegue de la
+      // observabilidad no llevan carrier y se procesan como traza raíz.
+      const outcome = await this.messagingTrace.runAsConsumer(
+        'outbox.process',
+        (message.payload ?? {})[TRACE_CARRIER_KEY],
+        {
+          [APP_ATTR.module]: 'messaging',
+          [APP_ATTR.operation]: 'process',
+          [APP_ATTR.entityType]: 'outbox-message',
+          [APP_ATTR.entityId]: String(message.id),
+          [APP_ATTR.eventType]: message.templateCode,
+          [APP_ATTR.jobAttempt]: message.attempts,
+          [MESSAGING_ATTR.system]: MESSAGING_SYSTEM,
+          [MESSAGING_ATTR.destinationName]: MESSAGING_DESTINATION,
+          [MESSAGING_ATTR.operationType]: 'process',
+          [MESSAGING_ATTR.messageId]: String(message.id),
+        },
+        async (span) => this.deliverClaimedMessage(message, span),
+      );
+
+      if (outcome.rawStatus === MESSAGE_STATUS.sent) sent += 1;
+      else failed += 1;
+      results.push(outcome.result);
+    }
+
+    return { processed: messages.length, sent, failed, results };
+  }
+
+  /**
+   * Entrega un mensaje ya reclamado. Los fallos de proveedor son un resultado
+   * de negocio esperado (reintentable), así que se anotan en el span pero no se
+   * propagan como excepción: el bucle debe continuar con el resto del lote.
+   */
+  private async deliverClaimedMessage(message: MessageOutbox, span: Span) {
+    try {
+      const providerResult = await this.provider.send(message);
+      await this.markSent(message, providerResult);
+      span.setAttribute(APP_ATTR.result, 'sent');
+      return {
+        rawStatus: MESSAGE_STATUS.sent,
+        result: {
           id: message.id,
           status: 'SENT',
           rawStatus: MESSAGE_STATUS.sent,
           provider: providerResult.provider,
           providerMessageId: providerResult.providerMessageId,
-        });
-      } catch (error) {
-        const normalizedError = this.provider.normalizeError(error);
-        const nextStatus = await this.markFailed(message, normalizedError);
-        this.logger.error(
-          `Message ${message.id} failed through ${normalizedError.metadata.provider ?? 'provider'}.`,
-        );
-        failed += 1;
-        results.push({
+        } as Record<string, unknown>,
+      };
+    } catch (error) {
+      const normalizedError = this.provider.normalizeError(error);
+      const nextStatus = await this.markFailed(message, normalizedError);
+      this.logger.error(
+        `Message ${message.id} failed through ${normalizedError.metadata.provider ?? 'provider'}.`,
+      );
+      span.setAttribute(APP_ATTR.result, nextStatus === MESSAGE_STATUS.failed ? 'dead' : 'retry');
+      span.setStatus({ code: SpanStatusCode.ERROR, message: normalizedError.message });
+      return {
+        rawStatus: nextStatus,
+        result: {
           id: message.id,
           status: this.toApiStatus(nextStatus),
           rawStatus: nextStatus,
           lastError: normalizedError.message,
-        });
-      }
+        } as Record<string, unknown>,
+      };
     }
-
-    return { processed: messages.length, sent, failed, results };
   }
 
   private async markSent(
@@ -328,13 +402,22 @@ export class MessagingService {
     return Math.max(1, Math.min(requestedLimit ?? configuredLimit, configuredLimit, 500));
   }
 
+  /**
+   * El carrier de traza es metadato interno de transporte: no forma parte del
+   * contrato de la API de mensajería y no debe filtrarse al panel administrativo.
+   */
+  private withoutTraceCarrier(payload: Record<string, unknown> | undefined) {
+    if (!payload || !(TRACE_CARRIER_KEY in payload)) return payload;
+    return Object.fromEntries(Object.entries(payload).filter(([key]) => key !== TRACE_CARRIER_KEY));
+  }
+
   private toApiOutbox(row: MessageOutbox) {
     return {
       id: row.id,
       channel: row.channel,
       recipient: row.recipient,
       templateCode: row.templateCode,
-      payload: sanitizeForLog(row.payload),
+      payload: sanitizeForLog(this.withoutTraceCarrier(row.payload)),
       status: this.toApiStatus(row.status),
       rawStatus: row.status,
       attempts: row.attempts,

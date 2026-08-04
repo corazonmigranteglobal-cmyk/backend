@@ -1,6 +1,9 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import request from 'supertest';
+// `esModuleInterop` está desactivado en tsconfig.json, así que un import por
+// defecto compila a `supertest_1.default`, que en un módulo CommonJS es
+// `undefined`. El import de espacio de nombres es la forma correcta aquí.
+import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 
 describe('Auth e2e', () => {

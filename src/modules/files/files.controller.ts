@@ -9,7 +9,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Public } from '@/common/decorators/public.decorator';
@@ -22,13 +22,14 @@ import {
   UploadFileDto,
 } from './dto/file.dto';
 
-@ApiTags('Files')
+@ApiTags('Archivos')
 @ApiBearerAuth()
 @Controller('files')
 export class FilesController {
   constructor(private readonly service: FilesService) {}
 
   @Post('cloudinary/signature')
+  @ApiOperation({ summary: 'Emitir una firma para subir un archivo directamente a Cloudinary' })
   createCloudinarySignature(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CloudinaryUploadSignatureDto,
@@ -37,6 +38,7 @@ export class FilesController {
   }
 
   @Post('cloudinary/complete')
+  @ApiOperation({ summary: 'Registrar en el sistema un archivo ya subido a Cloudinary' })
   completeCloudinaryUpload(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CompleteCloudinaryUploadDto,
@@ -45,6 +47,7 @@ export class FilesController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Subir un archivo a través de la API' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file', buildMulterOptions()))
   upload(
@@ -56,12 +59,14 @@ export class FilesController {
   }
 
   @Get(':id/signed-url')
+  @ApiOperation({ summary: 'Obtener una URL firmada temporal de un archivo' })
   @Public()
   signedUrl(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.service.getDownloadInfo(user, id);
   }
 
   @Get(':id/download')
+  @ApiOperation({ summary: 'Descargar un archivo' })
   @Public()
   download(
     @CurrentUser() user: AuthenticatedUser,

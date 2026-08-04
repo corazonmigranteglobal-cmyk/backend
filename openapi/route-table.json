@@ -1,0 +1,2355 @@
+{
+  "generatedFrom": "scripts/generate-openapi.ts",
+  "apiPrefix": "api/v1",
+  "total": 189,
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/accounting/account-groups",
+      "controller": "AccountingController",
+      "handler": "listGroups",
+      "sourceFile": "src/modules/accounting/accounting.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "accounting:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/accounting/account-groups",
+      "controller": "AccountingController",
+      "handler": "createGroup",
+      "sourceFile": "src/modules/accounting/accounting.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "accounting:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/accounting/accounts",
+      "controller": "AccountingController",
+      "handler": "listAccounts",
+      "sourceFile": "src/modules/accounting/accounting.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "accounting:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/accounting/accounts",
+      "controller": "AccountingController",
+      "handler": "createAccount",
+      "sourceFile": "src/modules/accounting/accounting.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "accounting:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/accounting/cost-centers",
+      "controller": "AccountingController",
+      "handler": "listCostCenters",
+      "sourceFile": "src/modules/accounting/accounting.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "accounting:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/accounting/cost-centers",
+      "controller": "AccountingController",
+      "handler": "createCostCenter",
+      "sourceFile": "src/modules/accounting/accounting.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "accounting:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/accounting/transactions",
+      "controller": "AccountingController",
+      "handler": "listTransactions",
+      "sourceFile": "src/modules/accounting/accounting.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "accounting:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/accounting/transactions",
+      "controller": "AccountingController",
+      "handler": "createTransaction",
+      "sourceFile": "src/modules/accounting/accounting.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "accounting:write"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/accounting/transactions/from-appointment/{appointmentId}",
+      "controller": "AccountingController",
+      "handler": "createSaleFromAppointment",
+      "sourceFile": "src/modules/accounting/accounting.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "accounting:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/advertising/ads",
+      "controller": "AdminAdvertisingController",
+      "handler": "listAds",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/advertising/ads",
+      "controller": "AdminAdvertisingController",
+      "handler": "createAd",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/advertising/ads/{id}",
+      "controller": "AdminAdvertisingController",
+      "handler": "removeAd",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/advertising/ads/{id}",
+      "controller": "AdminAdvertisingController",
+      "handler": "updateAd",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/advertising/campaigns",
+      "controller": "AdminAdvertisingController",
+      "handler": "listCampaigns",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/advertising/campaigns",
+      "controller": "AdminAdvertisingController",
+      "handler": "createCampaign",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/advertising/campaigns/{campaignId}/creatives",
+      "controller": "AdminAdvertisingController",
+      "handler": "listCreatives",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/advertising/campaigns/{campaignId}/creatives",
+      "controller": "AdminAdvertisingController",
+      "handler": "createCreative",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/advertising/campaigns/{id}",
+      "controller": "AdminAdvertisingController",
+      "handler": "removeCampaign",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/advertising/campaigns/{id}",
+      "controller": "AdminAdvertisingController",
+      "handler": "getCampaign",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/advertising/campaigns/{id}",
+      "controller": "AdminAdvertisingController",
+      "handler": "updateCampaign",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/advertising/campaigns/{id}/status",
+      "controller": "AdminAdvertisingController",
+      "handler": "setCampaignStatus",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/advertising/companies",
+      "controller": "AdminAdvertisingController",
+      "handler": "listCompanies",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/advertising/companies",
+      "controller": "AdminAdvertisingController",
+      "handler": "createCompany",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/advertising/companies/{id}",
+      "controller": "AdminAdvertisingController",
+      "handler": "removeCompany",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/advertising/companies/{id}",
+      "controller": "AdminAdvertisingController",
+      "handler": "updateCompany",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/advertising/creatives/{id}",
+      "controller": "AdminAdvertisingController",
+      "handler": "updateCreative",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/advertising/placements",
+      "controller": "AdminAdvertisingController",
+      "handler": "listPlacements",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/advertising/placements",
+      "controller": "AdminAdvertisingController",
+      "handler": "createPlacement",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/advertising/placements/{id}",
+      "controller": "AdminAdvertisingController",
+      "handler": "updatePlacement",
+      "sourceFile": "src/modules/advertising/admin-advertising.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/analytics/ui-events",
+      "controller": "AdminAnalyticsController",
+      "handler": "list",
+      "sourceFile": "src/modules/analytics/analytics.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "analytics:read"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/audit/logs",
+      "controller": "AuditController",
+      "handler": "list",
+      "sourceFile": "src/modules/audit/audit.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "audit:read"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/cms/pages",
+      "controller": "AdminCmsController",
+      "handler": "list",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/cms/pages",
+      "controller": "AdminCmsController",
+      "handler": "create",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/cms/pages/{pageId}",
+      "controller": "AdminCmsController",
+      "handler": "remove",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/cms/pages/{pageId}",
+      "controller": "AdminCmsController",
+      "handler": "get",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/cms/pages/{pageId}",
+      "controller": "AdminCmsController",
+      "handler": "update",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/cms/pages/{pageId}/elements",
+      "controller": "AdminCmsController",
+      "handler": "addElement",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/content/authors",
+      "controller": "AdminContentController",
+      "handler": "listAuthors",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/content/authors",
+      "controller": "AdminContentController",
+      "handler": "createAuthor",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/content/authors/{id}",
+      "controller": "AdminContentController",
+      "handler": "updateAuthor",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/content/categories",
+      "controller": "AdminContentController",
+      "handler": "listCategories",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/content/categories",
+      "controller": "AdminContentController",
+      "handler": "createCategory",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/content/categories/{id}",
+      "controller": "AdminContentController",
+      "handler": "updateCategory",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/content/publications",
+      "controller": "AdminContentController",
+      "handler": "listPublications",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/content/publications",
+      "controller": "AdminContentController",
+      "handler": "createPublication",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/content/publications/{id}",
+      "controller": "AdminContentController",
+      "handler": "getPublication",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:read"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/content/publications/{id}",
+      "controller": "AdminContentController",
+      "handler": "updatePublication",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/content/publications/{id}/archive",
+      "controller": "AdminContentController",
+      "handler": "archivePublication",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/content/publications/{id}/publish",
+      "controller": "AdminContentController",
+      "handler": "publishPublication",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/content/publications/{id}/schedule",
+      "controller": "AdminContentController",
+      "handler": "schedulePublication",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/content/subscribers",
+      "controller": "AdminContentController",
+      "handler": "listSubscribers",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/content/subscribers",
+      "controller": "AdminContentController",
+      "handler": "upsertSubscriber",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/content/subscribers/{id}",
+      "controller": "AdminContentController",
+      "handler": "updateSubscriber",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/content/subscribers/{userId}/approve",
+      "controller": "AdminContentController",
+      "handler": "approveSubscriberRequest",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/content/subscribers/{userId}/reject",
+      "controller": "AdminContentController",
+      "handler": "rejectSubscriberRequest",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/content/subscribers/{userId}/subscription",
+      "controller": "AdminContentController",
+      "handler": "updateSubscriberByUserId",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/content/tags",
+      "controller": "AdminContentController",
+      "handler": "listTags",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/content/tags",
+      "controller": "AdminContentController",
+      "handler": "createTag",
+      "sourceFile": "src/modules/content/admin-content.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "content:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/downloadables",
+      "controller": "AdminDownloadablesController",
+      "handler": "list",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/downloadables",
+      "controller": "AdminDownloadablesController",
+      "handler": "create",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/downloadables/{id}",
+      "controller": "AdminDownloadablesController",
+      "handler": "remove",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/downloadables/{id}",
+      "controller": "AdminDownloadablesController",
+      "handler": "detail",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/downloadables/{id}",
+      "controller": "AdminDownloadablesController",
+      "handler": "update",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/downloadables/{id}/archive",
+      "controller": "AdminDownloadablesController",
+      "handler": "archive",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/downloadables/{id}/entitlements",
+      "controller": "AdminDownloadablesController",
+      "handler": "grant",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/downloadables/{id}/entitlements/{userId}",
+      "controller": "AdminDownloadablesController",
+      "handler": "revoke",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/admin/downloadables/{id}/hotmart",
+      "controller": "AdminDownloadablesController",
+      "handler": "setHotmart",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/downloadables/{id}/versions",
+      "controller": "AdminDownloadablesController",
+      "handler": "versions",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/downloadables/{id}/versions",
+      "controller": "AdminDownloadablesController",
+      "handler": "createVersion",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/downloadables/{id}/versions/{versionId}/approve",
+      "controller": "AdminDownloadablesController",
+      "handler": "approve",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/downloadables/{id}/versions/{versionId}/publish",
+      "controller": "AdminDownloadablesController",
+      "handler": "publish",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/downloadables/{id}/versions/{versionId}/reject",
+      "controller": "AdminDownloadablesController",
+      "handler": "reject",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/downloadables/{id}/versions/{versionId}/request-changes",
+      "controller": "AdminDownloadablesController",
+      "handler": "requestChanges",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/downloadables/{id}/versions/{versionId}/restore",
+      "controller": "AdminDownloadablesController",
+      "handler": "restore",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/downloadables/{id}/versions/{versionId}/submit-review",
+      "controller": "AdminDownloadablesController",
+      "handler": "submit",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/downloadables/metrics",
+      "controller": "AdminDownloadablesController",
+      "handler": "metrics",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/files",
+      "controller": "AdminFilesController",
+      "handler": "list",
+      "sourceFile": "src/modules/files/admin-files.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/files",
+      "controller": "AdminFilesController",
+      "handler": "upload",
+      "sourceFile": "src/modules/files/admin-files.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/files/{id}",
+      "controller": "AdminFilesController",
+      "handler": "remove",
+      "sourceFile": "src/modules/files/admin-files.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/files/{id}",
+      "controller": "AdminFilesController",
+      "handler": "get",
+      "sourceFile": "src/modules/files/admin-files.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/files/{id}",
+      "controller": "AdminFilesController",
+      "handler": "update",
+      "sourceFile": "src/modules/files/admin-files.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/files/cloudinary/complete",
+      "controller": "AdminFilesController",
+      "handler": "completeCloudinaryUpload",
+      "sourceFile": "src/modules/files/admin-files.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/files/cloudinary/signature",
+      "controller": "AdminFilesController",
+      "handler": "createCloudinarySignature",
+      "sourceFile": "src/modules/files/admin-files.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/homepage/layout",
+      "controller": "AdminHomepageController",
+      "handler": "updateLayout",
+      "sourceFile": "src/modules/homepage/homepage.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "homepage:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/homepage/preview",
+      "controller": "AdminHomepageController",
+      "handler": "getPreview",
+      "sourceFile": "src/modules/homepage/homepage.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": [
+        "homepage:read"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/mensajeria/outbox",
+      "controller": "MessagingController",
+      "handler": "list",
+      "sourceFile": "src/modules/messaging/messaging.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "messaging:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/mensajeria/outbox/{id}/process",
+      "controller": "MessagingController",
+      "handler": "processOne",
+      "sourceFile": "src/modules/messaging/messaging.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "messaging:write"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/mensajeria/outbox/process",
+      "controller": "MessagingController",
+      "handler": "process",
+      "sourceFile": "src/modules/messaging/messaging.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "messaging:write"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/mensajeria/test-email",
+      "controller": "MessagingController",
+      "handler": "enqueueTestEmail",
+      "sourceFile": "src/modules/messaging/messaging.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "messaging:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/messaging/outbox",
+      "controller": "MessagingController",
+      "handler": "list",
+      "sourceFile": "src/modules/messaging/messaging.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "messaging:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/messaging/outbox/{id}/process",
+      "controller": "MessagingController",
+      "handler": "processOne",
+      "sourceFile": "src/modules/messaging/messaging.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "messaging:write"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/messaging/outbox/process",
+      "controller": "MessagingController",
+      "handler": "process",
+      "sourceFile": "src/modules/messaging/messaging.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "messaging:write"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/messaging/test-email",
+      "controller": "MessagingController",
+      "handler": "enqueueTestEmail",
+      "sourceFile": "src/modules/messaging/messaging.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "messaging:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications",
+      "controller": "NotificationsController",
+      "handler": "list",
+      "sourceFile": "src/modules/notifications/notifications.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/notifications/{id}/read",
+      "controller": "NotificationsController",
+      "handler": "markRead",
+      "sourceFile": "src/modules/notifications/notifications.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/notifications/read-all",
+      "controller": "NotificationsController",
+      "handler": "markAllRead",
+      "sourceFile": "src/modules/notifications/notifications.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/stream",
+      "controller": "NotificationsController",
+      "handler": "stream",
+      "sourceFile": "src/modules/notifications/notifications.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/notifications/unread-count",
+      "controller": "NotificationsController",
+      "handler": "unreadCount",
+      "sourceFile": "src/modules/notifications/notifications.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/public-pages",
+      "controller": "AdminPublicPagesController",
+      "handler": "list",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/public-pages",
+      "controller": "AdminPublicPagesController",
+      "handler": "create",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/public-pages/{pageId}",
+      "controller": "AdminPublicPagesController",
+      "handler": "remove",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/public-pages/{pageId}",
+      "controller": "AdminPublicPagesController",
+      "handler": "get",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/public-pages/{pageId}",
+      "controller": "AdminPublicPagesController",
+      "handler": "update",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/public-pages/{pageId}/posts",
+      "controller": "AdminPublicPagesController",
+      "handler": "attachPublication",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/public-pages/{pageId}/posts/{postId}",
+      "controller": "AdminPublicPagesController",
+      "handler": "detachPublication",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/publications/{publicationId}/downloadables",
+      "controller": "PublicationDownloadablesController",
+      "handler": "attach",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/publications/{publicationId}/downloadables/{resourceId}",
+      "controller": "PublicationDownloadablesController",
+      "handler": "detach",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/therapists/{therapistUserId}/schedules",
+      "controller": "AdminSchedulingController",
+      "handler": "listTherapistSchedules",
+      "sourceFile": "src/modules/scheduling/scheduling.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/therapists/{therapistUserId}/schedules",
+      "controller": "AdminSchedulingController",
+      "handler": "createTherapistSchedule",
+      "sourceFile": "src/modules/scheduling/scheduling.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/therapists/{therapistUserId}/schedules/{scheduleId}",
+      "controller": "AdminSchedulingController",
+      "handler": "removeTherapistSchedule",
+      "sourceFile": "src/modules/scheduling/scheduling.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/therapists/{therapistUserId}/schedules/{scheduleId}",
+      "controller": "AdminSchedulingController",
+      "handler": "updateTherapistSchedule",
+      "sourceFile": "src/modules/scheduling/scheduling.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/therapy/approaches",
+      "controller": "AdminTherapyCatalogController",
+      "handler": "listApproaches",
+      "sourceFile": "src/modules/therapy-catalog/therapy-catalog.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "therapy:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/therapy/approaches",
+      "controller": "AdminTherapyCatalogController",
+      "handler": "createApproach",
+      "sourceFile": "src/modules/therapy-catalog/therapy-catalog.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "therapy:write"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/therapy/approaches/{id}",
+      "controller": "AdminTherapyCatalogController",
+      "handler": "updateApproach",
+      "sourceFile": "src/modules/therapy-catalog/therapy-catalog.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "therapy:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/therapy/products",
+      "controller": "AdminTherapyCatalogController",
+      "handler": "listProducts",
+      "sourceFile": "src/modules/therapy-catalog/therapy-catalog.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "therapy:read"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/admin/therapy/products",
+      "controller": "AdminTherapyCatalogController",
+      "handler": "createProduct",
+      "sourceFile": "src/modules/therapy-catalog/therapy-catalog.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "therapy:write"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/admin/therapy/products/{id}",
+      "controller": "AdminTherapyCatalogController",
+      "handler": "deleteProduct",
+      "sourceFile": "src/modules/therapy-catalog/therapy-catalog.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "therapy:write"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/therapy/products/{id}",
+      "controller": "AdminTherapyCatalogController",
+      "handler": "updateProduct",
+      "sourceFile": "src/modules/therapy-catalog/therapy-catalog.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "therapy:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/users",
+      "controller": "UsersController",
+      "handler": "list",
+      "sourceFile": "src/modules/users/users.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "users:read"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/users/{userId}/avatar",
+      "controller": "UsersController",
+      "handler": "updateUserAvatar",
+      "sourceFile": "src/modules/users/users.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/users/{userId}/status",
+      "controller": "UsersController",
+      "handler": "updateUserStatus",
+      "sourceFile": "src/modules/users/users.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/admin/users/{userId}/therapist-profile",
+      "controller": "UsersController",
+      "handler": "updateTherapistByAdmin",
+      "sourceFile": "src/modules/users/users.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/admin/users/patients",
+      "controller": "UsersController",
+      "handler": "listPatients",
+      "sourceFile": "src/modules/users/users.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "users:read"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/advertising/placements",
+      "controller": "PublicAdvertisingController",
+      "handler": "listPlacements",
+      "sourceFile": "src/modules/advertising/public-advertising.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/advertising/slots",
+      "controller": "PublicAdvertisingController",
+      "handler": "getSlots",
+      "sourceFile": "src/modules/advertising/public-advertising.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/analytics/ui-events",
+      "controller": "AnalyticsController",
+      "handler": "track",
+      "sourceFile": "src/modules/analytics/analytics.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/appointments",
+      "controller": "AppointmentsController",
+      "handler": "create",
+      "sourceFile": "src/modules/appointments/appointments.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "PATIENT"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/appointments/{id}/status",
+      "controller": "AppointmentsController",
+      "handler": "updateStatus",
+      "sourceFile": "src/modules/appointments/appointments.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/appointments/admin",
+      "controller": "AppointmentsController",
+      "handler": "createForPatient",
+      "sourceFile": "src/modules/appointments/appointments.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN",
+        "THERAPIST"
+      ],
+      "permissions": [
+        "appointments:write"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/appointments/admin/{id}",
+      "controller": "AppointmentsController",
+      "handler": "adminUpdate",
+      "sourceFile": "src/modules/appointments/appointments.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "appointments:write"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/appointments/admin/{id}/payment",
+      "controller": "AppointmentsController",
+      "handler": "updatePayment",
+      "sourceFile": "src/modules/appointments/appointments.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "appointments:write"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/appointments/admin/list",
+      "controller": "AppointmentsController",
+      "handler": "adminList",
+      "sourceFile": "src/modules/appointments/appointments.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "permissions": [
+        "appointments:read"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/appointments/mine",
+      "controller": "AppointmentsController",
+      "handler": "listMine",
+      "sourceFile": "src/modules/appointments/appointments.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/login",
+      "controller": "AuthController",
+      "handler": "loginMustBePosted",
+      "sourceFile": "src/modules/auth/auth.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "controller": "AuthController",
+      "handler": "login",
+      "sourceFile": "src/modules/auth/auth.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/logout",
+      "controller": "AuthController",
+      "handler": "logout",
+      "sourceFile": "src/modules/auth/auth.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/password-reset/confirm",
+      "controller": "AuthController",
+      "handler": "resetPassword",
+      "sourceFile": "src/modules/auth/auth.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/password-reset/request",
+      "controller": "AuthController",
+      "handler": "requestPasswordReset",
+      "sourceFile": "src/modules/auth/auth.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "controller": "AuthController",
+      "handler": "refresh",
+      "sourceFile": "src/modules/auth/auth.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/register/patient",
+      "controller": "AuthController",
+      "handler": "registerPatient",
+      "sourceFile": "src/modules/auth/auth.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/register/therapist",
+      "controller": "AuthController",
+      "handler": "registerTherapist",
+      "sourceFile": "src/modules/auth/auth.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/booking/availability",
+      "controller": "BookingController",
+      "handler": "availability",
+      "sourceFile": "src/modules/scheduling/scheduling.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/booking/therapists",
+      "controller": "BookingController",
+      "handler": "listPublicTherapists",
+      "sourceFile": "src/modules/scheduling/scheduling.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/downloadables",
+      "controller": "DownloadablesController",
+      "handler": "list",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/downloadables/{id}/access",
+      "controller": "DownloadablesController",
+      "handler": "access",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/downloadables/{id}/download",
+      "controller": "DownloadablesController",
+      "handler": "download",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/downloadables/{slug}",
+      "controller": "DownloadablesController",
+      "handler": "detail",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/downloadables/me/history",
+      "controller": "DownloadablesController",
+      "handler": "history",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/downloadables/me/library",
+      "controller": "DownloadablesController",
+      "handler": "myLibrary",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/files",
+      "controller": "FilesController",
+      "handler": "upload",
+      "sourceFile": "src/modules/files/files.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/files/{id}/download",
+      "controller": "FilesController",
+      "handler": "download",
+      "sourceFile": "src/modules/files/files.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/files/{id}/signed-url",
+      "controller": "FilesController",
+      "handler": "signedUrl",
+      "sourceFile": "src/modules/files/files.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/files/cloudinary/complete",
+      "controller": "FilesController",
+      "handler": "completeCloudinaryUpload",
+      "sourceFile": "src/modules/files/files.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/files/cloudinary/signature",
+      "controller": "FilesController",
+      "handler": "createCloudinarySignature",
+      "sourceFile": "src/modules/files/files.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/health/version",
+      "controller": "HealthController",
+      "handler": "version",
+      "sourceFile": "src/modules/health/health.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/homepage",
+      "controller": "PublicHomepageController",
+      "handler": "getHomepage",
+      "sourceFile": "src/modules/homepage/homepage.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/legacy/status",
+      "controller": "LegacyCompatibilityController",
+      "handler": "status",
+      "sourceFile": "src/modules/legacy-compatibility/legacy-compatibility.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/me",
+      "controller": "UsersController",
+      "handler": "me",
+      "sourceFile": "src/modules/users/users.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/me/avatar",
+      "controller": "UsersController",
+      "handler": "updateOwnAvatar",
+      "sourceFile": "src/modules/users/users.controller.ts",
+      "isPublic": false,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/me/news-subscription",
+      "controller": "PremiumContentController",
+      "handler": "getMySubscription",
+      "sourceFile": "src/modules/content/premium-content.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "PATIENT"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/me/news-subscription/payment-config",
+      "controller": "PremiumContentController",
+      "handler": "getPaymentConfig",
+      "sourceFile": "src/modules/content/premium-content.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "PATIENT"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/me/news-subscription/request",
+      "controller": "PremiumContentController",
+      "handler": "requestSubscription",
+      "sourceFile": "src/modules/content/premium-content.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "PATIENT"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/me/patient-profile",
+      "controller": "UsersController",
+      "handler": "updatePatient",
+      "sourceFile": "src/modules/users/users.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "PATIENT"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/me/therapist-profile",
+      "controller": "UsersController",
+      "handler": "updateTherapist",
+      "sourceFile": "src/modules/users/users.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "THERAPIST"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/premium/publications/columns/{slug}",
+      "controller": "PremiumContentController",
+      "handler": "getPremiumColumn",
+      "sourceFile": "src/modules/content/premium-content.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "PATIENT"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/premium/publications/news/{slug}",
+      "controller": "PremiumContentController",
+      "handler": "getPremiumNews",
+      "sourceFile": "src/modules/content/premium-content.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "PATIENT"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/public/advertising",
+      "controller": "PublicAdvertisingAliasController",
+      "handler": "getPublicAdvertising",
+      "sourceFile": "src/modules/advertising/public-advertising.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/public/content/categories",
+      "controller": "PublicContentAliasController",
+      "handler": "listContentCategories",
+      "sourceFile": "src/modules/content/public-content.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/public/content/posts",
+      "controller": "PublicContentAliasController",
+      "handler": "listPosts",
+      "sourceFile": "src/modules/content/public-content.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/public/content/types",
+      "controller": "PublicContentAliasController",
+      "handler": "listContentTypes",
+      "sourceFile": "src/modules/content/public-content.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/public/pages",
+      "controller": "CmsController",
+      "handler": "listPublic",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/public/pages/{slug}",
+      "controller": "CmsController",
+      "handler": "get",
+      "sourceFile": "src/modules/cms/cms.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/publications/{publicationId}/downloadables",
+      "controller": "PublicationDownloadablesController",
+      "handler": "listForPublication",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/publications/categories",
+      "controller": "PublicContentController",
+      "handler": "listCategories",
+      "sourceFile": "src/modules/content/public-content.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/publications/columns",
+      "controller": "PublicContentController",
+      "handler": "listColumns",
+      "sourceFile": "src/modules/content/public-content.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/publications/columns/{slug}",
+      "controller": "PublicContentController",
+      "handler": "getColumn",
+      "sourceFile": "src/modules/content/public-content.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/publications/news",
+      "controller": "PublicContentController",
+      "handler": "listNews",
+      "sourceFile": "src/modules/content/public-content.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/publications/news/{slug}",
+      "controller": "PublicContentController",
+      "handler": "getNews",
+      "sourceFile": "src/modules/content/public-content.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/publications/subscribers",
+      "controller": "PublicContentController",
+      "handler": "subscribe",
+      "sourceFile": "src/modules/content/public-content.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/publications/tags",
+      "controller": "PublicContentController",
+      "handler": "listTags",
+      "sourceFile": "src/modules/content/public-content.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/therapists/me/blocked-times",
+      "controller": "SchedulingController",
+      "handler": "block",
+      "sourceFile": "src/modules/scheduling/scheduling.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "THERAPIST"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/therapists/me/schedules",
+      "controller": "SchedulingController",
+      "handler": "list",
+      "sourceFile": "src/modules/scheduling/scheduling.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "THERAPIST"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/therapists/me/schedules",
+      "controller": "SchedulingController",
+      "handler": "create",
+      "sourceFile": "src/modules/scheduling/scheduling.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "THERAPIST"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/therapists/me/schedules/{scheduleId}",
+      "controller": "SchedulingController",
+      "handler": "remove",
+      "sourceFile": "src/modules/scheduling/scheduling.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "THERAPIST"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/therapists/me/schedules/{scheduleId}",
+      "controller": "SchedulingController",
+      "handler": "update",
+      "sourceFile": "src/modules/scheduling/scheduling.controller.ts",
+      "isPublic": false,
+      "roles": [
+        "THERAPIST"
+      ],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/therapy/approaches",
+      "controller": "TherapyCatalogController",
+      "handler": "listApproaches",
+      "sourceFile": "src/modules/therapy-catalog/therapy-catalog.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/therapy/products",
+      "controller": "TherapyCatalogController",
+      "handler": "listProducts",
+      "sourceFile": "src/modules/therapy-catalog/therapy-catalog.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/webhooks/hotmart",
+      "controller": "DownloadablesWebhookController",
+      "handler": "handle",
+      "sourceFile": "src/modules/downloadables/downloadables.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "controller": "HealthController",
+      "handler": "check",
+      "sourceFile": "src/modules/health/health.controller.ts",
+      "isPublic": true,
+      "roles": [],
+      "permissions": []
+    }
+  ]
+}

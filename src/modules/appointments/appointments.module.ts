@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { Appointment, AppointmentStatusHistory, TherapyProduct } from '@/database/models';
+import { Appointment, AppointmentStatusHistory, TherapyProduct, User } from '@/database/models';
 import { AuditModule } from '../audit/audit.module';
 import { MessagingModule } from '../messaging/messaging.module';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -10,7 +10,7 @@ import { AppointmentsService } from './appointments.service';
 
 @Module({
   imports: [
-    SequelizeModule.forFeature([Appointment, AppointmentStatusHistory, TherapyProduct]),
+    SequelizeModule.forFeature([Appointment, AppointmentStatusHistory, TherapyProduct, User]),
     SchedulingModule,
     AuditModule,
     MessagingModule,

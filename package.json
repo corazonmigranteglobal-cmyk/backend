@@ -23,7 +23,7 @@
     "typecheck": "tsc --noEmit",
     "check:secrets": "node scripts/check-no-secrets.js",
     "check:repository": "node scripts/check-repository-hygiene.js",
-    "verify:ci": "yarn check:repository && yarn check:secrets && yarn lint && yarn typecheck && yarn test --runInBand && yarn build",
+    "verify:ci": "yarn check:repository && yarn check:secrets && yarn check:validation-strict && yarn lint && yarn typecheck && yarn test --runInBand && yarn build",
     "audit:dependencies": "node scripts/audit-production-dependencies.js",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
@@ -48,12 +48,28 @@
     "smoke:advertising": "node scripts/smoke-content-advertising.mjs --advertising",
     "smoke:homepage": "node scripts/smoke-content-advertising.mjs --homepage",
     "smoke:newspaper-internal": "node scripts/smoke-content-advertising.mjs --all",
-    "smoke:validation-lax": "node scripts/check-validation-lax.mjs",
+    "check:validation-strict": "node scripts/check-validation-strict.mjs",
     "db:deploy": "node scripts/deploy-db.mjs",
     "db:deploy:with-seeds": "node scripts/deploy-db.mjs --seeders",
     "db:deploy:rerun-seeds": "node scripts/deploy-db.mjs --rerun-seeders",
+    "jaeger:up": "docker compose -f docker-compose.jaeger.yml up -d",
+    "jaeger:down": "docker compose -f docker-compose.jaeger.yml down",
+    "jaeger:logs": "docker compose -f docker-compose.jaeger.yml logs -f",
+    "verify:jaeger": "bash scripts/verify-jaeger.sh",
     "smoke:plan-action": "node scripts/smoke-plan-action.mjs",
-    "smoke:plan-action:mutations": "node scripts/smoke-plan-action.mjs --mutations"
+    "smoke:plan-action:mutations": "node scripts/smoke-plan-action.mjs --mutations",
+    "docs:openapi:generate": "ts-node -r tsconfig-paths/register --project tsconfig.json scripts/generate-openapi.ts",
+    "docs:openapi:generate:env": "ts-node -r tsconfig-paths/register --project tsconfig.json scripts/generate-openapi.ts --use-env-database",
+    "docs:openapi:lint": "redocly lint openapi/openapi.yaml",
+    "docs:openapi:bundle": "redocly bundle openapi/openapi.yaml -o dist/openapi.yaml",
+    "docs:openapi:coverage": "node scripts/check-openapi-coverage.mjs",
+    "docs:links": "node scripts/check-doc-links.mjs",
+    "docs:serve": "python -m mkdocs serve",
+    "docs:build": "python -m mkdocs build --strict",
+    "docs:validate": "yarn docs:openapi:lint && yarn docs:openapi:coverage && yarn docs:links",
+    "docs:modules": "node scripts/generate-module-docs.mjs",
+    "docs:entities": "node scripts/generate-entity-catalog.mjs",
+    "docs:generate": "yarn docs:openapi:generate && yarn docs:modules && yarn docs:entities"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.21.0",
@@ -65,6 +81,22 @@
     "@nestjs/sequelize": "^11.0.1",
     "@nestjs/swagger": "^11.4.4",
     "@nestjs/throttler": "^6.5.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/core": "^2.10.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.221.0",
+    "@opentelemetry/instrumentation": "^0.221.0",
+    "@opentelemetry/instrumentation-express": "^0.69.0",
+    "@opentelemetry/instrumentation-http": "^0.221.0",
+    "@opentelemetry/instrumentation-ioredis": "^0.69.0",
+    "@opentelemetry/instrumentation-nestjs-core": "^0.67.0",
+    "@opentelemetry/instrumentation-pg": "^0.73.0",
+    "@opentelemetry/instrumentation-pino": "^0.67.0",
+    "@opentelemetry/instrumentation-undici": "^0.20.0",
+    "@opentelemetry/resources": "^2.10.0",
+    "@opentelemetry/sdk-node": "^0.221.0",
+    "@opentelemetry/sdk-trace-base": "^2.10.0",
+    "@opentelemetry/semantic-conventions": "^1.43.0",
+    "@scalar/nestjs-api-reference": "^1.2.12",
     "@sendgrid/mail": "^8.1.4",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",
@@ -84,9 +116,12 @@
     "sequelize-typescript": "^2.1.6"
   },
   "devDependencies": {
+    "@asyncapi/parser": "^3.6.1",
     "@nestjs/cli": "^11.0.23",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.1.27",
+    "@opentelemetry/context-async-hooks": "^2.10.0",
+    "@redocly/cli": "^2.43.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
@@ -110,12 +145,15 @@
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.10",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "yaml": "^2.9.0"
   },
   "overrides": {
     "multer": "$multer"
   },
   "resolutions": {
-    "multer": "2.2.0"
+    "multer": "2.2.0",
+    "@google-cloud/storage/fast-xml-parser": "^5.10.1",
+    "sequelize-typescript/**/brace-expansion": "^1.1.18"
   }
 }

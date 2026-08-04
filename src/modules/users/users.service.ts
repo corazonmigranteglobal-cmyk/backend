@@ -10,6 +10,7 @@ import {
   buildSafeOrder,
   toLimitOffset,
 } from '@/common/pagination/pagination.dto';
+import { containsPattern } from '@/common/utils/like.util';
 import { RolesPermissionsService } from '../roles-permissions/roles-permissions.service';
 import { AuditService } from '../audit/audit.service';
 import { UpdatePatientProfileDto, UpdateTherapistProfileDto } from './dto/update-profile.dto';
@@ -261,9 +262,9 @@ export class UsersService {
       ...(search
         ? {
             [Op.or]: [
-              { email: { [Op.iLike]: `%${search}%` } },
-              { '$patientProfile.firstName$': { [Op.iLike]: `%${search}%` } },
-              { '$patientProfile.lastName$': { [Op.iLike]: `%${search}%` } },
+              { email: { [Op.iLike]: containsPattern(search) } },
+              { '$patientProfile.firstName$': { [Op.iLike]: containsPattern(search) } },
+              { '$patientProfile.lastName$': { [Op.iLike]: containsPattern(search) } },
             ],
           }
         : {}),
@@ -309,11 +310,11 @@ export class UsersService {
       ...(search
         ? {
             [Op.or]: [
-              { email: { [Op.iLike]: `%${search}%` } },
-              { '$patientProfile.firstName$': { [Op.iLike]: `%${search}%` } },
-              { '$patientProfile.lastName$': { [Op.iLike]: `%${search}%` } },
-              { '$therapistProfile.firstName$': { [Op.iLike]: `%${search}%` } },
-              { '$therapistProfile.lastName$': { [Op.iLike]: `%${search}%` } },
+              { email: { [Op.iLike]: containsPattern(search) } },
+              { '$patientProfile.firstName$': { [Op.iLike]: containsPattern(search) } },
+              { '$patientProfile.lastName$': { [Op.iLike]: containsPattern(search) } },
+              { '$therapistProfile.firstName$': { [Op.iLike]: containsPattern(search) } },
+              { '$therapistProfile.lastName$': { [Op.iLike]: containsPattern(search) } },
             ],
           }
         : {}),
@@ -338,24 +339,27 @@ export class UsersService {
       ),
     });
 
-    const items = await Promise.all(
-      rows.map(async (u) => {
-        const auth = await this.rolesPermissions.getUserRolesAndPermissions(u.id);
-        const primaryRole = auth.roles[0] ?? 'NO_EXPUESTO';
-        return {
-          id: u.id,
-          email: u.email,
-          status: u.status,
-          role: primaryRole,
-          roles: auth.roles,
-          permissions: auth.permissions,
-          createdAt: u.createdAt,
-          patientProfile: this.serializeProfileWithAvatar(u.patientProfile),
-          therapistProfile: this.serializeProfileWithAvatar(u.therapistProfile),
-          adminProfile: u.adminProfile,
-        };
-      }),
+    // Una sola resolución en lote para toda la página: pedir roles y permisos
+    // usuario por usuario disparaba 4 consultas por fila.
+    const authByUserId = await this.rolesPermissions.getRolesAndPermissionsForUsers(
+      rows.map((u) => u.id),
     );
+
+    const items = rows.map((u) => {
+      const auth = authByUserId.get(u.id) ?? { roles: [], permissions: [] };
+      return {
+        id: u.id,
+        email: u.email,
+        status: u.status,
+        role: auth.roles[0] ?? 'NO_EXPUESTO',
+        roles: auth.roles,
+        permissions: auth.permissions,
+        createdAt: u.createdAt,
+        patientProfile: this.serializeProfileWithAvatar(u.patientProfile),
+        therapistProfile: this.serializeProfileWithAvatar(u.therapistProfile),
+        adminProfile: u.adminProfile,
+      };
+    });
 
     return { items, pagination: buildPagination(query, count) };
   }

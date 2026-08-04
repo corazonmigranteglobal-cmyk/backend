@@ -1,4 +1,6 @@
 import * as bcrypt from 'bcryptjs';
+import { TraceContextService } from '@/observability/trace-context.service';
+import { TracingService } from '@/observability/tracing.service';
 import { AuthService } from './auth.service';
 
 jest.mock('bcryptjs');
@@ -45,6 +47,9 @@ const makeService = () => {
     audit as any,
     messaging as any,
     tokenService as any,
+    // Sin SDK activo, la API de OpenTelemetry devuelve spans no-op: se usa el
+    // servicio real en vez de un mock para cubrir también su integración.
+    new TracingService(new TraceContextService()),
   );
 
   return {

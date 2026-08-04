@@ -6,12 +6,11 @@ import {
   PaginationQueryDto,
   buildPagination,
   buildSafeOrder,
-  getEffectivePage,
-  getEffectivePageSize,
   getEffectiveSearch,
   getEffectiveStatusFilter,
   toLimitOffset,
 } from '@/common/pagination/pagination.dto';
+import { containsPattern } from '@/common/utils/like.util';
 import { AuditService } from '../audit/audit.service';
 import { UpdateContentSubscriberDto, UpsertContentSubscriberDto } from './dto/subscriber.dto';
 
@@ -101,16 +100,25 @@ export class ContentSubscribersService {
    * Lista pacientes reales con su estado de suscripción. No lista correos sueltos.
    * Esto evita que el panel administrativo trate como suscriptor a alguien sin cuenta paciente.
    */
+  /**
+   * Lista pacientes con su estado de suscripción.
+   *
+   * El filtro por estado se resuelve en SQL sobre `content_subscribers`. La
+   * versión anterior traía la tabla de usuarios completa —sin LIMIT— y filtraba
+   * y paginaba en memoria, así que el coste crecía con el padrón entero.
+   */
   async list(query: PaginationQueryDto) {
     const search = getEffectiveSearch(query);
     const status = getEffectiveStatusFilter(query);
+    const subscriberWhere = this.buildSubscriberStatusWhere(status);
+
     const where = {
       ...(search
         ? {
             [Op.or]: [
-              { email: { [Op.iLike]: `%${search}%` } },
-              { '$patientProfile.firstName$': { [Op.iLike]: `%${search}%` } },
-              { '$patientProfile.lastName$': { [Op.iLike]: `%${search}%` } },
+              { email: { [Op.iLike]: containsPattern(search) } },
+              { '$patientProfile.firstName$': { [Op.iLike]: containsPattern(search) } },
+              { '$patientProfile.lastName$': { [Op.iLike]: containsPattern(search) } },
             ],
           }
         : {}),
@@ -118,9 +126,20 @@ export class ContentSubscribersService {
 
     const { rows, count } = await this.userModel.findAndCountAll({
       where,
-      include: [{ model: PatientProfile, required: true }],
+      include: [
+        { model: PatientProfile, required: true },
+        ...(subscriberWhere
+          ? [
+              {
+                model: ContentSubscriber,
+                required: subscriberWhere.required,
+                where: subscriberWhere.where,
+              } as any,
+            ]
+          : []),
+      ],
       distinct: true,
-      ...(status ? {} : toLimitOffset(query)),
+      ...toLimitOffset(query),
       order: buildSafeOrder(
         query,
         {
@@ -139,28 +158,35 @@ export class ContentSubscribersService {
       ? await this.subscriberModel.findAll({ where: { userId: rows.map((row) => row.id) } })
       : [];
     const byUserId = new Map(subscribers.map((subscriber) => [subscriber.userId, subscriber]));
-    let items = rows.map((user) => toPatientSubscriptionDto(user, byUserId.get(user.id) ?? null));
-
-    if (status) {
-      const normalizedStatus = status.trim().toUpperCase();
-      items = items.filter((item) => {
-        if (normalizedStatus === 'PREMIUM') return item.subscriptionTier === 'PREMIUM';
-        if (normalizedStatus === 'FREE')
-          return item.subscriptionTier !== 'PREMIUM' || !item.isPremiumActive;
-        if (normalizedStatus === 'ACTIVE') return item.status === 'ACTIVE';
-        return item.status === normalizedStatus || item.subscriptionStatus === normalizedStatus;
-      });
-      const filteredTotal = items.length;
-      const page = getEffectivePage(query);
-      const pageSize = getEffectivePageSize(query);
-      const offset = (page - 1) * pageSize;
-      return {
-        items: items.slice(offset, offset + pageSize),
-        pagination: buildPagination(query, filteredTotal),
-      };
-    }
+    const items = rows.map((user) => toPatientSubscriptionDto(user, byUserId.get(user.id) ?? null));
 
     return { items, pagination: buildPagination(query, count) };
+  }
+
+  /**
+   * Traduce el filtro de estado del panel a una condición sobre la suscripción.
+   * `FREE` incluye a los pacientes sin fila de suscriptor, por eso allí el join
+   * no es obligatorio y se compara contra NULL.
+   */
+  private buildSubscriberStatusWhere(status?: string) {
+    const normalized = status?.trim().toUpperCase();
+    if (!normalized) return undefined;
+
+    const activePremium = {
+      status: 'ACTIVE',
+      subscriptionTier: 'PREMIUM',
+      [Op.or]: [{ premiumUntil: null }, { premiumUntil: { [Op.gt]: new Date() } }],
+    };
+
+    if (normalized === 'PREMIUM') return { required: true, where: { subscriptionTier: 'PREMIUM' } };
+    if (normalized === 'ACTIVE') return { required: true, where: { status: 'ACTIVE' } };
+    if (normalized === 'FREE') {
+      return {
+        required: false,
+        where: { [Op.not]: activePremium },
+      };
+    }
+    return { required: true, where: { status: normalized } };
   }
 
   async upsert(actorUserId: string | undefined, dto: UpsertContentSubscriberDto) {

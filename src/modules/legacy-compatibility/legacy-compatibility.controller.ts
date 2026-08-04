@@ -1,11 +1,12 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '@/common/decorators/public.decorator';
-@ApiTags('Legacy compatibility')
+@ApiTags('Compatibilidad legacy')
 @Controller('legacy')
 @Public()
 export class LegacyCompatibilityController {
   @Get('status')
+  @ApiOperation({ summary: 'Comprobar la disponibilidad del backend desde clientes antiguos' })
   status() {
     return {
       enabled: true,

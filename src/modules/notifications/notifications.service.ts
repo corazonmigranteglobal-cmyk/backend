@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Subject } from 'rxjs';
 import { AdminNotification } from '@/database/models';
-import { PaginationQueryDto, buildPagination, toLimitOffset } from '@/common/pagination/pagination.dto';
+import {
+  PaginationQueryDto,
+  buildPagination,
+  toLimitOffset,
+} from '@/common/pagination/pagination.dto';
 
 export interface NotificationEvent {
   id: string;
@@ -75,18 +79,16 @@ export class NotificationsService {
 
   /** Mark a single notification as read */
   async markRead(id: string): Promise<void> {
-    await this.notificationModel.update(
-      { isRead: true, readAt: new Date() } as any,
-      { where: { id } },
-    );
+    await this.notificationModel.update({ isRead: true, readAt: new Date() } as any, {
+      where: { id },
+    });
   }
 
   /** Mark all unread notifications as read */
   async markAllRead(): Promise<void> {
-    await this.notificationModel.update(
-      { isRead: true, readAt: new Date() } as any,
-      { where: { isRead: false } },
-    );
+    await this.notificationModel.update({ isRead: true, readAt: new Date() } as any, {
+      where: { isRead: false },
+    });
   }
 
   /** Count of unread notifications — used for badge */

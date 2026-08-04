@@ -1,3 +1,6 @@
+import { MessagingTraceService } from '@/observability/messaging-trace.service';
+import { TraceContextService } from '@/observability/trace-context.service';
+import { TracingService } from '@/observability/tracing.service';
 import { MessagingService } from './messaging.service';
 
 const makeService = () => {
@@ -23,6 +26,7 @@ const makeService = () => {
     sequelize as any,
     config as any,
     provider as any,
+    new MessagingTraceService(new TracingService(new TraceContextService())),
   );
 
   return { service, outboxModel, logModel, sequelize, config, provider };

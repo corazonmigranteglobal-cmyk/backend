@@ -1,6 +1,11 @@
 import { Column, DataType, Model, Table } from 'sequelize-typescript';
 
-@Table({ tableName: 'downloadable_external_events', underscored: true, timestamps: false, paranoid: false })
+@Table({
+  tableName: 'downloadable_external_events',
+  underscored: true,
+  timestamps: false,
+  paranoid: false,
+})
 export class DownloadableExternalEvent extends Model<DownloadableExternalEvent> {
   @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, primaryKey: true })
   id: string;
@@ -29,6 +34,11 @@ export class DownloadableExternalEvent extends Model<DownloadableExternalEvent> 
   @Column({ type: DataType.STRING(40), allowNull: true })
   result?: string | null;
 
-  @Column({ type: DataType.DATE, allowNull: false, defaultValue: DataType.NOW, field: 'created_at' })
+  @Column({
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: DataType.NOW,
+    field: 'created_at',
+  })
   createdAt: Date;
 }

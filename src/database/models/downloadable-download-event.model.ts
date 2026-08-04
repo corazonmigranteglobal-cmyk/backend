@@ -1,11 +1,6 @@
 import { Column, DataType, Model, Table } from 'sequelize-typescript';
 
-export type DownloadResult =
-  | 'REQUESTED'
-  | 'AUTHORIZED'
-  | 'DENIED'
-  | 'COMPLETED'
-  | 'FAILED';
+export type DownloadResult = 'REQUESTED' | 'AUTHORIZED' | 'DENIED' | 'COMPLETED' | 'FAILED';
 
 /**
  * Auditoría de descargas. No guarda tokens ni URLs firmadas completas:
@@ -48,6 +43,11 @@ export class DownloadableDownloadEvent extends Model<DownloadableDownloadEvent> 
   @Column({ type: DataType.STRING(400), allowNull: true, field: 'user_agent' })
   userAgent?: string | null;
 
-  @Column({ type: DataType.DATE, allowNull: false, defaultValue: DataType.NOW, field: 'created_at' })
+  @Column({
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: DataType.NOW,
+    field: 'created_at',
+  })
   createdAt: Date;
 }

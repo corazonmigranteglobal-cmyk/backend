@@ -1,0 +1,123 @@
+site_name: Corazón Migrante — Backend
+site_description: Documentación técnica del backend de Corazón Migrante
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  language: es
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle: { icon: material/weather-night, name: Cambiar a modo oscuro }
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle: { icon: material/weather-sunny, name: Cambiar a modo claro }
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - content.code.copy
+    - search.highlight
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc: { permalink: true }
+  - pymdownx.details
+  - pymdownx.highlight: { anchor_linenums: true }
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  # Mermaid nativo de Material: no hace falta plugin externo.
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+plugins:
+  - search: { lang: es }
+
+validation:
+  nav:
+    omitted_files: ignore
+  links:
+    # Buena parte del valor de esta documentación son los enlaces al código que
+    # sostiene cada afirmación (`../../src/...`). MkDocs sólo resuelve enlaces
+    # dentro de `docs/`, así que los marcaría todos como rotos.
+    #
+    # La comprobación no se pierde: `yarn docs:links` los valida contra el
+    # sistema de archivos real —incluidos los que salen de `docs/`—, que es una
+    # verificación más fuerte que la de MkDocs, y falla en CI si alguno no existe.
+    not_found: ignore
+    absolute_links: ignore
+    unrecognized_links: ignore
+
+nav:
+  - Inicio: index.md
+  - Empezar:
+      - Puesta en marcha local: getting-started/local-setup.md
+      - Variables de entorno: getting-started/environment-variables.md
+  - Arquitectura:
+      - Dependencias entre módulos: architecture/module-dependencies.md
+      - Mapa de integraciones: architecture/integration-map.md
+      - Decisiones (ADR): adr/index.md
+      - ADR-0003 · ORM y modelo de datos: adr/ADR-0003-orm-y-modelo-de-datos.md
+      - ADR-0015 · Interoperabilidad de módulos: adr/ADR-0015-interoperabilidad-de-modulos.md
+  - Negocio:
+      - Flujos críticos: business/critical-workflows.md
+  - Módulos:
+      - Índice: modules/index.md
+      - accounting: modules/accounting.md
+      - advertising: modules/advertising.md
+      - analytics: modules/analytics.md
+      - appointments: modules/appointments.md
+      - audit: modules/audit.md
+      - auth: modules/auth.md
+      - cms: modules/cms.md
+      - content: modules/content.md
+      - downloadables: modules/downloadables.md
+      - files: modules/files.md
+      - health: modules/health.md
+      - homepage: modules/homepage.md
+      - legacy-compatibility: modules/legacy-compatibility.md
+      - messaging: modules/messaging.md
+      - notifications: modules/notifications.md
+      - roles-permissions: modules/roles-permissions.md
+      - scheduling: modules/scheduling.md
+      - therapy-catalog: modules/therapy-catalog.md
+      - users: modules/users.md
+  - API:
+      - Autorización: api/authorization.md
+      - Política de deprecación: api/deprecation-policy.md
+  - Datos:
+      - Catálogo de entidades: data/entity-catalog.md
+      - Retención: data/retention.md
+      - Copia y restauración: data/backup-and-restore.md
+  - Eventos:
+      - Semántica de entrega: events/delivery-semantics.md
+      - Reintentos y fallidos: events/retries-and-dlq.md
+  - Seguridad:
+      - Modelo de amenazas: security/threat-model.md
+      - Gestión de secretos: security/secrets-management.md
+      - Auditabilidad: security/auditability.md
+      - Seguridad de dependencias: security/dependency-security.md
+  - Observabilidad:
+      - Trazas: observability/tracing.md
+  - Operación:
+      - Runbook · Cola de mensajes detenida: operations/runbooks/outbox-detenido.md
+  - Gobierno:
+      - Política de documentación: governance/documentation-policy.md
+      - Matriz de trazabilidad: governance/traceability-matrix.md
+  - Informes:
+      - Línea base: reports/baseline.md
+      - Auditoría del grafo: reports/graphify-audit.md
+      - Análisis de brechas: reports/documentation-gap-analysis.md
+      - Cobertura OpenAPI: reports/openapi-coverage.md

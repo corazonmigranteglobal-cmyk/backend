@@ -1,3 +1,4 @@
+import { resolveTelemetryConfig } from '@/observability/telemetry.config';
 import { decodeOptionalBase64, parseCorsOrigins } from './environment.util';
 import { resolveGoogleCredentials } from './google-credentials.config';
 import { resolveRedisConnection } from './redis.config';
@@ -143,6 +144,9 @@ export default () => {
       subscriptionAmountBob: Number(process.env.NEWS_SUBSCRIPTION_AMOUNT_BOB ?? 0),
       subscriptionCurrency: process.env.NEWS_SUBSCRIPTION_CURRENCY ?? 'BOB',
     },
+    // Misma resolución que usa el bootstrap del SDK, para que no existan dos
+    // fuentes de verdad sobre la configuración de telemetría.
+    otel: resolveTelemetryConfig(),
     email: {
       provider: emailProvider,
       fromEmail: process.env.EMAIL_FROM_EMAIL ?? process.env.MAIL_FROM,

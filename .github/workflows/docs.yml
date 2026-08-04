@@ -1,0 +1,146 @@
+# CI documental.
+#
+# Convierte la documentación en parte del producto: si el contrato queda
+# incompleto, si una ruta deja de estar documentada, si un enlace apunta al
+# vacío o si un artefacto generado se quedó desactualizado respecto al código,
+# la construcción falla.
+name: docs
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+jobs:
+  contrato-y-portal:
+    name: Contrato, cobertura y portal
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Instalar dependencias
+        run: yarn install --frozen-lockfile
+
+      # La generación es offline: no necesita PostgreSQL ni Redis. Las rutas
+      # quedan registradas antes de que Sequelize intente conectarse.
+      - name: Generar el contrato OpenAPI
+        run: yarn docs:openapi:generate
+
+      - name: Regenerar la documentación derivada
+        run: |
+          yarn docs:modules
+          yarn docs:entities
+
+      # Si el contrato o las páginas generadas cambian, es que alguien tocó
+      # rutas, permisos o modelos sin regenerar. Se falla con el diff a la vista.
+      - name: Comprobar que los artefactos generados están al día
+        run: |
+          if ! git diff --quiet -- openapi/ docs/modules/ docs/data/entity-catalog.md; then
+            echo "::error::Hay artefactos de documentación desactualizados."
+            echo "Ejecuta 'yarn docs:generate' y añade el resultado al commit."
+            git diff --stat -- openapi/ docs/modules/ docs/data/entity-catalog.md
+            git diff -- openapi/ docs/modules/ docs/data/entity-catalog.md | head -200
+            exit 1
+          fi
+
+      - name: Gobierno del contrato (Redocly)
+        run: yarn docs:openapi:lint
+
+      - name: Cobertura de operaciones y paridad de rutas
+        run: yarn docs:openapi:coverage
+
+      - name: Enlaces de la documentación
+        run: yarn docs:links
+
+      - name: Buscar marcadores provisionales en la documentación
+        run: |
+          if grep -rInE '\b(TODO|FIXME|TBD|PENDIENTE)\b' docs/ --include='*.md' \
+              --exclude-dir=archive | grep -v 'documentation-gap-analysis.md'; then
+            echo "::error::Hay marcadores provisionales en la documentación."
+            exit 1
+          fi
+          echo "Sin marcadores provisionales."
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar MkDocs Material
+        run: pip install mkdocs-material
+
+      - name: Construir el portal en modo estricto
+        run: mkdocs build --strict
+
+      - name: Publicar el portal como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: portal-documentacion
+          path: site/
+          retention-days: 14
+
+      - name: Publicar el contrato como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: contrato-openapi
+          path: |
+            openapi/openapi.yaml
+            openapi/openapi.json
+          retention-days: 30
+
+  pruebas-e2e:
+    name: Pruebas e2e con base de datos
+    runs-on: ubuntu-latest
+
+    # Las pruebas e2e no formaban parte de ninguna puerta de calidad, y por eso
+    # la suite pudo quedarse rota sin que nadie se enterara. Aquí sí se ejecutan.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: corazon_migrante
+          POSTGRES_USER: corazon
+          POSTGRES_PASSWORD: corazon
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U corazon -d corazon_migrante"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+
+    env:
+      NODE_ENV: test
+      DATABASE_HOST: localhost
+      DATABASE_PORT: '5432'
+      DATABASE_NAME: corazon_migrante
+      DATABASE_USER: corazon
+      DATABASE_PASSWORD: corazon
+      DATABASE_SSL: 'false'
+      REDIS_ENABLED: 'false'
+      OUTBOX_WORKER_ENABLED: 'false'
+      JWT_ACCESS_SECRET: solo-para-ci-no-es-un-secreto-real
+      JWT_REFRESH_SECRET: solo-para-ci-distinto-del-anterior
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn test:e2e
+
+  dependencias:
+    name: Auditoría de dependencias de producción
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn audit:dependencies

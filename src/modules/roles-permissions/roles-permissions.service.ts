@@ -27,17 +27,70 @@ export class RolesPermissionsService {
   }
 
   async getUserRolesAndPermissions(userId: string) {
-    const userRoles = await this.userRoleModel.findAll({ where: { userId } });
-    const roleIds = userRoles.map((ur) => ur.roleId);
-    const roles = await this.roleModel.findAll({ where: { id: roleIds } });
-    const rolePermissions = await this.rolePermissionModel.findAll({ where: { roleId: roleIds } });
-    const permissionIds = [...new Set(rolePermissions.map((rp) => rp.permissionId))];
+    const byUser = await this.getRolesAndPermissionsForUsers([userId]);
+    return byUser.get(userId) ?? { roles: [], permissions: [] };
+  }
+
+  /**
+   * Resuelve roles y permisos de varios usuarios con un número fijo de
+   * consultas (4), independientemente de cuántos usuarios se pidan.
+   *
+   * Llamar a `getUserRolesAndPermissions` dentro de un bucle sobre un listado
+   * paginado generaba 4 consultas por fila: 400 en una página de 100 usuarios.
+   */
+  async getRolesAndPermissionsForUsers(
+    userIds: string[],
+  ): Promise<Map<string, { roles: string[]; permissions: string[] }>> {
+    const result = new Map<string, { roles: string[]; permissions: string[] }>();
+    const uniqueUserIds = [...new Set(userIds)].filter(Boolean);
+    if (!uniqueUserIds.length) return result;
+
+    const userRoles = await this.userRoleModel.findAll({ where: { userId: uniqueUserIds } });
+    const roleIds = [...new Set(userRoles.map((userRole) => userRole.roleId))];
+
+    const [roles, rolePermissions] = await Promise.all([
+      roleIds.length ? this.roleModel.findAll({ where: { id: roleIds } }) : [],
+      roleIds.length ? this.rolePermissionModel.findAll({ where: { roleId: roleIds } }) : [],
+    ]);
+
+    const permissionIds = [...new Set(rolePermissions.map((link) => link.permissionId))];
     const permissions = permissionIds.length
       ? await this.permissionModel.findAll({ where: { id: permissionIds } })
       : [];
-    return {
-      roles: roles.map((role) => role.code),
-      permissions: permissions.map((permission) => permission.code),
-    };
+
+    const roleCodeById = new Map(roles.map((role) => [role.id, role.code]));
+    const permissionCodeById = new Map(
+      permissions.map((permission) => [permission.id, permission.code]),
+    );
+    const permissionCodesByRoleId = new Map<string, string[]>();
+    for (const link of rolePermissions) {
+      const code = permissionCodeById.get(link.permissionId);
+      if (!code) continue;
+      const bucket = permissionCodesByRoleId.get(link.roleId);
+      if (bucket) bucket.push(code);
+      else permissionCodesByRoleId.set(link.roleId, [code]);
+    }
+
+    for (const userId of uniqueUserIds) result.set(userId, { roles: [], permissions: [] });
+    const permissionSetByUser = new Map<string, Set<string>>(
+      uniqueUserIds.map((userId) => [userId, new Set<string>()]),
+    );
+
+    for (const userRole of userRoles) {
+      const entry = result.get(userRole.userId);
+      if (!entry) continue;
+      const roleCode = roleCodeById.get(userRole.roleId);
+      if (roleCode) entry.roles.push(roleCode);
+      const permissionSet = permissionSetByUser.get(userRole.userId)!;
+      for (const code of permissionCodesByRoleId.get(userRole.roleId) ?? []) {
+        permissionSet.add(code);
+      }
+    }
+
+    for (const [userId, permissionSet] of permissionSetByUser) {
+      result.get(userId)!.permissions = [...permissionSet];
+    }
+
+    return result;
   }
 }

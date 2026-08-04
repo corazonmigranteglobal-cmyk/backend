@@ -1,15 +1,23 @@
+// PRIMERA importación del proceso, a propósito: OpenTelemetry debe parchear
+// http, express, pg, ioredis y pino ANTES de que NestJS los cargue. Cualquier
+// import por encima de esta línea rompe la instrumentación automática.
+import './observability/telemetry.bootstrap.api';
+
 import 'dotenv/config';
-import { BadRequestException, RequestMethod, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { mountApiReference } from './common/openapi/api-reference';
 import { mkdirSync } from 'node:fs';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { PinoLoggerService } from './common/logging/pino-logger.service';
+import { API_PREFIX_EXCLUDED_ROUTES } from './config/http-routes';
+import { TRACE_ID_HEADER } from './observability/telemetry.constants';
+import { TraceResponseInterceptor } from './observability/trace-response.interceptor';
 
 async function bootstrap() {
   mkdirSync('storage/tmp', { recursive: true });
@@ -61,12 +69,10 @@ async function bootstrap() {
     credentials: true,
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Authorization', 'Content-Type', 'Idempotency-Key', 'X-Request-Id'],
-    exposedHeaders: ['X-Request-Id'],
+    exposedHeaders: ['X-Request-Id', TRACE_ID_HEADER],
     maxAge: 600,
   });
-  app.setGlobalPrefix(apiPrefix, {
-    exclude: [{ path: 'health', method: RequestMethod.GET }],
-  });
+  app.setGlobalPrefix(apiPrefix, { exclude: API_PREFIX_EXCLUDED_ROUTES });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -91,19 +97,12 @@ async function bootstrap() {
     }),
   );
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  // El interceptor de trazas va primero para que `x-trace-id` esté fijado antes
+  // de que cualquier otro interceptor o el filtro de excepciones escriba.
+  app.useGlobalInterceptors(new TraceResponseInterceptor(), new ResponseInterceptor());
 
   if (config.get<boolean>('app.swaggerEnabled')) {
-    const swaggerConfiguration = new DocumentBuilder()
-      .setTitle('Corazon Migrante API')
-      .setDescription('API /api/v1 para Corazon Migrante')
-      .setVersion('1.0.0')
-      .addBearerAuth()
-      .build();
-    const document = SwaggerModule.createDocument(app, swaggerConfiguration);
-    SwaggerModule.setup('docs', app, document, {
-      swaggerOptions: { persistAuthorization: false },
-    });
+    mountApiReference(app, config);
   }
 
   app.enableShutdownHooks(['SIGINT', 'SIGTERM']);

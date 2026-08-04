@@ -44,6 +44,63 @@ describe('RolesPermissionsService', () => {
   });
 
   // -------------------------------------------------------------------------
+  // getRolesAndPermissionsForUsers()
+  // -------------------------------------------------------------------------
+
+  describe('getRolesAndPermissionsForUsers()', () => {
+    it('resolves several users with a fixed number of queries', async () => {
+      userRoleModel.findAll.mockResolvedValue([
+        { userId: 'u1', roleId: 'r-admin' },
+        { userId: 'u2', roleId: 'r-patient' },
+        { userId: 'u3', roleId: 'r-admin' },
+        { userId: 'u3', roleId: 'r-patient' },
+      ]);
+      roleModel.findAll.mockResolvedValue([
+        makeRole('r-admin', 'ADMIN'),
+        makeRole('r-patient', 'PATIENT'),
+      ]);
+      rolePermissionModel.findAll.mockResolvedValue([
+        { roleId: 'r-admin', permissionId: 'p-read' },
+        { roleId: 'r-admin', permissionId: 'p-write' },
+        { roleId: 'r-patient', permissionId: 'p-read' },
+      ]);
+      permissionModel.findAll.mockResolvedValue([
+        makePermission('p-read', 'users:read'),
+        makePermission('p-write', 'users:write'),
+      ]);
+
+      const result = await service.getRolesAndPermissionsForUsers(['u1', 'u2', 'u3']);
+
+      expect(result.get('u1')).toEqual({
+        roles: ['ADMIN'],
+        permissions: ['users:read', 'users:write'],
+      });
+      expect(result.get('u2')).toEqual({ roles: ['PATIENT'], permissions: ['users:read'] });
+      expect(result.get('u3')?.roles.sort()).toEqual(['ADMIN', 'PATIENT']);
+      // Permisos deduplicados aunque dos roles compartan el mismo permiso.
+      expect(result.get('u3')?.permissions.sort()).toEqual(['users:read', 'users:write']);
+
+      // El coste no depende del número de usuarios: una consulta por tabla.
+      expect(userRoleModel.findAll).toHaveBeenCalledTimes(1);
+      expect(roleModel.findAll).toHaveBeenCalledTimes(1);
+      expect(rolePermissionModel.findAll).toHaveBeenCalledTimes(1);
+      expect(permissionModel.findAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns empty entries for users without roles and skips queries when given no ids', async () => {
+      userRoleModel.findAll.mockResolvedValue([]);
+      roleModel.findAll.mockResolvedValue([]);
+      rolePermissionModel.findAll.mockResolvedValue([]);
+
+      await expect(service.getRolesAndPermissionsForUsers([])).resolves.toEqual(new Map());
+      expect(userRoleModel.findAll).not.toHaveBeenCalled();
+
+      const result = await service.getRolesAndPermissionsForUsers(['ghost']);
+      expect(result.get('ghost')).toEqual({ roles: [], permissions: [] });
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // assignRoleByCode()
   // -------------------------------------------------------------------------
 

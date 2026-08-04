@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { timingSafeEqual } from 'node:crypto';
 
 /**
  * Adaptador desacoplado para la integración con Hotmart.
@@ -70,9 +71,22 @@ export class HotmartAdapter {
     }
     // La verificación real de firma (HMAC/hottok) se realiza aquí cuando existan
     // credenciales. Contrato listo para implementación productiva.
-    const expected = this.webhookSecret;
-    const valid = payload.rawSignature === expected;
-    return valid ? { valid: true } : { valid: false, reason: 'firma inválida' };
+    return this.matchesSecret(payload.rawSignature, this.webhookSecret)
+      ? { valid: true }
+      : { valid: false, reason: 'firma inválida' };
+  }
+
+  /**
+   * Comparación en tiempo constante: un `===` filtra por cuánto tarda en fallar
+   * cuántos caracteres iniciales del hottok acertó quien lo intenta.
+   */
+  private matchesSecret(candidate: string, expected: string): boolean {
+    const candidateBuffer = Buffer.from(candidate, 'utf8');
+    const expectedBuffer = Buffer.from(expected, 'utf8');
+    return (
+      candidateBuffer.length === expectedBuffer.length &&
+      timingSafeEqual(candidateBuffer, expectedBuffer)
+    );
   }
 
   /**

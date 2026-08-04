@@ -30,8 +30,11 @@ export class AuthController {
   @Post('register/patient')
   @Throttle({ default: { limit: 5, ttl: 3_600_000 } })
   @ApiOperation({ summary: 'Registrar un nuevo paciente' })
-  @ApiResponse({ status: 201, description: 'Paciente registrado. Devuelve tokens de acceso.' })
-  @ApiResponse({ status: 409, description: 'El email ya está registrado.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Paciente registrado. Devuelve id, email y status; no emite tokens.',
+  })
+  @ApiResponse({ status: 400, description: 'El email ya está registrado.' })
   registerPatient(@Body() dto: RegisterPatientDto) {
     return this.authService.registerPatient(dto);
   }
@@ -39,8 +42,12 @@ export class AuthController {
   @Post('register/therapist')
   @Throttle({ default: { limit: 5, ttl: 3_600_000 } })
   @ApiOperation({ summary: 'Registrar un nuevo terapeuta (requiere aprobación admin)' })
-  @ApiResponse({ status: 201, description: 'Terapeuta registrado. Devuelve tokens de acceso.' })
-  @ApiResponse({ status: 409, description: 'El email ya está registrado.' })
+  @ApiResponse({
+    status: 201,
+    description:
+      'Terapeuta registrado en estado PENDING_APPROVAL. No emite tokens hasta la aprobación.',
+  })
+  @ApiResponse({ status: 400, description: 'El email ya está registrado.' })
   registerTherapist(@Body() dto: RegisterTherapistDto) {
     return this.authService.registerTherapist(dto);
   }
@@ -71,7 +78,11 @@ export class AuthController {
     status: 201,
     description: 'Devuelve nuevos accessToken y refreshToken (rotación).',
   })
-  @ApiResponse({ status: 401, description: 'Refresh token inválido o expirado.' })
+  @ApiResponse({
+    status: 401,
+    description:
+      'Refresh token inválido o expirado. Si el token ya había sido rotado se revocan todas las sesiones del usuario.',
+  })
   refresh(
     @Body() dto: RefreshTokenDto,
     @Ip() ipAddress: string,

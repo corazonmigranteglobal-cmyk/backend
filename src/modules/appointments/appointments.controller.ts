@@ -14,7 +14,7 @@ import {
   UpdateAppointmentStatusDto,
 } from './dto/appointment.dto';
 
-@ApiTags('Appointments')
+@ApiTags('Citas')
 @ApiBearerAuth()
 @Controller('appointments')
 export class AppointmentsController {

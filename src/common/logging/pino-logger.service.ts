@@ -110,7 +110,16 @@ export class PinoLoggerService implements LoggerService, OnApplicationShutdown {
   }
 
   onApplicationShutdown() {
-    this.fileDestination?.flushSync();
+    // `flushSync` lanza «sonic boom is not ready yet» si el proceso termina
+    // antes de que el descriptor del archivo esté abierto (arranques muy
+    // cortos: generación del contrato, comandos de un solo uso, fallo de
+    // arranque). Perder ese buffer no justifica romper el apagado, así que el
+    // fallo se traga y se sigue cerrando el destino.
+    try {
+      this.fileDestination?.flushSync();
+    } catch {
+      // El destino aún no estaba listo: no hay nada que vaciar.
+    }
     this.fileDestination?.end();
   }
 }

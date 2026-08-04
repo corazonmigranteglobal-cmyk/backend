@@ -1,0 +1,36 @@
+# Jaeger para desarrollo local.
+#
+# Uso independiente (backend corriendo fuera de Docker):
+#   docker compose -f docker-compose.jaeger.yml up -d
+#   OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://localhost:4318/v1/traces
+#
+# Uso combinado (backend dentro de Docker, misma red que la API):
+#   docker compose -f docker-compose.yml -f docker-compose.jaeger.yml up -d
+#   OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://jaeger:4318/v1/traces
+#
+# ADVERTENCIA: `all-in-one` guarda las trazas EN MEMORIA y no tiene
+# autenticación. Es exclusivamente para desarrollo. La topología de producción
+# está en docs/observability/03-production-topology.md.
+
+services:
+  jaeger:
+    # Versión explícita: `latest` haría que un cambio de imagen upstream
+    # rompiese el entorno de desarrollo sin ningún cambio en el repositorio.
+    image: jaegertracing/all-in-one:1.62.0
+    container_name: corazon_migrante_jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+      # Techo de memoria: evita que un bucle de trazas agote la RAM del portátil.
+      MEMORY_MAX_TRACES: "20000"
+      SPAN_STORAGE_TYPE: memory
+    ports:
+      # Enlazados a loopback: nada de exponer la UI ni OTLP en toda la red local.
+      - "127.0.0.1:16686:16686"   # UI de Jaeger
+      - "127.0.0.1:4317:4317"     # OTLP gRPC
+      - "127.0.0.1:4318:4318"     # OTLP HTTP (el que usa este backend)
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:14269/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped

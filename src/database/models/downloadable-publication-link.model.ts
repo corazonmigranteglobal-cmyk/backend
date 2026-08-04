@@ -1,6 +1,11 @@
 import { Column, DataType, Model, Table } from 'sequelize-typescript';
 
-@Table({ tableName: 'downloadable_publication_links', underscored: true, timestamps: false, paranoid: false })
+@Table({
+  tableName: 'downloadable_publication_links',
+  underscored: true,
+  timestamps: false,
+  paranoid: false,
+})
 export class DownloadablePublicationLink extends Model<DownloadablePublicationLink> {
   @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4, primaryKey: true })
   id: string;
@@ -23,6 +28,11 @@ export class DownloadablePublicationLink extends Model<DownloadablePublicationLi
   @Column({ type: DataType.UUID, allowNull: true, field: 'created_by' })
   createdBy?: string | null;
 
-  @Column({ type: DataType.DATE, allowNull: false, defaultValue: DataType.NOW, field: 'created_at' })
+  @Column({
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: DataType.NOW,
+    field: 'created_at',
+  })
   createdAt: Date;
 }
