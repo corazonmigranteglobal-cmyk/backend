@@ -38,3 +38,6 @@ yarn-error.log*
 /graphify-out
 # Portal MkDocs generado (yarn docs:build)
 site/
+
+# Cache incremental de TypeScript
+*.tsbuildinfo
