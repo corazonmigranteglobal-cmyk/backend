@@ -75,7 +75,12 @@
     "db:retention:apply": "node scripts/purge-retention.mjs --apply",
     "db:verify-restore": "node scripts/verify-restore.mjs",
     "files:check": "node scripts/backup-file-storage.mjs --check",
-    "files:replicate": "node scripts/backup-file-storage.mjs --replicate"
+    "files:replicate": "node scripts/backup-file-storage.mjs --replicate",
+    "files:backup:cloudinary": "node scripts/backup-cloudinary.mjs",
+    "files:check:cloudinary": "node scripts/backup-cloudinary.mjs --check",
+    "obs:up": "docker compose -f docker-compose.observability.yml up -d",
+    "obs:down": "docker compose -f docker-compose.observability.yml down",
+    "obs:logs": "docker compose -f docker-compose.observability.yml logs -f"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.21.0",

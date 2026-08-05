@@ -79,8 +79,10 @@ No es trabajo de este repositorio: es configuración del proveedor.
 
 | Proveedor | Mecanismo | Estado |
 | --- | --- | --- |
-| Google Cloud Storage | Versionado de objetos más regla de ciclo de vida, o replicación a un bucket secundario | **Sin configurar** |
-| Cloudinary | Copia gestionada del plan, o exportación programada | **Sin configurar** |
+| Google Cloud Storage | Versionado de objetos más regla de ciclo de vida, o replicación a un bucket secundario | **Sin configurar**. Hay herramienta: `yarn files:replicate` |
+| Cloudinary | Copia gestionada del plan, o exportación programada | **Sin configurar**. Hay herramienta: `yarn files:backup:cloudinary` |
+
+Procedimiento completo en el [runbook de copia de archivos](../operations/runbooks/copia-de-archivos.md).
 
 Hasta que exista, la recuperación ante desastre está incompleta y el backend no puede declararse
 apto para producción. Ver [preparación para producción](../reports/production-readiness.md).

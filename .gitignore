@@ -41,3 +41,4 @@ site/
 
 # Cache incremental de TypeScript
 *.tsbuildinfo
+metrics-token

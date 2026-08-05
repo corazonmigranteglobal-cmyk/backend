@@ -1,0 +1,107 @@
+# Alertas del backend de Corazón Migrante.
+#
+# Regla de oro: **sólo se alerta de lo que alguien va a atender**. Una alerta
+# que nadie mira enseña al equipo a ignorar las alertas, y entonces tampoco
+# mirará la que importa.
+#
+# Las condiciones salen de los objetivos declarados en
+# `docs/observability/service-level-objectives.md`.
+
+groups:
+  - name: disponibilidad
+    rules:
+      - alert: BackendCaido
+        expr: up{job="backend"} == 0
+        for: 2m
+        labels:
+          urgencia: inmediata
+        annotations:
+          resumen: El backend no responde al raspado de métricas.
+          accion: docs/operations/runbooks/api-caida.md
+
+      - alert: TasaDeErrores5xx
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+            / sum(rate(http_requests_total[5m])) > 0.01
+        for: 10m
+        labels:
+          urgencia: inmediata
+        annotations:
+          resumen: Más del 1 % de las peticiones devuelve 5xx.
+          accion: docs/operations/runbooks/api-caida.md
+
+      - alert: LatenciaDegradada
+        expr: |
+          histogram_quantile(
+            0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 2
+        for: 15m
+        labels:
+          urgencia: laboral
+        annotations:
+          resumen: El percentil 95 de latencia supera los 2 s.
+
+  - name: recorridos-criticos
+    rules:
+      # Los cuatro recorridos que definen que el servicio «funciona». Se vigilan
+      # aparte porque un fallo aquí importa más que la media global.
+      - alert: FallosDeInicioDeSesion
+        expr: |
+          sum(rate(http_requests_total{route="/api/v1/auth/login", status=~"5.."}[10m]))
+            / sum(rate(http_requests_total{route="/api/v1/auth/login"}[10m])) > 0.01
+        for: 10m
+        labels:
+          urgencia: inmediata
+        annotations:
+          resumen: Falla el inicio de sesión. Sin esto no hay acceso a nada.
+
+      - alert: FallosAlReservarCita
+        expr: |
+          sum(rate(http_requests_total{route="/api/v1/appointments", status=~"5.."}[10m]))
+            / sum(rate(http_requests_total{route="/api/v1/appointments"}[10m])) > 0.01
+        for: 10m
+        labels:
+          urgencia: inmediata
+        annotations:
+          resumen: Falla la reserva de citas, que es la capacidad central del producto.
+
+  - name: base-de-datos
+    rules:
+      - alert: PoolSaturado
+        expr: db_pool_connections{state="pending"} > 0
+        for: 5m
+        labels:
+          urgencia: inmediata
+        annotations:
+          resumen: Hay peticiones esperando una conexión libre. Precede a una caída.
+          accion: docs/operations/runbooks/api-caida.md
+
+      - alert: MetricasSinMuestrear
+        expr: increase(outbox_metrics_poll_failures_total[15m]) > 3
+        for: 5m
+        labels:
+          urgencia: laboral
+        annotations:
+          resumen: El muestreo no puede consultar la base. Suele significar que la base no responde.
+
+  - name: mensajeria
+    rules:
+      # La alerta más útil de todas, y no es técnica: si un correo prometido
+      # lleva media hora sin salir, alguien está esperando algo que no llega.
+      - alert: OutboxAtascado
+        expr: outbox_oldest_pending_seconds > 1800
+        for: 5m
+        labels:
+          urgencia: laboral
+        annotations:
+          resumen: Hay un mensaje pendiente de más de 30 minutos.
+          accion: docs/operations/runbooks/outbox-detenido.md
+
+      - alert: CorreosFallidos
+        expr: increase(outbox_messages{status="FALLIDO"}[1h]) > 10
+        for: 5m
+        labels:
+          urgencia: laboral
+        annotations:
+          resumen: Más de 10 mensajes agotaron sus reintentos en la última hora.
+          accion: docs/operations/runbooks/outbox-detenido.md

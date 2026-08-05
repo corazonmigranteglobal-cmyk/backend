@@ -1,0 +1,44 @@
+# Configuración de Prometheus para el backend de Corazón Migrante.
+#
+# El backend expone métricas en `GET /metrics`, fuera del prefijo `api/v1` y
+# protegido por `METRICS_TOKEN`. Este archivo le dice a Prometheus dónde
+# raspar y con qué credencial.
+
+global:
+  # Cada 15 s es suficiente: las métricas que consultan la base se refrescan en
+  # el backend cada 15 s (`METRICS_POLL_INTERVAL_MS`), así que raspar más a
+  # menudo sólo devolvería el mismo valor.
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 30s
+  external_labels:
+    servicio: corazon-migrante-backend
+
+rule_files:
+  - /etc/prometheus/alertas.yml
+
+scrape_configs:
+  - job_name: backend
+    metrics_path: /metrics
+    scheme: http
+
+    # El token va en un archivo, no aquí: así el fichero de configuración se
+    # puede versionar y el secreto no.
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/metrics-token
+
+    static_configs:
+      - targets:
+          # `host.docker.internal` alcanza el proceso que corre en la máquina
+          # anfitriona desde dentro del contenedor. Si el backend también corre
+          # en Docker, sustitúyelo por el nombre de su servicio.
+          - host.docker.internal:3000
+        labels:
+          entorno: local
+
+  # Prometheus se vigila a sí mismo: si deja de raspar, conviene que quede
+  # registrado en algún sitio.
+  - job_name: prometheus
+    static_configs:
+      - targets: [localhost:9090]

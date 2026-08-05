@@ -10,7 +10,7 @@ una tarea verificable. Se clasifica según el plan: `BLOCKER`, `CRITICAL`, `HIGH
 | `BLOCKER` | 3 | 0 |
 | `CRITICAL` | 2 | 0 |
 | `HIGH` | 7 | 2 |
-| `MEDIUM` | 10 | 3 |
+| `MEDIUM` | 12 | 3 |
 | `LOW` | 0 | 3 |
 
 ## Brechas cerradas
@@ -40,6 +40,8 @@ una tarea verificable. Se clasifica según el plan: `BLOCKER`, `CRITICAL`, `HIGH
 | G-30 | Operación | `MEDIUM` — faltaban 7 runbooks | 6 runbooks: API caida, outbox, migracion fallida, integracion externa, rollback y recuperacion desde copia | Enlaces verificados |
 | G-24a | Observabilidad | `HIGH` — no se exponia ninguna metrica | Modulo de metricas Prometheus: RED de HTTP por patron de ruta, pool de base y outbox; token con fallo cerrado y comparacion en tiempo constante | 4 pruebas nuevas; verificado sirviendo en `/metrics` |
 | G-23a | Datos | `HIGH` — sin forma de detectar metadatos huerfanos de archivos | `scripts/backup-file-storage.mjs` con `--check` y `--replicate` | `yarn files:check` |
+| G-24b | Observabilidad | `MEDIUM` — las metricas se emitian pero nadie las recogia | Prometheus + Grafana en `docker-compose.observability.yml`, con 9 reglas de alerta y fuente de datos aprovisionada | Verificado: objetivo `UP`, series llegando, reglas cargadas |
+| G-23b | Datos | `HIGH` — sin forma de copiar ni verificar los archivos de Cloudinary | `scripts/backup-cloudinary.mjs`: inventario por Admin API, descarga reanudable con manifiesto y contraste con la base | Ejecutado contra la cuenta real: 111 recursos, 180,9 MB, 0 metadatos rotos |
 | G-19 | Pruebas | `MEDIUM` — sin estrategia de pruebas documentada | [Estrategia de pruebas](../testing/strategy.md) | — |
 
 ## Brechas abiertas
@@ -49,7 +51,7 @@ una tarea verificable. Se clasifica según el plan: `BLOCKER`, `CRITICAL`, `HIGH
 | G-20 | `MEDIUM` | API | 35 de 189 operaciones documentan el sobre pero no el esquema de `data` (81,5 % tipado). Lo que queda son sobre todo acciones sin carga útil propia y alias de compatibilidad | Completar con `@ApiEnvelope(Dto, …)` los handlers restantes de contenido admin, usuarios y descargables | Quien integra esas operaciones concretas conoce la envoltura y los errores, no la forma exacta de la carga |
 | G-22 | `HIGH` | Recuperación | El ensayo de restauración ya existe y pasa (`yarn db:verify-restore`), pero **no se ha ejecutado contra un volcado de producción** ni está programado | Ejecutarlo sobre una copia de Neon, medir el tiempo real y declarar RPO/RTO a partir de esa medición | El RTO real sigue siendo desconocido |
 | G-23 | `HIGH` | Recuperación | Los archivos subidos no entran en la copia de la base | Definir política de copia del bucket | Pérdida irrecuperable de documentación clínica adjunta |
-| G-24 | `MEDIUM` | Observabilidad | Las métricas **ya se emiten** (`GET /metrics`, protegido y con fallo cerrado), pero nadie las recoge: falta desplegar un Prometheus y definir alertas | Raspar el endpoint, conservar la serie y medir un mes antes de fijar los objetivos definitivos | Sin recolección no hay alertas: la detección sigue dependiendo de que alguien lo note |
+| G-24 | `MEDIUM` | Observabilidad | Prometheus y Grafana ya recogen las métricas (`yarn obs:up`, verificado con el objetivo `UP` y 9 reglas cargadas), pero **Prometheus evalúa las alertas y no las envía a ningún sitio**: falta un Alertmanager con destino | Añadir Alertmanager con correo o Slack, y medir un mes antes de fijar los objetivos definitivos | Una alerta que se dispara sólo se ve entrando a mirar |
 | G-27 | `MEDIUM` | Pruebas | `audit`, `homepage` y `notifications` sin suite propia | Añadir pruebas unitarias | Comportamiento sólo ejercitado de forma indirecta |
 | G-28 | `MEDIUM` | Pruebas | Las migraciones no se ejecutan en `verify:ci` | Job con PostgreSQL que aplique migraciones | Una migración rota se descubre al desplegar |
 | G-29 | `MEDIUM` | Seguridad | El `hottok` de Hotmart no liga la firma al contenido | Migrar a HMAC sobre el cuerpo | [A-1](../security/threat-model.md): un token filtrado permite notificaciones fabricadas |

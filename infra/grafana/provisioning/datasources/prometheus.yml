@@ -1,0 +1,11 @@
+# Grafana se conecta sola a Prometheus al arrancar: no hay que configurar nada
+# a mano en la interfaz.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false

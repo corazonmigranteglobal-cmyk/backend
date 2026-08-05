@@ -1,0 +1,69 @@
+# Recolección de métricas y tableros.
+#
+# Se levanta aparte de `docker-compose.yml` a propósito: la observabilidad no
+# tiene por qué correr cada vez que alguien arranca la base de datos.
+#
+#   1. Crea el archivo con el token (una sola vez):
+#        echo -n "$METRICS_TOKEN" > infra/prometheus/metrics-token
+#
+#   2. Levanta:
+#        yarn obs:up
+#
+#   3. Abre:
+#        Prometheus  http://localhost:9090      (Status → Targets)
+#        Grafana     http://localhost:3001      (admin / admin)
+#
+# El token debe ser **el mismo** que tiene el backend en `METRICS_TOKEN`. Sin
+# él, `/metrics` responde 404 y Prometheus verá el objetivo como caído.
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: corazon_migrante_prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      # 90 días: suficiente para revisar una tendencia trimestral sin que el
+      # disco crezca sin control.
+      - --storage.tsdb.retention.time=90d
+      - --web.enable-lifecycle
+    ports:
+      - '${PROMETHEUS_HOST_PORT:-9090}:9090'
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/prometheus/alertas.yml:/etc/prometheus/alertas.yml:ro
+      # El token se monta como archivo para que no acabe en la configuración
+      # versionada ni en el historial de comandos.
+      - ./infra/prometheus/metrics-token:/etc/prometheus/metrics-token:ro
+      - prometheus_data:/prometheus
+    extra_hosts:
+      # Permite raspar un backend que corre en la máquina anfitriona, que es lo
+      # normal en desarrollo (`yarn start:dev`).
+      - 'host.docker.internal:host-gateway'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:9090/-/healthy']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: corazon_migrante_grafana
+    depends_on:
+      - prometheus
+    ports:
+      - '${GRAFANA_HOST_PORT:-3001}:3000'
+    environment:
+      # Credenciales por defecto: esto es una herramienta local, no un servicio
+      # expuesto. Si algún día se publica, hay que cambiarlas.
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  prometheus_data:
+  grafana_data:

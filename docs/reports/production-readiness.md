@@ -37,7 +37,7 @@ recuperación real.
 
 | # | Acción | Brecha | Naturaleza |
 | --- | --- | --- | --- |
-| 1 | Configurar versionado o replicación de los buckets de archivos | [G-23](documentation-gap-analysis.md) | Configuración del proveedor |
+| 1 | Activar versionado o copia gestionada en el proveedor. **Las herramientas ya existen** (`yarn files:backup:cloudinary`, `yarn files:replicate`): falta programarlas o activar el mecanismo nativo | [G-23](documentation-gap-analysis.md) | Configuración del proveedor |
 | 2 | Ejecutar el ensayo contra un volcado de producción y medir el tiempo real | [G-22](documentation-gap-analysis.md) | Operación |
 | 3 | Declarar RPO y RTO a partir de esa medición | [G-22](documentation-gap-analysis.md) | Decisión de negocio |
 
@@ -130,8 +130,8 @@ Todo lo de esta sección se ha ejecutado y su salida es reproducible.
 | --- | :---: |
 | Health checks documentados | ✅ |
 | Logs, métricas y trazas definidos | ✅ los tres. Métricas Prometheus en `GET /metrics` |
-| Alertas y SLO definidos | ⚠️ definidos y ya medibles; falta un Prometheus que los recoja |
-| Runbooks disponibles | ⚠️ 6 de los 10 que pide el plan |
+| Alertas y SLO definidos | ⚠️ 9 reglas cargadas en Prometheus; falta un Alertmanager que las envíe |
+| Runbooks disponibles | ⚠️ 7 de los 10 que pide el plan |
 | Backup, restauración y rollback comprobados | ⚠️ **parcial — sigue bloqueando** |
 
 ### Calidad
@@ -164,7 +164,7 @@ Todo lo de esta sección se ha ejecutado y su salida es reproducible.
 | Marcadores TODO/TBD | 0 | 0 | ✅ |
 | Riesgos críticos abiertos | 0 | 0 | ✅ |
 | Esquemas con descripción | 100 % de los públicos | 81,5 % con `data` tipado (154/189) | ⚠️ |
-| Runbooks críticos disponibles | 100 % | 60 % (6/10) | ⚠️ |
+| Runbooks críticos disponibles | 100 % | 70 % (7/10) | ⚠️ |
 
 ---
 
